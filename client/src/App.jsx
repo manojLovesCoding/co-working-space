@@ -40,6 +40,8 @@ import EditTenant from "./pages/landloard/EditTenant";
 import UpdateTenantPassword from "./pages/landloard/UpdateTenantPassword";
 import AssignTenant from "./pages/landloard/AssignTenant";
 import AssignedTenants from "./pages/landloard/AssignedTenants";
+import AddSpaceMaster from "./pages/admin/AddSpaceMaster";
+import SpaceMaster from "./pages/admin/SpaceMaster";
 
 const App = () => {
   return (
@@ -73,6 +75,9 @@ const App = () => {
             </PublicRoute>
           }
         />
+
+      
+       
 
         {/* ================= TENANT ================= */}
         <Route element={<ProtectedRoute allowedRoles={["tenant"]} />}>
@@ -121,6 +126,8 @@ const App = () => {
             <Route path="users" element={<Users />} />
             <Route path="properties" element={<AdminProperties />} />
             <Route path="payments" element={<AdminPayments />} />
+            <Route path="add-space-master" element={<AddSpaceMaster />} />
+            <Route path="space-master-list" element={<SpaceMaster />} />
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>
         </Route>
