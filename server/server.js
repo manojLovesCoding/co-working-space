@@ -10,6 +10,7 @@ import paymentRouter from "./routes/paymentRoutes.js";
 import dns from "dns";
 import spaceRouter from "./routes/spaceRoutes.js";
 import profileRouter2 from "./routes/profileRoutes2.js";
+import companyRouter from "./routes/companyRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -31,6 +32,7 @@ app.use("/api/property", propertyRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/space", spaceRouter);
 app.use("/api/profile", profileRouter2);
+app.use("/api/company", companyRouter);
 
 await connectDB();
 connectCloudinary();

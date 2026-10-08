@@ -26,6 +26,8 @@ import TenantList from "./pages/landloard/TenantList";
 import Payments from "./pages/landloard/Payments";
 import Reports from "./pages/landloard/Reports";
 import Profile from "./pages/landloard/Profile";
+import Profile2 from "./pages/landloard/Profile2";
+import CompanyProfile from "./pages/landloard/CompanyProfile";
 
 /* Admin pages */
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -43,7 +45,7 @@ import AssignedTenants from "./pages/landloard/AssignedTenants";
 import AddSpaceMaster from "./pages/admin/AddSpaceMaster";
 import SpaceMaster from "./pages/admin/SpaceMaster";
 import BookSpace from "./pages/BookSpace";
-import Profile2 from "./pages/landloard/Profile2";
+
 
 const App = () => {
   return (
@@ -123,6 +125,7 @@ const App = () => {
             <Route path="payments" element={<Payments />} />
             {/* <Route path="reports" element={<Reports />} />*/}
             <Route path="profile2" element={<Profile2 />} /> 
+            <Route path="company-profile" element={<CompanyProfile />} />
           </Route>
         </Route>
 
