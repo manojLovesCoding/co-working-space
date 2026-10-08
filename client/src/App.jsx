@@ -43,6 +43,7 @@ import AssignedTenants from "./pages/landloard/AssignedTenants";
 import AddSpaceMaster from "./pages/admin/AddSpaceMaster";
 import SpaceMaster from "./pages/admin/SpaceMaster";
 import BookSpace from "./pages/BookSpace";
+import Profile2 from "./pages/landloard/Profile2";
 
 const App = () => {
   return (
@@ -120,8 +121,8 @@ const App = () => {
             />
 
             <Route path="payments" element={<Payments />} />
-            {/* <Route path="reports" element={<Reports />} />
-            <Route path="profile" element={<Profile />} /> */}
+            {/* <Route path="reports" element={<Reports />} />*/}
+            <Route path="profile2" element={<Profile2 />} /> 
           </Route>
         </Route>
 

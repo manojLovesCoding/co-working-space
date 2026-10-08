@@ -29,10 +29,59 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
     },
 
+    /*
+     * Role is used for authorization.
+     *
+     * Example:
+     * admin
+     * customer
+     * tenant
+     */
     role: {
       type: String,
-      enum: ["customer", "tenant", "admin",],
+      enum: ["customer", "tenant", "admin"],
       default: "tenant",
+    },
+
+    /*
+     * Designation is profile information.
+     *
+     * Example:
+     * Manager
+     * Accountant
+     * Receptionist
+     * Software Developer
+     */
+    designation: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    /*
+     * Date of birth
+     */
+    dob: {
+      type: Date,
+      default: null,
+    },
+
+    /*
+     * User address
+     */
+    address: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    /*
+     * Cloudinary profile image URL
+     */
+    profilePic: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     createdBy: {
