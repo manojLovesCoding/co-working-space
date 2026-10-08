@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios.js";
+import PublicSpaces from "../components/public/PublicSpaces.jsx";
 
 const Home = () => {
   const [properties, setProperties] = useState([]);
@@ -257,6 +258,8 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+        <PublicSpaces />
 
       {/* ================= FOOTER ================= */}
       <footer className="border-t border-slate-200 bg-white">

@@ -44,7 +44,7 @@ paymentRouter.get(
 paymentRouter.get(
   "/landlord-summary",
   verifyToken,
-  authorizeRoles("landlord"),
+  authorizeRoles("customer"),
   getLandlordSummary
 );
 

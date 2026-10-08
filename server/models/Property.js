@@ -28,7 +28,7 @@ const propertySchema = new mongoose.Schema(
       default: "",
     },
 
-    landlord: {
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,

@@ -719,4 +719,96 @@ export const updateSpace = async (req, res) => {
 };
 
 
+/* Get active spaces for public/customer homepage
+export const getPublicSpaces = async (req, res) => {
+  try {
+    const spaces = await Space.find({
+      status: "Active",
+    })
+      .select(
+        "spaceCode space perHour perDay oneWeek twoWeeks threeWeeks perMonth minDuration minDurationDesc maxDuration maxDurationDesc image status"
+      )
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      spaces,
+    });
+  } catch (error) {
+    console.error("Get public spaces error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch spaces",
+    });
+  }
+}; */
+
+export const getPublicSpaces = async (req, res) => {
+  try {
+    const spaces = await Space.find({
+      status: "Active",
+    })
+      .select(
+        "spaceCode space perHour perDay oneWeek twoWeeks threeWeeks perMonth minDuration minDurationDesc maxDuration maxDurationDesc image status"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Group spaces by workspace name
+    const groupedSpaces = Object.values(
+      spaces.reduce((groups, item) => {
+        const key = item.space?.trim();
+
+        if (!key) return groups;
+
+        if (!groups[key]) {
+          groups[key] = {
+            space: key,
+
+            // Pricing/details from the workspace
+            perHour: item.perHour,
+            perDay: item.perDay,
+            oneWeek: item.oneWeek,
+            twoWeeks: item.twoWeeks,
+            threeWeeks: item.threeWeeks,
+            perMonth: item.perMonth,
+
+            minDuration: item.minDuration,
+            minDurationDesc: item.minDurationDesc,
+
+            maxDuration: item.maxDuration,
+            maxDurationDesc: item.maxDurationDesc,
+
+            image: item.image,
+
+            // All physical spaces/seats belonging to this workspace
+            spaces: [],
+          };
+        }
+
+        groups[key].spaces.push({
+          spaceCode: item.spaceCode,
+          status: item.status,
+        });
+
+        return groups;
+      }, {})
+    );
+
+    res.status(200).json({
+      success: true,
+      spaces: groupedSpaces,
+    });
+  } catch (error) {
+    console.error("Get public spaces error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch spaces",
+    });
+  }
+};
+
+
 

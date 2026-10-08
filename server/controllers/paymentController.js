@@ -39,7 +39,7 @@ export const createOrder = async (req, res) => {
 
 await Payment.create({
   tenant: req.user.id,
-  landlord: property.landlord,
+  customer: property.customer,
   property: property._id,
   amount: property.rent,
   orderId: order.id,
@@ -144,7 +144,7 @@ export const getPaymentHistory = async (req, res) => {
 export const getLandlordSummary = async (req, res) => {
   try {
 
-    const landlordId = req.user.id;
+    const customerId = req.user.id;
 
     const date = new Date();
 
@@ -154,7 +154,7 @@ export const getLandlordSummary = async (req, res) => {
 
     // Total properties
     const totalProperties = await Property.countDocuments({
-      landlord: landlordId,
+      customer: customerId,
     });
 
 
@@ -162,7 +162,7 @@ export const getLandlordSummary = async (req, res) => {
     // Total tenants
     const totalTenants = await User.countDocuments({
       role: "tenant",
-      createdBy: landlordId,
+      createdBy: customerId,
       isActive: true,
     });
 
@@ -172,7 +172,7 @@ export const getLandlordSummary = async (req, res) => {
     const incomeResult = await Payment.aggregate([
       {
         $match: {
-          landlord: landlordId,
+          customer: customerId,
           status: "paid",
           month,
           year,
@@ -200,7 +200,7 @@ export const getLandlordSummary = async (req, res) => {
     const pendingPayments = await Payment.aggregate([
       {
         $match: {
-          landlord: landlordId,
+          customer: customerId,
           status: "created",
         },
       },
@@ -224,7 +224,7 @@ export const getLandlordSummary = async (req, res) => {
 
     // Recent payments
     const payments = await Payment.find({
-      landlord: landlordId,
+      customer: customerId,
       status: "paid",
     })
       .populate("tenant", "name")
@@ -267,7 +267,7 @@ export const getAllPayments = async (req, res) => {
     const payments = await Payment.find()
       .populate("tenant", "name email")
       .populate("property", "title city")
-      .populate("landlord", "name email")
+      .populate("customer", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -292,7 +292,7 @@ export const getAdminSummary = async (req, res) => {
     });
 
     const totalLandlords = await User.countDocuments({
-      role: "landlord",
+      role: "customer",
     });
 
     const totalProperties = await Property.countDocuments();

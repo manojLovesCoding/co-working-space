@@ -22,7 +22,7 @@ propertyRouter.get("/home", getHomeProperties);
 propertyRouter.post(
   "/add",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   upload.single("image"),
   addProperty
 );
@@ -30,14 +30,14 @@ propertyRouter.post(
 propertyRouter.get(
   "/",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   getProperties
 );
 
 propertyRouter.delete(
   "/:id",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   deleteProperty
 );
 
@@ -45,7 +45,7 @@ propertyRouter.delete(
 propertyRouter.put(
   "/:id",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   upload.single("image"),
   updateProperty
 );
@@ -53,21 +53,21 @@ propertyRouter.put(
 propertyRouter.put(
   "/:id/assign-tenant",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   assignTenant
 );
 
 propertyRouter.put(
   "/:id/remove-tenant",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   removeTenant
 );
 
 propertyRouter.get(
   "/assigned-tenants",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   getAssignedTenants
 );
 

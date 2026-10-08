@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   createSpace,
   getSpaces,
+  getPublicSpaces,
   updateSpace,
 } from "../controllers/spaceController.js";
 
@@ -11,6 +12,19 @@ import { authorizeRoles } from "../middleware/role.js";
 import { upload } from "../middleware/upload.js";
 
 const spaceRouter = Router();
+
+/*
+ * PUBLIC
+ * Customer/Homepage
+ *
+ * GET /api/space/public
+ */
+spaceRouter.get("/public", getPublicSpaces);
+
+
+/*
+ * ADMIN
+ */
 
 spaceRouter.post(
   "/",

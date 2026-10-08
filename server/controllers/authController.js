@@ -63,7 +63,7 @@ export const login = async (req, res) => {
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been deactivated. Contact your landlord.",
+        message: "Your account has been deactivated. Contact your customer.",
       });
     }
 
@@ -157,7 +157,7 @@ export const createTenant = async (req, res) => {
       phone,
       password: hashedPassword,
       role: "tenant",
-      createdBy: req.user.id, // landlord id
+      createdBy: req.user.id, // customer id
     });
 
     res.status(201).json({

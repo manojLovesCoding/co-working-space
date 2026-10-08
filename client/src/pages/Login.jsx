@@ -305,25 +305,25 @@ const Login = () => {
                       </p>
                     </button>
 
-                    {/* Landlord */}
+                    {/* customer */}
                     <button
                       type="button"
                       disabled={loading}
                       onClick={() =>
                         setFormData((prev) => ({
                           ...prev,
-                          role: "landlord",
+                          role: "customer",
                         }))
                       }
                       className={`rounded-xl border p-3 transition sm:p-4 ${
-                        formData.role === "landlord"
+                        formData.role === "customer"
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
                           : "border-slate-200 bg-slate-50 hover:border-slate-300"
                       }`}
                     >
                       <div
                         className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg ${
-                          formData.role === "landlord"
+                          formData.role === "customer"
                             ? "bg-blue-600 text-white"
                             : "bg-white text-slate-500"
                         }`}
@@ -332,7 +332,7 @@ const Login = () => {
                       </div>
 
                       <p className="mt-2 text-xs font-bold text-slate-900 sm:text-sm">
-                        Landlord
+                        customer
                       </p>
                     </button>
 

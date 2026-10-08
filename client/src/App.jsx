@@ -42,6 +42,7 @@ import AssignTenant from "./pages/landloard/AssignTenant";
 import AssignedTenants from "./pages/landloard/AssignedTenants";
 import AddSpaceMaster from "./pages/admin/AddSpaceMaster";
 import SpaceMaster from "./pages/admin/SpaceMaster";
+import BookSpace from "./pages/BookSpace";
 
 const App = () => {
   return (
@@ -76,6 +77,11 @@ const App = () => {
           }
         />
 
+        <Route
+  path="/book-space/:id"
+  element={<PublicRoute><BookSpace /></PublicRoute>}
+/>
+
       
        
 
@@ -92,8 +98,8 @@ const App = () => {
         </Route>
 
         {/* ================= LANDLORD ================= */}
-        <Route element={<ProtectedRoute allowedRoles={["landlord"]} />}>
-          <Route path="/landlord" element={<LandlordLayout />}>
+        <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
+          <Route path="/customer" element={<LandlordLayout />}>
             <Route index element={<LandlordDashboard />} />
 
             <Route path="properties" element={<PropertyList />} />

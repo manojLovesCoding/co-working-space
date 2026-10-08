@@ -33,7 +33,7 @@ export const addProperty = async (req, res) => {
       city,
       rent,
       image: imageUrl,
-      landlord: req.user.id,
+      customer: req.user.id,
     });
 
     res.status(201).json({
@@ -51,10 +51,10 @@ export const addProperty = async (req, res) => {
 export const getProperties = async (req, res) => {
   try {
     // Check if the user is a landlord, filter by their ID. Admins can see all.
-    const filter = req.user.role === "admin" ? {} : { landlord: req.user.id };
+    const filter = req.user.role === "admin" ? {} : { customer: req.user.id };
 
     const properties = await Property.find(filter)
-      .populate("landlord", "name email phone")
+      .populate("customer", "name email phone")
       .populate("tenant", "name email phone");
 
     res.status(200).json({
@@ -175,7 +175,7 @@ export const assignTenant = async (req, res) => {
     // landlord can assign only his property
     if (
       req.user.role !== "admin" &&
-      property.landlord.toString() !== req.user.id
+      property.customer.toString() !== req.user.id
     ) {
       return res.status(403).json({
         success: false,
@@ -260,7 +260,7 @@ export const removeTenant = async (req, res) => {
 
     if (
       req.user.role !== "admin" &&
-      property.landlord.toString() !== req.user.id
+      property.customer.toString() !== req.user.id
     ) {
       return res.status(403).json({
         success: false,
@@ -290,7 +290,7 @@ export const removeTenant = async (req, res) => {
 export const getAssignedTenants = async (req, res) => {
   try {
     const properties = await Property.find({
-      landlord: req.user.id,
+      customer: req.user.id,
       status: "rented",
     })
       .populate({
@@ -318,10 +318,10 @@ export const getTenantProperty = async (req, res) => {
       status: "rented",
     })
       .populate({
-        path: "landlord",
+        path: "customer",
         select: "name email phone",
       })
-      .select("title address city rent image status landlord dueDate");
+      .select("title address city rent image status customer dueDate");
 
     if (!property) {
       return res.status(404).json({

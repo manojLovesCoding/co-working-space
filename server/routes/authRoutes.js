@@ -20,7 +20,7 @@ authRouter.post("/login", login);
 authRouter.post(
   "/create-tenant",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   createTenant,
 );
 
@@ -34,27 +34,27 @@ authRouter.get(
 authRouter.get(
   "/tenants",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   getTenants,
 );
 authRouter.put(
   "/tenant/:id",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   updateTenant,
 );
 
 authRouter.patch(
   "/tenant/:id/deactivate",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   deactivateTenant,
 );
 
 authRouter.put(
   "/tenant/:id/password",
   verifyToken,
-  authorizeRoles("admin", "landlord"),
+  authorizeRoles("admin", "customer"),
   updateTenantPassword,
 );
 

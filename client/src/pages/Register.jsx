@@ -427,17 +427,17 @@ const Register = () => {
                       </div>
                     </button>
 
-                    {/* Landlord */}
+                    {/* customer */}
                     <button
                       type="button"
                       onClick={() =>
                         setFormData((prev) => ({
                           ...prev,
-                          role: "landlord",
+                          role: "customer",
                         }))
                       }
                       className={`rounded-xl border p-4 text-left transition ${
-                        formData.role === "landlord"
+                        formData.role === "customer"
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
                           : "border-slate-200 bg-slate-50 hover:border-slate-300"
                       }`}
@@ -445,7 +445,7 @@ const Register = () => {
                       <div className="flex items-center gap-3">
                         <div
                           className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                            formData.role === "landlord"
+                            formData.role === "customer"
                               ? "bg-blue-600 text-white"
                               : "bg-white text-slate-500"
                           }`}
@@ -455,7 +455,7 @@ const Register = () => {
 
                         <div>
                           <p className="text-sm font-bold text-slate-900">
-                            Landlord
+                            customer
                           </p>
 
                           <p className="text-xs text-slate-500">
