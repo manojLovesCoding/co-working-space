@@ -34,13 +34,21 @@ const companyProfileSchema = new mongoose.Schema(
       trim: true,
     },
 
-    // Cloudinary secure URL
+    /*
+     * Cloudinary secure URL
+     */
     logo: {
       type: String,
       default: "",
       trim: true,
     },
 
+    /*
+     * Owner of this company profile.
+     *
+     * User A -> Company A
+     * User B -> Company B
+     */
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -50,6 +58,21 @@ const companyProfileSchema = new mongoose.Schema(
   {
     timestamps: true,
   }
+);
+
+/*
+ * One company profile per user.
+ *
+ * This prevents:
+ *
+ * User A -> Company A
+ * User A -> Company B
+ *
+ * A user can have only one company profile.
+ */
+companyProfileSchema.index(
+  { createdBy: 1 },
+  { unique: true }
 );
 
 export default mongoose.model(

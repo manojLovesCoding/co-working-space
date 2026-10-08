@@ -2,8 +2,8 @@ import CompanyProfile from "../models/CompanyProfile.js";
 import { v2 as cloudinary } from "cloudinary";
 
 /*
- * Extract Cloudinary public ID from
- * the stored secure URL.
+ * Extract Cloudinary public ID
+ * from a stored secure URL.
  */
 const getCloudinaryPublicId = (imageUrl) => {
   try {
@@ -21,16 +21,21 @@ const getCloudinaryPublicId = (imageUrl) => {
       return null;
     }
 
-    let publicParts = parts.slice(uploadIndex + 1);
+    let publicParts = parts.slice(
+      uploadIndex + 1
+    );
 
     /*
-     * Remove Cloudinary version:
+     * Remove Cloudinary version.
      *
-     * v123456789/company/profile.jpg
+     * Example:
+     * v123456/company/logo.jpg
      */
     if (
       publicParts[0]?.startsWith("v") &&
-      /^\d+$/.test(publicParts[0].substring(1))
+      /^\d+$/.test(
+        publicParts[0].substring(1)
+      )
     ) {
       publicParts.shift();
     }
@@ -41,10 +46,8 @@ const getCloudinaryPublicId = (imageUrl) => {
       return null;
     }
 
-    const nameWithoutExtension = fileName.replace(
-      /\.[^/.]+$/,
-      ""
-    );
+    const nameWithoutExtension =
+      fileName.replace(/\.[^/.]+$/, "");
 
     publicParts.push(nameWithoutExtension);
 
@@ -60,16 +63,32 @@ const getCloudinaryPublicId = (imageUrl) => {
 };
 
 /*
+ * ==========================================
  * GET COMPANY PROFILE
+ * ==========================================
+ *
+ * GET /api/company
+ *
+ * Only returns the company belonging
+ * to the currently logged-in user.
  */
-export const getCompanyProfile = async (req, res) => {
+export const getCompanyProfile = async (
+  req,
+  res
+) => {
   try {
-    const company = await CompanyProfile.findOne()
-      .populate("createdBy", "name email")
-      .lean();
+    const company =
+      await CompanyProfile.findOne({
+        createdBy: req.user.id,
+      })
+        .populate(
+          "createdBy",
+          "name email phone"
+        )
+        .lean();
 
     /*
-     * No company profile created yet.
+     * User does not have a company yet.
      */
     if (!company) {
       return res.status(200).json({
@@ -96,19 +115,16 @@ export const getCompanyProfile = async (req, res) => {
 };
 
 /*
+ * ==========================================
  * CREATE / UPDATE COMPANY PROFILE
- *
- * This endpoint works like:
+ * ==========================================
  *
  * PUT /api/company
- *
- * If company profile doesn't exist:
- *      create it
- *
- * If it already exists:
- *      update it
  */
-export const saveCompanyProfile = async (req, res) => {
+export const saveCompanyProfile = async (
+  req,
+  res
+) => {
   let uploadedLogo = null;
 
   try {
@@ -159,131 +175,170 @@ export const saveCompanyProfile = async (req, res) => {
     }
 
     /*
-     * Find existing company profile.
+     * IMPORTANT
      *
-     * Since this application has one company
-     * profile, we only need findOne().
+     * Find only the company belonging
+     * to the logged-in user.
      */
-    let company = await CompanyProfile.findOne();
-
-    /*
-     * ============================
-     * CREATE NEW COMPANY PROFILE
-     * ============================
-     */
-    if (!company) {
-      /*
-       * Logo is required only if you want
-       * to enforce it during creation.
-       *
-       * Currently it is optional.
-       */
-
-      if (req.file) {
-        uploadedLogo = await new Promise(
-          (resolve, reject) => {
-            cloudinary.uploader
-              .upload_stream(
-                {
-                  folder: "company",
-                  resource_type: "image",
-                },
-                (error, result) => {
-                  if (error) {
-                    reject(error);
-                  } else {
-                    resolve(result);
-                  }
-                }
-              )
-              .end(req.file.buffer);
-          }
-        );
-      }
-
-      company = await CompanyProfile.create({
-        companyName: companyName.trim(),
-
-        gstNo: gstNo.trim().toUpperCase(),
-
-        email: email.trim().toLowerCase(),
-
-        contact: contact.trim(),
-
-        address: address.trim(),
-
-        logo: uploadedLogo?.secure_url || "",
-
+    let company =
+      await CompanyProfile.findOne({
         createdBy: req.user.id,
       });
 
+    /*
+     * ======================================
+     * CREATE COMPANY
+     * ======================================
+     */
+    if (!company) {
+      /*
+       * Upload logo if provided.
+       */
+      if (req.file) {
+        uploadedLogo =
+          await new Promise(
+            (resolve, reject) => {
+              cloudinary.uploader
+                .upload_stream(
+                  {
+                    folder: "company",
+                    resource_type: "image",
+                  },
+                  (
+                    error,
+                    result
+                  ) => {
+                    if (error) {
+                      reject(error);
+                    } else {
+                      resolve(
+                        result
+                      );
+                    }
+                  }
+                )
+                .end(
+                  req.file.buffer
+                );
+            }
+          );
+      }
+
+      /*
+       * Create company for this user.
+       */
+      company =
+        await CompanyProfile.create({
+          companyName:
+            companyName.trim(),
+
+          gstNo: gstNo
+            .trim()
+            .toUpperCase(),
+
+          email: email
+            .trim()
+            .toLowerCase(),
+
+          contact: contact.trim(),
+
+          address: address.trim(),
+
+          logo:
+            uploadedLogo?.secure_url ||
+            "",
+
+          /*
+           * IMPORTANT
+           *
+           * This connects Company A
+           * to User A.
+           */
+          createdBy: req.user.id,
+        });
+
       return res.status(201).json({
         success: true,
-        message: "Company profile created successfully",
+        message:
+          "Company profile created successfully",
         company,
       });
     }
 
     /*
-     * ============================
-     * UPDATE EXISTING PROFILE
-     * ============================
+     * ======================================
+     * UPDATE COMPANY
+     * ======================================
      */
 
     const oldLogo = company.logo;
 
     /*
-     * Update text fields.
+     * Update normal fields.
      */
-    company.companyName = companyName.trim();
+    company.companyName =
+      companyName.trim();
 
-    company.gstNo = gstNo.trim().toUpperCase();
+    company.gstNo = gstNo
+      .trim()
+      .toUpperCase();
 
-    company.email = email.trim().toLowerCase();
+    company.email = email
+      .trim()
+      .toLowerCase();
 
-    company.contact = contact.trim();
+    company.contact =
+      contact.trim();
 
-    company.address = address.trim();
+    company.address =
+      address.trim();
 
     /*
-     * Upload new logo only when
-     * user selected a new image.
+     * Upload new logo only if
+     * user selected one.
      */
     if (req.file) {
-      uploadedLogo = await new Promise(
-        (resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream(
-              {
-                folder: "company",
-                resource_type: "image",
-              },
-              (error, result) => {
-                if (error) {
-                  reject(error);
-                } else {
-                  resolve(result);
+      uploadedLogo =
+        await new Promise(
+          (resolve, reject) => {
+            cloudinary.uploader
+              .upload_stream(
+                {
+                  folder: "company",
+                  resource_type:
+                    "image",
+                },
+                (
+                  error,
+                  result
+                ) => {
+                  if (error) {
+                    reject(error);
+                  } else {
+                    resolve(
+                      result
+                    );
+                  }
                 }
-              }
-            )
-            .end(req.file.buffer);
-        }
-      );
+              )
+              .end(
+                req.file.buffer
+              );
+          }
+        );
 
-      /*
-       * Save new Cloudinary URL.
-       */
-      company.logo = uploadedLogo.secure_url;
+      company.logo =
+        uploadedLogo.secure_url;
     }
 
     /*
-     * Save MongoDB document first.
+     * Save company.
      */
     await company.save();
 
     /*
-     * Delete old logo only AFTER
-     * MongoDB successfully saved.
+     * Delete old logo AFTER
+     * MongoDB update succeeds.
      */
     if (
       req.file &&
@@ -292,7 +347,9 @@ export const saveCompanyProfile = async (req, res) => {
     ) {
       try {
         const oldPublicId =
-          getCloudinaryPublicId(oldLogo);
+          getCloudinaryPublicId(
+            oldLogo
+          );
 
         if (oldPublicId) {
           await cloudinary.uploader.destroy(
@@ -309,7 +366,8 @@ export const saveCompanyProfile = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Company profile updated successfully",
+      message:
+        "Company profile updated successfully",
       company,
     });
   } catch (error) {
@@ -319,8 +377,8 @@ export const saveCompanyProfile = async (req, res) => {
     );
 
     /*
-     * If logo was uploaded but MongoDB
-     * operation failed, remove new logo.
+     * Cleanup newly uploaded image
+     * if MongoDB operation failed.
      */
     if (uploadedLogo?.public_id) {
       try {
@@ -336,9 +394,23 @@ export const saveCompanyProfile = async (req, res) => {
     }
 
     /*
+     * Duplicate key error.
+     */
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "This user already has a company profile",
+      });
+    }
+
+    /*
      * Mongoose validation error.
      */
-    if (error.name === "ValidationError") {
+    if (
+      error.name ===
+      "ValidationError"
+    ) {
       return res.status(400).json({
         success: false,
         message: error.message,
