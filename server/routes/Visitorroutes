@@ -1,0 +1,47 @@
+import { Router } from "express";
+
+import {
+  getUpcomingBookings,
+  createVisitorOrder,
+  confirmVisitorPayment,
+  getMyVisitors,
+} from "../controllers/Visitorcontroller.js";
+
+import { verifyToken } from "../middleware/auth.js";
+import { authorizeRoles } from "../middleware/role.js";
+
+const visitorRouter = Router();
+
+// Bookings the customer can invite visitors to
+visitorRouter.get(
+  "/upcoming_bookings",
+  verifyToken,
+  authorizeRoles("customer"),
+  getUpcomingBookings
+);
+
+// Create Razorpay order for the visitor fee
+visitorRouter.post(
+  "/create_razorpay_order",
+  verifyToken,
+  authorizeRoles("customer"),
+  createVisitorOrder
+);
+
+// Verify payment and confirm the visitor pass
+visitorRouter.post(
+  "/confirm_payment",
+  verifyToken,
+  authorizeRoles("customer"),
+  confirmVisitorPayment
+);
+
+// Visitors invited by the logged-in customer
+visitorRouter.get(
+  "/my_visitors",
+  verifyToken,
+  authorizeRoles("customer"),
+  getMyVisitors
+);
+
+export default visitorRouter;

@@ -45,6 +45,8 @@ import SpaceMaster from "./pages/admin/SpaceMaster";
 /* Workspace booking pages */
 import BookSpace from "./pages/BookSpace";
 import Checkout from "./pages/Checkout";
+import InviteVisitor from "./pages/landloard/InviteVisitor";
+import Visitors from "./pages/landloard/Visitors";
 
 const App = () => {
   return (
@@ -124,6 +126,9 @@ const App = () => {
               path="company-profile"
               element={<CompanyProfile />}
             />
+
+            <Route path="invite-visitor" element={<InviteVisitor />} />
+            <Route path="visitors" element={<Visitors />} />
 
             {/* <Route path="reports" element={<Reports />} /> */}
           </Route>

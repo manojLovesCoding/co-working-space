@@ -8,24 +8,33 @@ const LandlordSidebar = () => {
 
   const [open, setOpen] = useState(false);
 
-  
-const menuItems = [
-  {
-    label: "Customer Profile",
-    path: "profile2",
-    icon: "♟",
-  },
-  {
-    label: "Reservations",
-    path: "reservations",
-    icon: "▤",
-  },
-  {
-    label: "Company Profile",
-    path: "company-profile",
-    icon: "🏢",
-  },
-];
+  const menuItems = [
+    {
+      label: "Customer Profile",
+      path: "profile2",
+      icon: "♟",
+    },
+    {
+      label: "Reservations",
+      path: "reservations",
+      icon: "▤",
+    },
+    {
+      label: "Invite Visitor",
+      path: "invite-visitor",
+      icon: "✉️",
+    },
+    {
+      label: "Visitors",
+      path: "visitors",
+      icon: "👥",
+    },
+    {
+      label: "Company Profile",
+      path: "company-profile",
+      icon: "🏢",
+    },
+  ];
 
   const handleLogout = () => {
     logout();
@@ -56,9 +65,7 @@ const menuItems = [
             🏢
           </div>
 
-          <span className="font-bold text-slate-900">
-            Vayuhu
-          </span>
+          <span className="font-bold text-slate-900">Vayuhu</span>
         </div>
 
         <div className="w-10" />

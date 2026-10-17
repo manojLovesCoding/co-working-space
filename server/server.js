@@ -12,18 +12,17 @@ import spaceRouter from "./routes/spaceRoutes.js";
 import profileRouter2 from "./routes/profileRoutes2.js";
 import companyRouter from "./routes/companyRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
+import visitorRouter from "./routes/Visitorroutes";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-dns.setServers(["1.1.1.1","8.8.8.8"])
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 // middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
 
 // routes
 app.get("/", (req, res) => res.send("server is running"));
@@ -35,6 +34,8 @@ app.use("/api/space", spaceRouter);
 app.use("/api/profile", profileRouter2);
 app.use("/api/company", companyRouter);
 app.use("/api/booking", bookingRouter);
+app.use("/api/visitor", visitorRouter);
+
 
 await connectDB();
 connectCloudinary();

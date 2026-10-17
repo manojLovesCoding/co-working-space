@@ -10,7 +10,7 @@ const TIME_ZONE = "Asia/Kolkata";
 // Must match the 10 minute pending window used by the backend.
 const PENDING_EXPIRY_MS = 10 * 60 * 1000;
 
-const formatDate = (date) => {
+const formatDate = (date, timeZone = TIME_ZONE) => {
   if (!date) return "—";
 
   // bookingDate is a plain "YYYY-MM-DD" string: treat it as an IST date.
@@ -21,7 +21,7 @@ const formatDate = (date) => {
   if (Number.isNaN(parsedDate.getTime())) return "—";
 
   return parsedDate.toLocaleDateString("en-IN", {
-    timeZone: TIME_ZONE,
+    timeZone,
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -47,6 +47,21 @@ const formatCurrency = (amount) =>
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(Number(amount) || 0);
+
+// Bookings saved before the IST update were stored at UTC midnight
+// (00:00Z) instead of IST midnight. Read those in UTC so the calendar
+// day is not pushed forward by the +05:30 offset.
+const isLegacyMidnight = (date) => {
+  const parsed = new Date(date);
+
+  return (
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.getUTCHours() === 0 &&
+    parsed.getUTCMinutes() === 0 &&
+    parsed.getUTCSeconds() === 0 &&
+    parsed.getUTCMilliseconds() === 0
+  );
+};
 
 // endAt is exclusive (midnight after the last booked day),
 // so subtract 1 ms to get the last day the customer can use the space.
@@ -93,10 +108,11 @@ const getScheduleRows = (reservation) => {
   }
 
   const lastDate = getLastBookedDate(reservation.endAt);
+  const zone = isLegacyMidnight(reservation.startAt) ? "UTC" : TIME_ZONE;
 
   return [
-    { label: "From", value: formatDate(reservation.startAt) },
-    { label: "To", value: lastDate ? formatDate(lastDate) : "—" },
+    { label: "From", value: formatDate(reservation.startAt, zone) },
+    { label: "To", value: lastDate ? formatDate(lastDate, zone) : "—" },
   ];
 };
 
