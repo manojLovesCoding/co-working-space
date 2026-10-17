@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 
+const TIME_REGEX = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 const workspaceBookingSchema = new mongoose.Schema(
   {
     bookingId: {
@@ -59,6 +61,20 @@ const workspaceBookingSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // Only used for hourly bookings: "HH:mm" in IST (e.g. "14:00").
+    // Stays null for daily and monthly bookings.
+    startTime: {
+      type: String,
+      default: null,
+      match: [TIME_REGEX, "Invalid start time"],
+    },
+
+    endTime: {
+      type: String,
+      default: null,
+      match: [TIME_REGEX, "Invalid end time"],
+    },
+
     startAt: {
       type: Date,
       required: true,
@@ -67,6 +83,12 @@ const workspaceBookingSchema = new mongoose.Schema(
     endAt: {
       type: Date,
       required: true,
+      validate: {
+        validator: function (value) {
+          return !this.startAt || value > this.startAt;
+        },
+        message: "endAt must be after startAt",
+      },
     },
 
     razorpayOrderId: {
@@ -74,9 +96,13 @@ const workspaceBookingSchema = new mongoose.Schema(
       default: "",
     },
 
+    // No default on purpose: the sparse unique index below ignores
+    // documents where this field is missing, so unpaid bookings
+    // do not clash with each other.
     razorpayPaymentId: {
       type: String,
-      default: "",
+      unique: true,
+      sparse: true,
     },
 
     paymentStatus: {
@@ -96,12 +122,26 @@ const workspaceBookingSchema = new mongoose.Schema(
   }
 );
 
+// Availability query
 workspaceBookingSchema.index({
   selectedSpaces: 1,
   startAt: 1,
   endAt: 1,
   status: 1,
 });
+
+// Automatically delete abandoned bookings that were never paid.
+// Confirmed bookings no longer match the filter, so they are never removed.
+workspaceBookingSchema.index(
+  { createdAt: 1 },
+  {
+    expireAfterSeconds: 24 * 60 * 60,
+    partialFilterExpression: {
+      status: "Pending",
+      paymentStatus: "Pending",
+    },
+  }
+);
 
 export default mongoose.model(
   "WorkspaceBooking",

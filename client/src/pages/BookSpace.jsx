@@ -16,6 +16,20 @@ import {
 import api from "../api/axios.js";
 
 // ---------------------------------------------
+// Office hours (minutes from midnight)
+// Mon-Fri: 08:00 - 19:00 | Sat: 09:00 - 19:00 | Sun: closed
+// The backend enforces the same rules; this is for UX only.
+// ---------------------------------------------
+
+const OFFICE_HOURS = {
+  weekday: { open: 8 * 60, close: 19 * 60 },
+  saturday: { open: 9 * 60, close: 19 * 60 },
+};
+
+const OFFICE_HOURS_TEXT =
+  "Mon - Fri: 8:00 AM - 7:00 PM  |  Sat: 9:00 AM - 7:00 PM  |  Sunday: Closed";
+
+// ---------------------------------------------
 // Helpers
 // ---------------------------------------------
 
@@ -48,6 +62,72 @@ const formatDate = (dateString) => {
     month: "short",
     year: "numeric",
   });
+};
+
+// 0 = Sunday ... 6 = Saturday (calendar weekday of a YYYY-MM-DD string)
+const getWeekday = (dateString) =>
+  new Date(`${dateString}T00:00:00Z`).getUTCDay();
+
+const isSunday = (dateString) =>
+  Boolean(dateString) && getWeekday(dateString) === 0;
+
+const addDays = (dateString, days) => {
+  const date = new Date(`${dateString}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+};
+
+const getOfficeHours = (dateString) => {
+  if (!dateString) return null;
+
+  const day = getWeekday(dateString);
+
+  if (Number.isNaN(day) || day === 0) return null;
+
+  return day === 6 ? OFFICE_HOURS.saturday : OFFICE_HOURS.weekday;
+};
+
+const getNextOpenDate = (dateString) =>
+  isSunday(dateString) ? addDays(dateString, 1) : dateString;
+
+const timeToMinutes = (time) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return hours * 60 + minutes;
+};
+
+const minutesToTime = (totalMinutes) =>
+  `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(
+    totalMinutes % 60
+  ).padStart(2, "0")}`;
+
+const formatTime = (time) => {
+  if (!time) return "";
+
+  const [hours, minutes] = time.split(":").map(Number);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+
+  return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+};
+
+const getEndTime = (startTime, durationHours) =>
+  minutesToTime(timeToMinutes(startTime) + durationHours * 60);
+
+// Daily bookings skip Sundays. Returns the last working day covered.
+const getDailyEndDate = (startDate, duration) => {
+  let cursor = startDate;
+  let counted = 0;
+  let last = startDate;
+
+  while (counted < duration) {
+    if (!isSunday(cursor)) {
+      counted += 1;
+      last = cursor;
+    }
+    cursor = addDays(cursor, 1);
+  }
+
+  return last;
 };
 
 const getSpaceCapacity = (spaceName = "") => {
@@ -87,16 +167,31 @@ const getPricingOptions = (space) => {
   return options;
 };
 
-const getDurationLimits = (space, plan) => {
+// For hourly plans the maximum is also limited by closing time,
+// based on the selected date and start time.
+const getDurationLimits = (space, plan, dateString, startTime) => {
   const min = Math.max(1, Number(space?.minDuration) || 1);
 
   const defaultMax =
     plan === "hourly" ? 12 : plan === "daily" ? 30 : 12;
 
   const configuredMax = Number(space?.maxDuration) || defaultMax;
-  const max = Math.max(min, configuredMax);
+  let max = Math.max(min, configuredMax);
 
-  return { min, max };
+  if (plan === "hourly") {
+    const hours = getOfficeHours(dateString);
+
+    if (hours) {
+      const startMinutes = startTime
+        ? timeToMinutes(startTime)
+        : hours.open;
+
+      const hoursLeft = Math.floor((hours.close - startMinutes) / 60);
+      max = Math.min(max, hoursLeft);
+    }
+  }
+
+  return { min, max: Math.max(min, max) };
 };
 
 // ---------------------------------------------
@@ -117,13 +212,24 @@ export default function BookSpace() {
     pricingOptions[0]?.id || "daily"
   );
 
-  const [selectedDate, setSelectedDate] = useState(getToday());
+  // If today is Sunday, start from Monday.
+  const [selectedDate, setSelectedDate] = useState(
+    getNextOpenDate(getToday())
+  );
+  const [selectedTime, setSelectedTime] = useState("");
   const [selectedSpaces, setSelectedSpaces] = useState([]);
   const [duration, setDuration] = useState(1);
 
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [unavailableSpaces, setUnavailableSpaces] = useState([]);
   const [availabilityError, setAvailabilityError] = useState("");
+
+  const isHourly = selectedPlan === "hourly";
+  const isClosedDay = isSunday(selectedDate);
+  const officeHours = useMemo(
+    () => getOfficeHours(selectedDate),
+    [selectedDate]
+  );
 
   const selectedPricing = useMemo(
     () =>
@@ -133,9 +239,46 @@ export default function BookSpace() {
   );
 
   const { min: minDuration, max: maxDuration } = useMemo(
-    () => getDurationLimits(space, selectedPlan),
-    [space, selectedPlan]
+    () => getDurationLimits(space, selectedPlan, selectedDate, selectedTime),
+    [space, selectedPlan, selectedDate, selectedTime]
   );
+
+  const baseMinDuration = Math.max(1, Number(space?.minDuration) || 1);
+
+  // Hourly start-time slots for the selected date.
+  const timeSlots = useMemo(() => {
+    if (!isHourly || !officeHours) return [];
+
+    const isToday = selectedDate === getToday();
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const slots = [];
+
+    for (
+      let minutes = officeHours.open;
+      minutes + baseMinDuration * 60 <= officeHours.close;
+      minutes += 60
+    ) {
+      const value = minutesToTime(minutes);
+
+      slots.push({
+        value,
+        label: formatTime(value),
+        disabled: isToday && minutes <= nowMinutes,
+      });
+    }
+
+    return slots;
+  }, [isHourly, officeHours, selectedDate, baseMinDuration]);
+
+  const endTime =
+    isHourly && selectedTime ? getEndTime(selectedTime, duration) : "";
+
+  const dailyEndDate =
+    selectedPlan === "daily" && duration > 1 && !isClosedDay
+      ? getDailyEndDate(selectedDate, duration)
+      : "";
 
   const totalAmount = useMemo(() => {
     if (!selectedPricing) return 0;
@@ -185,7 +328,54 @@ export default function BookSpace() {
   const handlePlanChange = (planId) => {
     setSelectedPlan(planId);
 
-    const limits = getDurationLimits(space, planId);
+    const limits = getDurationLimits(
+      space,
+      planId,
+      selectedDate,
+      selectedTime
+    );
+
+    setDuration((previous) =>
+      Math.min(Math.max(previous, limits.min), limits.max)
+    );
+
+    clearAvailabilityResult();
+  };
+
+  const handleDateChange = (value) => {
+    setSelectedDate(value);
+
+    // Reset the time if it is not valid for the new date
+    // (e.g. 08:00 AM is not available on Saturday).
+    const hours = getOfficeHours(value);
+    let nextTime = selectedTime;
+
+    if (
+      selectedTime &&
+      (!hours || timeToMinutes(selectedTime) < hours.open)
+    ) {
+      nextTime = "";
+      setSelectedTime("");
+    }
+
+    const limits = getDurationLimits(space, selectedPlan, value, nextTime);
+
+    setDuration((previous) =>
+      Math.min(Math.max(previous, limits.min), limits.max)
+    );
+
+    clearAvailabilityResult();
+  };
+
+  const handleTimeChange = (time) => {
+    setSelectedTime(time);
+
+    const limits = getDurationLimits(
+      space,
+      selectedPlan,
+      selectedDate,
+      time
+    );
 
     setDuration((previous) =>
       Math.min(Math.max(previous, limits.min), limits.max)
@@ -217,6 +407,13 @@ export default function BookSpace() {
       return;
     }
 
+    if (isSunday(selectedDate)) {
+      setAvailabilityError(
+        "Our office is closed on Sundays. Please select another date."
+      );
+      return;
+    }
+
     if (!selectedSpaces.length) {
       setAvailabilityError("Please select at least one space.");
       return;
@@ -239,6 +436,39 @@ export default function BookSpace() {
     ) {
       setAvailabilityError("Please select a valid booking duration.");
       return;
+    }
+
+    if (isHourly) {
+      if (!selectedTime) {
+        setAvailabilityError("Please select a start time.");
+        return;
+      }
+
+      const startMinutes = timeToMinutes(selectedTime);
+      const endMinutes = startMinutes + duration * 60;
+
+      if (
+        !officeHours ||
+        startMinutes < officeHours.open ||
+        endMinutes > officeHours.close
+      ) {
+        setAvailabilityError(
+          "Selected time is outside office hours. Please choose another time."
+        );
+        return;
+      }
+
+      if (selectedDate === getToday()) {
+        const now = new Date();
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+        if (startMinutes <= nowMinutes) {
+          setAvailabilityError(
+            "Selected time has already passed. Please choose a later time."
+          );
+          return;
+        }
+      }
     }
 
     const selectedCodes = new Set(
@@ -267,6 +497,7 @@ export default function BookSpace() {
           plan: selectedPlan,
           duration,
           selectedSpaces,
+          ...(isHourly ? { startTime: selectedTime } : {}),
         }
       );
 
@@ -310,6 +541,12 @@ export default function BookSpace() {
         selectedSpaces: [...selectedSpaces],
         pricePerUnit: selectedPricing.price,
         totalAmount,
+        ...(isHourly
+          ? {
+              startTime: selectedTime,
+              endTime: getEndTime(selectedTime, Number(duration)),
+            }
+          : {}),
       };
 
       navigate("/checkout", {
@@ -333,6 +570,13 @@ export default function BookSpace() {
       setCheckingAvailability(false);
     }
   };
+
+  const continueDisabled =
+    !selectedSpaces.length ||
+    !selectedPricing ||
+    checkingAvailability ||
+    isClosedDay ||
+    (isHourly && !selectedTime);
 
   // ---------------------------------------------
   // Missing workspace information
@@ -537,15 +781,20 @@ export default function BookSpace() {
               )}
             </section>
 
-            {/* Step 2: Date and duration */}
+            {/* Step 2: Date, time and duration */}
             <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5">
                 <h2 className="text-lg font-bold text-gray-900">
-                  2. Select Date &amp; Duration
+                  2. Select Date{isHourly ? ", Time" : ""} &amp; Duration
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
                   Select when and how long you need the space.
                 </p>
+              </div>
+
+              <div className="mb-5 flex items-start gap-2 rounded-xl bg-blue-50 px-4 py-3 text-xs text-blue-700">
+                <Clock3 size={15} className="mt-0.5 shrink-0" />
+                <p>Office hours: {OFFICE_HOURS_TEXT}</p>
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -564,20 +813,30 @@ export default function BookSpace() {
                       type="date"
                       min={getToday()}
                       value={selectedDate}
-                      onChange={(event) => {
-                        setSelectedDate(event.target.value);
-                        clearAvailabilityResult();
-                      }}
-                      className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      onChange={(event) =>
+                        handleDateChange(event.target.value)
+                      }
+                      className={`w-full rounded-xl border bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:ring-2 ${
+                        isClosedDay
+                          ? "border-red-300 focus:border-red-400 focus:ring-red-100"
+                          : "border-gray-200 focus:border-blue-500 focus:ring-blue-100"
+                      }`}
                     />
                   </div>
 
-                  {selectedDate && (
+                  {selectedDate && !isClosedDay && (
                     <p className="mt-2 text-xs text-gray-500">
                       Selected:{" "}
                       <span className="font-medium text-gray-700">
                         {formatDate(selectedDate)}
                       </span>
+                    </p>
+                  )}
+
+                  {isClosedDay && (
+                    <p className="mt-2 text-xs font-medium text-red-600">
+                      Our office is closed on Sundays. Please select another
+                      date.
                     </p>
                   )}
                 </div>
@@ -624,8 +883,67 @@ export default function BookSpace() {
                     {selectedPricing?.shortLabel?.toLowerCase() || "units"}{" "}
                     available.
                   </p>
+
+                  {selectedPlan === "daily" && (
+                    <p className="mt-1 text-xs text-gray-400">
+                      Sundays are not counted in daily bookings.
+                    </p>
+                  )}
                 </div>
               </div>
+
+              {/* Hourly: start time selection */}
+              {isHourly && !isClosedDay && (
+                <div className="mt-6">
+                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                    Start Time
+                  </label>
+
+                  {timeSlots.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                      {timeSlots.map((slot) => {
+                        const isSelected = selectedTime === slot.value;
+
+                        return (
+                          <button
+                            key={slot.value}
+                            type="button"
+                            disabled={slot.disabled || checkingAvailability}
+                            onClick={() => handleTimeChange(slot.value)}
+                            aria-pressed={isSelected}
+                            className={`rounded-xl border-2 px-2 py-2.5 text-xs font-semibold transition ${
+                              slot.disabled
+                                ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                                : isSelected
+                                  ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
+                                  : "border-gray-200 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50"
+                            }`}
+                          >
+                            {slot.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+                      No time slots available on this date.
+                    </p>
+                  )}
+
+                  {selectedTime ? (
+                    <p className="mt-3 text-xs text-gray-500">
+                      Your booking:{" "}
+                      <span className="font-medium text-gray-700">
+                        {formatTime(selectedTime)} - {formatTime(endTime)}
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="mt-3 text-xs text-gray-400">
+                      Select a start time to continue.
+                    </p>
+                  )}
+                </div>
+              )}
             </section>
 
             {/* Step 3: Space selection */}
@@ -788,9 +1106,28 @@ export default function BookSpace() {
                     <p className="mt-1 text-sm font-semibold text-gray-900">
                       {formatDate(selectedDate)}
                     </p>
+                    {dailyEndDate && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        till {formatDate(dailyEndDate)} (Sundays excluded)
+                      </p>
+                    )}
                   </div>
                   <CalendarDays size={19} className="text-gray-400" />
                 </div>
+
+                {isHourly && (
+                  <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-4">
+                    <div>
+                      <p className="text-xs text-gray-500">Time</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-900">
+                        {selectedTime
+                          ? `${formatTime(selectedTime)} - ${formatTime(endTime)}`
+                          : "Not selected"}
+                      </p>
+                    </div>
+                    <Clock3 size={19} className="text-gray-400" />
+                  </div>
+                )}
 
                 <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-4">
                   <div>
@@ -884,11 +1221,7 @@ export default function BookSpace() {
                 <button
                   type="button"
                   onClick={handleContinue}
-                  disabled={
-                    !selectedSpaces.length ||
-                    !selectedPricing ||
-                    checkingAvailability
-                  }
+                  disabled={continueDisabled}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                 >
                   {checkingAvailability ? (
@@ -904,10 +1237,20 @@ export default function BookSpace() {
                   )}
                 </button>
 
-                {!selectedSpaces.length && (
-                  <p className="mt-3 text-center text-xs text-gray-400">
-                    Select at least one space to continue.
+                {isClosedDay ? (
+                  <p className="mt-3 text-center text-xs text-red-500">
+                    Office is closed on Sundays. Select another date.
                   </p>
+                ) : isHourly && !selectedTime ? (
+                  <p className="mt-3 text-center text-xs text-gray-400">
+                    Select a start time to continue.
+                  </p>
+                ) : (
+                  !selectedSpaces.length && (
+                    <p className="mt-3 text-center text-xs text-gray-400">
+                      Select at least one space to continue.
+                    </p>
+                  )
                 )}
               </div>
             </div>

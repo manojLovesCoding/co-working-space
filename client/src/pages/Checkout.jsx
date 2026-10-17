@@ -17,6 +17,40 @@ const loadRazorpayScript = () =>
     document.body.appendChild(script);
   });
 
+// ---------------------------------------------
+// Helpers
+// ---------------------------------------------
+
+const isSunday = (dateString) =>
+  Boolean(dateString) &&
+  new Date(`${dateString}T00:00:00Z`).getUTCDay() === 0;
+
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+
+  return new Date(`${dateString}T00:00:00`).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const formatTime = (time) => {
+  if (!time) return "";
+
+  const [hours, minutes] = time.split(":").map(Number);
+  const suffix = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+
+  return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
+};
+
+const unitLabel = (plan, count) => {
+  const base = plan === "hourly" ? "hour" : plan === "monthly" ? "month" : "day";
+  return Number(count) === 1 ? base : `${base}s`;
+};
+
 export default function Checkout() {
   const { state } = useLocation();
   const navigate = useNavigate();
@@ -53,7 +87,11 @@ export default function Checkout() {
     plan,
     duration,
     selectedSpaces,
+    startTime,
+    endTime,
   } = bookingData;
+
+  const isHourly = plan === "hourly";
 
   const totalAmount = Number(
     bookingData.totalAmount ??
@@ -78,6 +116,19 @@ export default function Checkout() {
       return;
     }
 
+    // Office is closed on Sundays (the server enforces this as well).
+    if (isSunday(bookingDate)) {
+      toast.error(
+        "Our office is closed on Sundays. Please select another date."
+      );
+      return;
+    }
+
+    if (isHourly && !startTime) {
+      toast.error("Please select a start time for your hourly booking.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -96,6 +147,7 @@ export default function Checkout() {
           plan,
           duration: Number(duration),
           selectedSpaces,
+          ...(isHourly ? { startTime } : {}),
         }
       );
 
@@ -119,7 +171,7 @@ export default function Checkout() {
         amount: Number(order.amount),
         currency: order.currency || "INR",
         name: "Workspace Booking",
-        description: `${spaceName} - ${selectedSpaces.length} seat(s)`,
+        description: `${spaceName} - ${selectedSpaces.length} space(s)`,
         order_id: order.orderId,
 
         // Step 3: Send payment details to the backend for verification.
@@ -143,7 +195,7 @@ export default function Checkout() {
             }
 
             setConfirmedBookingId(
-              verifyResponse.data.bookingId || order.bookingId
+              verifyResponse.data.booking?.bookingId || order.bookingId
             );
             setBookingConfirmed(true);
             toast.success("Payment verified and booking confirmed!");
@@ -224,7 +276,18 @@ export default function Checkout() {
             </p>
 
             <p className="mt-4 text-sm text-gray-500">Booking date</p>
-            <p className="mt-1 font-medium text-gray-900">{bookingDate}</p>
+            <p className="mt-1 font-medium text-gray-900">
+              {formatDate(bookingDate)}
+            </p>
+
+            {isHourly && startTime && (
+              <>
+                <p className="mt-4 text-sm text-gray-500">Time</p>
+                <p className="mt-1 font-medium text-gray-900">
+                  {formatTime(startTime)} - {formatTime(endTime)}
+                </p>
+              </>
+            )}
           </div>
 
           <button
@@ -269,9 +332,20 @@ export default function Checkout() {
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">Booking date</p>
                 <p className="mt-1 font-semibold text-gray-900">
-                  {bookingDate}
+                  {formatDate(bookingDate)}
                 </p>
               </div>
+
+              {isHourly && (
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <p className="text-sm text-gray-500">Time</p>
+                  <p className="mt-1 font-semibold text-gray-900">
+                    {startTime
+                      ? `${formatTime(startTime)} - ${formatTime(endTime)}`
+                      : "Not selected"}
+                  </p>
+                </div>
+              )}
 
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">Plan</p>
@@ -283,7 +357,7 @@ export default function Checkout() {
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">Duration</p>
                 <p className="mt-1 font-semibold text-gray-900">
-                  {duration} {Number(duration) === 1 ? "unit" : "units"}
+                  {duration} {unitLabel(plan, duration)}
                 </p>
               </div>
 
