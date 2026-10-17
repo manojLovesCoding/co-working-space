@@ -8,38 +8,24 @@ const LandlordSidebar = () => {
 
   const [open, setOpen] = useState(false);
 
-  const menuItems = [
-    {
-      label: "Dashboard",
-      path: "",
-      icon: "⌂",
-    },
-    {
-      label: "Properties",
-      path: "properties",
-      icon: "▣",
-    },
-    {
-      label: "Add Property",
-      path: "add-property",
-      icon: "+",
-    },
-    {
-      label: "Tenants",
-      path: "tenants",
-      icon: "♙",
-    },
-    {
-      label: "Assigned Tenants",
-      path: "assigned-tenants",
-      icon: "◉",
-    },
-    {
-      label: "Payments",
-      path: "payments",
-      icon: "₹",
-    },
-  ];
+  
+const menuItems = [
+  {
+    label: "Customer Profile",
+    path: "profile2",
+    icon: "♟",
+  },
+  {
+    label: "Reservations",
+    path: "reservations",
+    icon: "▤",
+  },
+  {
+    label: "Company Profile",
+    path: "company-profile",
+    icon: "🏢",
+  },
+];
 
   const handleLogout = () => {
     logout();
@@ -121,7 +107,7 @@ const LandlordSidebar = () => {
               </h1>
 
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                Landlord Portal
+                Customer Portal
               </p>
             </div>
 
