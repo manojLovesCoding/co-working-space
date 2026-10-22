@@ -9,31 +9,55 @@ const AdminSidebar = () => {
   const [open, setOpen] = useState(false);
 
   const menuItems = [
-    {
-      label: "Dashboard",
-      path: "",
-      icon: "▦",
-      description: "Overview",
-    },
-    {
-      label: "Users",
-      path: "users",
-      icon: "♙",
-      description: "Manage users",
-    },
-    {
-      label: "Properties",
-      path: "properties",
-      icon: "⌂",
-      description: "Manage listings",
-    },
-    {
-      label: "Payments",
-      path: "payments",
-      icon: "₹",
-      description: "Transactions",
-    },
-  ];
+  {
+    label: "Dashboard",
+    path: "",
+    icon: "▦",
+    description: "Overview",
+  },
+  {
+    label: "Users",
+    path: "users",
+    icon: "♙",
+    description: "Manage users",
+  },
+  {
+    label: "Properties",
+    path: "properties",
+    icon: "⌂",
+    description: "Manage listings",
+  },
+  {
+    label: "Payments",
+    path: "payments",
+    icon: "₹",
+    description: "Transactions",
+  },
+  {
+    label: "Add Space Master",
+    path: "add-space-master",
+    icon: "＋",
+    description: "Add new space",
+  },
+  {
+    label: "Space Master List",
+    path: "space-master-list",
+    icon: "▤",
+    description: "Manage spaces",
+  },
+  {
+    label: "Reservations",
+    path: "reservations",
+    icon: "▣",
+    description: "Manage reservations",
+  },
+  {
+    label: "Visitors",
+    path: "visitors",
+    icon: "♧",
+    description: "Manage visitors",
+  },
+];
 
   const handleLogout = () => {
     logout();
