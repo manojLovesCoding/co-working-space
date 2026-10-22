@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, LoaderCircle, RefreshCw, UserPlus } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  LoaderCircle,
+  RefreshCw,
+  UserPlus,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios.js";
 
@@ -10,14 +16,15 @@ import api from "../../api/axios.js";
 
 const GST_RATE = 0.18;
 const MAX_ATTENDEES = 20;
+const MAX_HOURS = 12;
 const MAX_REASON_LENGTH = 300;
 
-// Bookings are made in IST, so always display in IST.
 const TIME_ZONE = "Asia/Kolkata";
 
 const EMPTY_FORM = {
   bookingId: "",
   attendees: "1",
+  visitHours: "1",
   name: "",
   contact: "",
   email: "",
@@ -53,7 +60,6 @@ const formatMoney = (amount) =>
 const formatDate = (date, timeZone = TIME_ZONE) => {
   if (!date) return "";
 
-  // bookingDate is a plain "YYYY-MM-DD" string: treat it as an IST date.
   const parsed = /^\d{4}-\d{2}-\d{2}$/.test(date)
     ? new Date(`${date}T00:00:00+05:30`)
     : new Date(date);
@@ -72,7 +78,6 @@ const formatTime = (time) => {
   if (!time) return "";
 
   const [hours, minutes] = time.split(":").map(Number);
-
   if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return "";
 
   const suffix = hours >= 12 ? "PM" : "AM";
@@ -81,12 +86,8 @@ const formatTime = (time) => {
   return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
 };
 
-// Bookings saved before the IST update were stored at UTC midnight
-// (00:00Z) instead of IST midnight. Read those in UTC so the calendar
-// day is not pushed forward by the +05:30 offset.
 const isLegacyMidnight = (date) => {
   const parsed = new Date(date);
-
   return (
     !Number.isNaN(parsed.getTime()) &&
     parsed.getUTCHours() === 0 &&
@@ -96,12 +97,9 @@ const isLegacyMidnight = (date) => {
   );
 };
 
-// endAt is exclusive (midnight after the last booked day).
 const getLastBookedDate = (endAt) => {
   const parsed = new Date(endAt);
-
   if (Number.isNaN(parsed.getTime())) return null;
-
   return new Date(parsed.getTime() - 1);
 };
 
@@ -114,23 +112,21 @@ const getBookingLabel = (booking) => {
 
   if (booking.plan === "hourly" && booking.startTime) {
     when = `${formatDate(booking.bookingDate)}, ${formatTime(
-      booking.startTime
+      booking.startTime,
     )} - ${formatTime(booking.endTime)}`;
   } else if (booking.plan === "hourly") {
     when = formatDate(booking.bookingDate);
   } else {
     const lastDate = getLastBookedDate(booking.endAt);
     const zone = isLegacyMidnight(booking.startAt) ? "UTC" : TIME_ZONE;
-
     const first = formatDate(booking.startAt, zone);
     const last = lastDate ? formatDate(lastDate, zone) : "";
 
-    when = !last || first === last ? first : `${first} - ${last}`;
+    when = !last || first === last ? first : `${first} to ${last}`;
   }
 
-  return `${booking.spaceName || "Workspace"}${
-    seats ? ` (${seats})` : ""
-  } • ${when}`;
+  const planBadge = booking.plan ? ` [${booking.plan.toUpperCase()}]` : "";
+  return `${booking.spaceName || "Workspace"}${seats ? ` (${seats})` : ""}${planBadge} — ${when}`;
 };
 
 const validateForm = (form) => {
@@ -141,13 +137,17 @@ const validateForm = (form) => {
   }
 
   const attendees = Number(form.attendees);
-
   if (
     !Number.isInteger(attendees) ||
     attendees < 1 ||
     attendees > MAX_ATTENDEES
   ) {
     errors.attendees = `Enter between 1 and ${MAX_ATTENDEES} attendees.`;
+  }
+
+  const hours = Number(form.visitHours);
+  if (!Number.isInteger(hours) || hours < 1 || hours > MAX_HOURS) {
+    errors.visitHours = `Enter between 1 and ${MAX_HOURS} hours.`;
   }
 
   if (form.name.trim().length < 2) {
@@ -192,11 +192,6 @@ export default function InviteVisitor() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmedVisit, setConfirmedVisit] = useState(null);
 
-  // ---------------------------------------------
-  // GET /api/visitor/upcoming_bookings
-  // Confirmed + paid bookings that have not ended yet.
-  // ---------------------------------------------
-
   const fetchBookings = useCallback(async () => {
     try {
       setLoadingBookings(true);
@@ -206,14 +201,13 @@ export default function InviteVisitor() {
 
       if (!response.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to load your bookings."
+          response.data?.message || "Failed to load your bookings.",
         );
       }
 
       const now = Date.now();
-
       const upcoming = (response.data.bookings || []).filter(
-        (booking) => new Date(booking.endAt).getTime() > now
+        (booking) => new Date(booking.endAt).getTime() > now,
       );
 
       setBookings(upcoming);
@@ -237,21 +231,21 @@ export default function InviteVisitor() {
 
   const selectedBooking = useMemo(
     () => bookings.find((item) => item.bookingId === form.bookingId),
-    [bookings, form.bookingId]
+    [bookings, form.bookingId],
   );
 
-  // Preview only. The server recalculates the amount when the order is created.
+  // Pricing based strictly on workspace hourly rate
   const pricing = useMemo(() => {
     const attendees = Number.parseInt(form.attendees, 10) || 0;
+    const hours = Number.parseInt(form.visitHours, 10) || 0;
     const rate = Number(selectedBooking?.hourlyRate) || 0;
-    const hours = Number(selectedBooking?.visitHours) || 0;
 
     const subtotal = round2(rate * hours * attendees);
     const gst = round2(subtotal * GST_RATE);
     const total = round2(subtotal + gst);
 
     return { attendees, rate, hours, subtotal, gst, total };
-  }, [selectedBooking, form.attendees]);
+  }, [selectedBooking, form.attendees, form.visitHours]);
 
   const updateField = (field, value) => {
     setForm((previous) => ({ ...previous, [field]: value }));
@@ -267,12 +261,6 @@ export default function InviteVisitor() {
     setConfirmedVisit(null);
     fetchBookings();
   };
-
-  // ---------------------------------------------
-  // Pay and confirm
-  // POST /api/visitor/create_razorpay_order
-  // POST /api/visitor/confirm_payment
-  // ---------------------------------------------
 
   const handlePay = async (event) => {
     event.preventDefault();
@@ -301,17 +289,15 @@ export default function InviteVisitor() {
         throw new Error("Unable to load Razorpay Checkout. Please try again.");
       }
 
-      const orderResponse = await api.post(
-        "/visitor/create_razorpay_order",
-        {
-          bookingId: form.bookingId,
-          attendees: Number(form.attendees),
-          name: form.name.trim(),
-          contact: form.contact,
-          email: form.email.trim(),
-          reason: form.reason.trim(),
-        }
-      );
+      const orderResponse = await api.post("/visitor/create_razorpay_order", {
+        bookingId: form.bookingId,
+        attendees: Number(form.attendees),
+        visitHours: Number(form.visitHours),
+        name: form.name.trim(),
+        contact: form.contact,
+        email: form.email.trim(),
+        reason: form.reason.trim(),
+      });
 
       const order = orderResponse.data;
 
@@ -323,7 +309,7 @@ export default function InviteVisitor() {
         !Number.isFinite(Number(order.amount))
       ) {
         throw new Error(
-          order?.message || "Could not create the payment order."
+          order?.message || "Could not create the payment order.",
         );
       }
 
@@ -332,7 +318,7 @@ export default function InviteVisitor() {
         amount: Number(order.amount),
         currency: order.currency || "INR",
         name: "Visitor Pass",
-        description: `${pricing.attendees} visitor(s) - ${
+        description: `${pricing.attendees} visitor(s) for ${pricing.hours} hr(s) - ${
           selectedBooking.spaceName || "Workspace"
         }`,
         order_id: order.orderId,
@@ -344,20 +330,16 @@ export default function InviteVisitor() {
 
         handler: async (paymentResponse) => {
           try {
-            const verifyResponse = await api.post(
-              "/visitor/confirm_payment",
-              {
-                visitId: order.visitId,
-                razorpayOrderId: paymentResponse.razorpay_order_id,
-                razorpayPaymentId: paymentResponse.razorpay_payment_id,
-                razorpaySignature: paymentResponse.razorpay_signature,
-              }
-            );
+            const verifyResponse = await api.post("/visitor/confirm_payment", {
+              visitId: order.visitId,
+              razorpayOrderId: paymentResponse.razorpay_order_id,
+              razorpayPaymentId: paymentResponse.razorpay_payment_id,
+              razorpaySignature: paymentResponse.razorpay_signature,
+            });
 
             if (!verifyResponse.data?.success) {
               throw new Error(
-                verifyResponse.data?.message ||
-                  "Payment verification failed."
+                verifyResponse.data?.message || "Payment verification failed.",
               );
             }
 
@@ -365,6 +347,7 @@ export default function InviteVisitor() {
               visitId: verifyResponse.data.visit?.visitId || order.visitId,
               name: form.name.trim(),
               attendees: pricing.attendees,
+              visitHours: pricing.hours,
               total: pricing.total,
               bookingLabel: getBookingLabel(selectedBooking),
             });
@@ -375,7 +358,7 @@ export default function InviteVisitor() {
             toast.error(
               error.response?.data?.message ||
                 error.message ||
-                "Payment verification failed. Contact support before paying again."
+                "Payment verification failed. Contact support before paying again.",
             );
           } finally {
             setSubmitting(false);
@@ -397,7 +380,7 @@ export default function InviteVisitor() {
       razorpay.on("payment.failed", (response) => {
         console.error("Razorpay payment failed:", response.error);
         toast.error(
-          response.error?.description || "Payment failed. Please try again."
+          response.error?.description || "Payment failed. Please try again.",
         );
         setSubmitting(false);
       });
@@ -408,7 +391,7 @@ export default function InviteVisitor() {
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Unable to start payment."
+          "Unable to start payment.",
       );
       setSubmitting(false);
     }
@@ -422,17 +405,14 @@ export default function InviteVisitor() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
         <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
-          <CheckCircle2
-            size={56}
-            className="mx-auto text-green-600"
-          />
+          <CheckCircle2 size={56} className="mx-auto text-green-600" />
 
           <h1 className="mt-4 text-2xl font-bold text-gray-900">
-            Visitor Invited!
+            Visitor Pass Confirmed!
           </h1>
 
           <p className="mt-3 text-gray-600">
-            Your payment was verified and the visitor pass is confirmed.
+            Your payment was verified and the visitor pass has been issued.
           </p>
 
           <div className="mt-6 rounded-xl bg-gray-50 p-4 text-left">
@@ -444,10 +424,12 @@ export default function InviteVisitor() {
             <p className="mt-4 text-sm text-gray-500">Visitor</p>
             <p className="mt-1 font-medium text-gray-900">
               {confirmedVisit.name} ({confirmedVisit.attendees}{" "}
-              {confirmedVisit.attendees === 1 ? "attendee" : "attendees"})
+              {confirmedVisit.attendees === 1 ? "attendee" : "attendees"},{" "}
+              {confirmedVisit.visitHours}{" "}
+              {confirmedVisit.visitHours === 1 ? "hour" : "hours"})
             </p>
 
-            <p className="mt-4 text-sm text-gray-500">Booking</p>
+            <p className="mt-4 text-sm text-gray-500">Workspace Booking</p>
             <p className="mt-1 font-medium text-gray-900">
               {confirmedVisit.bookingLabel}
             </p>
@@ -481,7 +463,7 @@ export default function InviteVisitor() {
   }
 
   // ---------------------------------------------
-  // Main UI
+  // Main Form UI
   // ---------------------------------------------
 
   return (
@@ -497,7 +479,8 @@ export default function InviteVisitor() {
               Invite a Visitor
             </h1>
             <p className="text-sm text-gray-500">
-              Invite visitors to your booked workspace.
+              Invite visitors to your booked workspace at the standard hourly
+              rate.
             </p>
           </div>
         </div>
@@ -534,12 +517,10 @@ export default function InviteVisitor() {
             <h2 className="text-lg font-semibold text-gray-900">
               No upcoming bookings
             </h2>
-
             <p className="mt-2 text-sm text-gray-500">
               You need a confirmed workspace booking before you can invite a
               visitor.
             </p>
-
             <button
               type="button"
               onClick={() => navigate("/")}
@@ -556,7 +537,7 @@ export default function InviteVisitor() {
             noValidate
             className="space-y-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
           >
-            {/* Booking */}
+            {/* Booking selection */}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
                 Select Your Active Workspace Booking{" "}
@@ -572,7 +553,6 @@ export default function InviteVisitor() {
                 className={inputClass(Boolean(errors.bookingId))}
               >
                 <option value="">-- Select an Upcoming Booking --</option>
-
                 {bookings.map((booking) => (
                   <option key={booking.bookingId} value={booking.bookingId}>
                     {getBookingLabel(booking)}
@@ -581,18 +561,20 @@ export default function InviteVisitor() {
               </select>
 
               {errors.bookingId ? (
-                <p className="mt-1 text-xs text-red-600">
-                  {errors.bookingId}
-                </p>
+                <p className="mt-1 text-xs text-red-600">{errors.bookingId}</p>
               ) : (
                 <p className="mt-1 text-xs text-gray-500">
-                  Visitor fee is based on the selected workspace rate.
+                  Visitors are billed by the workspace hourly catalog rate (
+                  {selectedBooking
+                    ? `${formatMoney(selectedBooking.hourlyRate)}/hr`
+                    : "select a space to see rate"}
+                  ).
                 </p>
               )}
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Attendees */}
+              {/* Number of Attendees */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Number of Attendees <span className="text-red-500">*</span>
@@ -611,14 +593,40 @@ export default function InviteVisitor() {
                   className={inputClass(Boolean(errors.attendees))}
                 />
 
-                {errors.attendees ? (
+                {errors.attendees && (
                   <p className="mt-1 text-xs text-red-600">
                     {errors.attendees}
                   </p>
-                ) : (
-                  <p className="mt-1 text-xs text-gray-500">
-                    Each attendee is charged per hour based on workspace rate
-                    + 18% GST.
+                )}
+              </div>
+
+              {/* Number of Hours */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Visit Duration (Hours) <span className="text-red-500">*</span>
+                </label>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    min={1}
+                    max={MAX_HOURS}
+                    step={1}
+                    value={form.visitHours}
+                    onChange={(event) =>
+                      updateField("visitHours", event.target.value)
+                    }
+                    disabled={submitting}
+                    className={inputClass(Boolean(errors.visitHours))}
+                  />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+                    <Clock size={16} />
+                  </div>
+                </div>
+
+                {errors.visitHours && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {errors.visitHours}
                   </p>
                 )}
               </div>
@@ -626,16 +634,14 @@ export default function InviteVisitor() {
               {/* Name */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Name <span className="text-red-500">*</span>
+                  Visitor Name <span className="text-red-500">*</span>
                 </label>
 
                 <input
                   type="text"
                   value={form.name}
-                  onChange={(event) =>
-                    updateField("name", event.target.value)
-                  }
-                  placeholder="Enter Your Name"
+                  onChange={(event) => updateField("name", event.target.value)}
+                  placeholder="Enter Visitor's Name"
                   maxLength={80}
                   disabled={submitting}
                   className={inputClass(Boolean(errors.name))}
@@ -649,7 +655,7 @@ export default function InviteVisitor() {
               {/* Contact */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Contact No <span className="text-red-500">*</span>
+                  Visitor Contact No <span className="text-red-500">*</span>
                 </label>
 
                 <input
@@ -659,34 +665,30 @@ export default function InviteVisitor() {
                   onChange={(event) =>
                     updateField(
                       "contact",
-                      event.target.value.replace(/\D/g, "").slice(0, 10)
+                      event.target.value.replace(/\D/g, "").slice(0, 10),
                     )
                   }
-                  placeholder="Enter Your Contact No"
+                  placeholder="Enter 10-digit mobile number"
                   disabled={submitting}
                   className={inputClass(Boolean(errors.contact))}
                 />
 
                 {errors.contact && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.contact}
-                  </p>
+                  <p className="mt-1 text-xs text-red-600">{errors.contact}</p>
                 )}
               </div>
 
               {/* Email */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Email Id
+                  Visitor Email Id
                 </label>
 
                 <input
                   type="email"
                   value={form.email}
-                  onChange={(event) =>
-                    updateField("email", event.target.value)
-                  }
-                  placeholder="Enter Your Email Id"
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="Enter Visitor Email (optional)"
                   maxLength={120}
                   disabled={submitting}
                   className={inputClass(Boolean(errors.email))}
@@ -696,36 +698,34 @@ export default function InviteVisitor() {
                   <p className="mt-1 text-xs text-red-600">{errors.email}</p>
                 )}
               </div>
-            </div>
 
-            {/* Company (read only) */}
-            <div className="md:w-1/2 md:pr-3">
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Company Name
-              </label>
+              {/* Company (read only) */}
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Hosting Company
+                </label>
 
-              <input
-                type="text"
-                value={companyName}
-                readOnly
-                tabIndex={-1}
-                className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-600 outline-none"
-              />
+                <input
+                  type="text"
+                  value={companyName}
+                  readOnly
+                  tabIndex={-1}
+                  className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-600 outline-none"
+                />
+              </div>
             </div>
 
             {/* Reason */}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">
-                Reason
+                Reason for Visit
               </label>
 
               <textarea
-                rows={4}
+                rows={3}
                 value={form.reason}
-                onChange={(event) =>
-                  updateField("reason", event.target.value)
-                }
-                placeholder="Enter Reason"
+                onChange={(event) => updateField("reason", event.target.value)}
+                placeholder="Enter purpose of visit"
                 maxLength={MAX_REASON_LENGTH}
                 disabled={submitting}
                 className={`${inputClass(false)} resize-none`}
@@ -741,8 +741,8 @@ export default function InviteVisitor() {
               <div className="rounded-xl bg-gray-50 p-4 text-sm">
                 <div className="flex items-center justify-between text-gray-600">
                   <span>
-                    {formatMoney(pricing.rate)} / hr × {pricing.hours} hr ×{" "}
-                    {pricing.attendees}{" "}
+                    {formatMoney(pricing.rate)} / hr × {pricing.hours}{" "}
+                    {pricing.hours === 1 ? "hr" : "hrs"} × {pricing.attendees}{" "}
                     {pricing.attendees === 1 ? "attendee" : "attendees"}
                   </span>
                   <span className="font-medium text-gray-900">
@@ -763,11 +763,6 @@ export default function InviteVisitor() {
                     {formatMoney(pricing.total)}
                   </span>
                 </div>
-
-                <p className="mt-3 text-xs text-gray-500">
-                  The final amount is calculated and validated by the server
-                  when your order is created.
-                </p>
               </div>
             )}
 

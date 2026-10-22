@@ -17,11 +17,8 @@ const razorpay = new Razorpay({
 
 const GST_PERCENT = 18;
 const MAX_ATTENDEES = 20;
-
-// Hours charged per visitor for daily and monthly bookings
-// (one office day). Hourly bookings use the booked duration instead.
-// Change this if your visitor pass should cover a different period.
-const FULL_DAY_VISIT_HOURS = 11;
+const MIN_VISIT_HOURS = 1;
+const MAX_VISIT_HOURS = 12;
 
 // ==========================================
 // HELPERS
@@ -30,11 +27,8 @@ const FULL_DAY_VISIT_HOURS = 11;
 const isNonEmptyString = (value) =>
   typeof value === "string" && value.trim().length > 0;
 
-// Best-effort company lookup. Uses the already registered User model,
-// so no import path is needed. Adjust the field names to match your schema.
 const getCompanyName = async (userId) => {
   const User = mongoose.models.User;
-
   if (!User) return "";
 
   const user = await User.findById(userId).lean();
@@ -43,18 +37,13 @@ const getCompanyName = async (userId) => {
   return typeof value === "string" ? value : "";
 };
 
-// Current hourly rate per workspace name (used for daily/monthly bookings).
+// Fetch catalog hourly rate for ALL spaces regardless of booking plan
 const getHourlyRates = async (bookings) => {
   const names = [
-    ...new Set(
-      bookings
-        .filter((booking) => booking.plan !== "hourly")
-        .map((booking) => booking.spaceName)
-    ),
+    ...new Set(bookings.map((booking) => booking.spaceName).filter(Boolean)),
   ];
 
   const rates = new Map();
-
   if (names.length === 0) return rates;
 
   const spaces = await Space.find({
@@ -66,7 +55,6 @@ const getHourlyRates = async (bookings) => {
 
   for (const space of spaces) {
     const rate = Number(space.perHour);
-
     if (Number.isFinite(rate) && rate > 0 && !rates.has(space.space)) {
       rates.set(space.space, rate);
     }
@@ -75,26 +63,23 @@ const getHourlyRates = async (bookings) => {
   return rates;
 };
 
-// Returns { hourlyRate, visitHours } or null if visitors cannot be
-// charged for this booking (e.g. the space has no hourly rate).
-const getVisitTerms = (booking, hourlyRates) => {
-  if (booking.plan === "hourly") {
-    const rate = Number(booking.pricePerUnit);
-    const hours = Number(booking.duration);
+// Resolve to catalog perHour rate (fallback to pricePerUnit if hourly)
+const getVisitTerms = (booking, hourlyRates, requestedHours = 1) => {
+  const rate =
+    hourlyRates.get(booking.spaceName) ||
+    (booking.plan === "hourly" ? Number(booking.pricePerUnit) : null);
 
-    if (!Number.isFinite(rate) || rate <= 0 || !(hours >= 1)) return null;
+  if (!rate || rate <= 0) return null;
 
-    return { hourlyRate: rate, visitHours: hours };
-  }
+  const parsedHours = Number.parseInt(requestedHours, 10);
+  const hours =
+    Number.isInteger(parsedHours) && parsedHours >= MIN_VISIT_HOURS
+      ? Math.min(parsedHours, MAX_VISIT_HOURS)
+      : 1;
 
-  const rate = hourlyRates.get(booking.spaceName);
-
-  if (!rate) return null;
-
-  return { hourlyRate: rate, visitHours: FULL_DAY_VISIT_HOURS };
+  return { hourlyRate: rate, visitHours: hours };
 };
 
-// All maths in paise to avoid floating point errors.
 const calculatePricing = (hourlyRate, visitHours, attendees) => {
   const ratePaise = Math.round(hourlyRate * 100);
   const subtotalPaise = ratePaise * visitHours * attendees;
@@ -110,21 +95,29 @@ const calculatePricing = (hourlyRate, visitHours, attendees) => {
 };
 
 const validateVisitorInput = (body) => {
-  const { bookingId, attendees, name, contact, email, reason } = body;
+  const { bookingId, attendees, visitHours, name, contact, email, reason } = body;
 
   if (!isNonEmptyString(bookingId)) {
     throw new Error("Please select a booking");
   }
 
   const numericAttendees = Number(attendees);
-
   if (
     !Number.isInteger(numericAttendees) ||
     numericAttendees < 1 ||
     numericAttendees > MAX_ATTENDEES
   ) {
+    throw new Error(`Attendees must be between 1 and ${MAX_ATTENDEES}`);
+  }
+
+  const numericHours = Number(visitHours || 1);
+  if (
+    !Number.isInteger(numericHours) ||
+    numericHours < MIN_VISIT_HOURS ||
+    numericHours > MAX_VISIT_HOURS
+  ) {
     throw new Error(
-      `Attendees must be between 1 and ${MAX_ATTENDEES}`
+      `Visit duration must be between ${MIN_VISIT_HOURS} and ${MAX_VISIT_HOURS} hours`
     );
   }
 
@@ -141,7 +134,6 @@ const validateVisitorInput = (body) => {
   }
 
   const cleanEmail = typeof email === "string" ? email.trim() : "";
-
   if (
     cleanEmail &&
     (cleanEmail.length > 120 ||
@@ -151,7 +143,6 @@ const validateVisitorInput = (body) => {
   }
 
   const cleanReason = typeof reason === "string" ? reason.trim() : "";
-
   if (cleanReason.length > 300) {
     throw new Error("Reason must be 300 characters or less");
   }
@@ -159,6 +150,7 @@ const validateVisitorInput = (body) => {
   return {
     bookingId: bookingId.trim(),
     attendees: numericAttendees,
+    visitHours: numericHours,
     name: name.trim(),
     contact,
     email: cleanEmail,
@@ -166,8 +158,6 @@ const validateVisitorInput = (body) => {
   };
 };
 
-// A booking can have visitors only if it belongs to this user,
-// is paid and confirmed, and has not ended yet.
 const getInvitableBooking = async (bookingId, userId) => {
   const booking = await WorkspaceBooking.findOne({
     bookingId,
@@ -178,9 +168,7 @@ const getInvitableBooking = async (bookingId, userId) => {
   });
 
   if (!booking) {
-    throw new Error(
-      "Booking not found, not confirmed, or already ended"
-    );
+    throw new Error("Booking not found, not confirmed, or already ended");
   }
 
   return booking;
@@ -194,7 +182,6 @@ const getInvitableBooking = async (bookingId, userId) => {
 export const getUpcomingBookings = async (req, res) => {
   try {
     const userId = req.user?.id;
-
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -222,9 +209,8 @@ export const getUpcomingBookings = async (req, res) => {
     const result = [];
 
     for (const booking of bookings) {
-      const terms = getVisitTerms(booking, hourlyRates);
-
-      // Skip bookings where a visitor fee cannot be worked out.
+      // Default to 1 hour base rate preview
+      const terms = getVisitTerms(booking, hourlyRates, 1);
       if (!terms) continue;
 
       result.push({
@@ -249,7 +235,6 @@ export const getUpcomingBookings = async (req, res) => {
     });
   } catch (error) {
     console.error("Get upcoming bookings error:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to fetch upcoming bookings",
@@ -277,20 +262,13 @@ export const createVisitorOrder = async (req, res) => {
     }
 
     const input = validateVisitorInput(req.body);
+    const booking = await getInvitableBooking(input.bookingId, req.user.id);
 
-    const booking = await getInvitableBooking(
-      input.bookingId,
-      req.user.id
-    );
-
-    // Never trust an amount sent by the client.
     const hourlyRates = await getHourlyRates([booking]);
-    const terms = getVisitTerms(booking, hourlyRates);
+    const terms = getVisitTerms(booking, hourlyRates, input.visitHours);
 
     if (!terms) {
-      throw new Error(
-        "Visitor pricing is not available for this workspace"
-      );
+      throw new Error("Visitor hourly pricing is not configured for this workspace");
     }
 
     const pricing = calculatePricing(
@@ -307,12 +285,10 @@ export const createVisitorOrder = async (req, res) => {
     }
 
     const companyName = await getCompanyName(req.user.id);
-
     const visitId = `VIS-${new mongoose.Types.ObjectId()
       .toString()
       .toUpperCase()}`;
 
-    // Create a pending record before creating the payment order.
     visitor = await Visitor.create({
       visitId,
       user: req.user.id,
@@ -364,11 +340,9 @@ export const createVisitorOrder = async (req, res) => {
   } catch (error) {
     console.error("Create visitor order error:", error);
 
-    // Remove the temporary record if order creation failed.
     if (visitor && !visitor.razorpayOrderId) {
-      await Visitor.deleteOne({ _id: visitor._id }).catch(
-        (cleanupError) =>
-          console.error("Visitor cleanup error:", cleanupError.message)
+      await Visitor.deleteOne({ _id: visitor._id }).catch((err) =>
+        console.error("Visitor cleanup error:", err.message)
       );
     }
 
@@ -464,7 +438,6 @@ export const confirmVisitorPayment = async (req, res) => {
       });
     }
 
-    // Confirm the payment against Razorpay's API as well.
     const payment = await razorpay.payments.fetch(razorpayPaymentId);
 
     if (
@@ -479,7 +452,6 @@ export const confirmVisitorPayment = async (req, res) => {
       });
     }
 
-    // The booking must still be confirmed when the payment completes.
     const booking = await WorkspaceBooking.findOne({
       bookingId: visitor.bookingId,
       user: req.user.id,
@@ -503,14 +475,12 @@ export const confirmVisitorPayment = async (req, res) => {
     try {
       await visitor.save();
     } catch (saveError) {
-      // Duplicate payment id: this payment was already used.
       if (saveError?.code === 11000) {
         return res.status(409).json({
           success: false,
           message: "This payment has already been used",
         });
       }
-
       throw saveError;
     }
 
@@ -521,7 +491,6 @@ export const confirmVisitorPayment = async (req, res) => {
     });
   } catch (error) {
     console.error("Confirm visitor payment error:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to confirm visitor payment",
@@ -537,7 +506,6 @@ export const confirmVisitorPayment = async (req, res) => {
 export const getMyVisitors = async (req, res) => {
   try {
     const userId = req.user?.id;
-
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -559,7 +527,6 @@ export const getMyVisitors = async (req, res) => {
     });
   } catch (error) {
     console.error("Get my visitors error:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to fetch visitors",
@@ -571,7 +538,7 @@ export const getMyVisitors = async (req, res) => {
 // GET ALL VISITORS (ADMIN)
 // GET /api/visitor/all_visitors
 // ==========================================
- 
+
 export const getAllVisitors = async (req, res) => {
   try {
     const visitors = await Visitor.find()
@@ -581,7 +548,7 @@ export const getAllVisitors = async (req, res) => {
       )
       .sort({ createdAt: -1 })
       .lean();
- 
+
     return res.status(200).json({
       success: true,
       count: visitors.length,
@@ -589,7 +556,6 @@ export const getAllVisitors = async (req, res) => {
     });
   } catch (error) {
     console.error("Get all visitors error:", error);
- 
     return res.status(500).json({
       success: false,
       message: "Failed to fetch visitors",

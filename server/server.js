@@ -12,7 +12,7 @@ import spaceRouter from "./routes/spaceRoutes.js";
 import profileRouter2 from "./routes/profileRoutes2.js";
 import companyRouter from "./routes/companyRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
-import visitorRouter from "./routes/Visitorroutes";
+import visitorRouter from "./routes/Visitorroutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
