@@ -5,6 +5,7 @@ import {
   createRazorpayOrder,
   addWorkspaceBooking,
   getMyReservations,
+  getAllReservations,
 } from "../controllers/bookingController.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -17,7 +18,7 @@ bookingRouter.post(
   "/check_workspace_availability",
   verifyToken,
   authorizeRoles("customer"),
-  checkWorkspaceAvailability
+  checkWorkspaceAvailability,
 );
 
 // Create Razorpay order
@@ -25,7 +26,7 @@ bookingRouter.post(
   "/create_razorpay_order",
   verifyToken,
   authorizeRoles("customer"),
-  createRazorpayOrder
+  createRazorpayOrder,
 );
 
 // Verify payment and confirm booking
@@ -33,14 +34,21 @@ bookingRouter.post(
   "/add_workspace_booking",
   verifyToken,
   authorizeRoles("customer"),
-  addWorkspaceBooking
+  addWorkspaceBooking,
 );
 
 bookingRouter.get(
   "/my_reservations",
   verifyToken,
   authorizeRoles("customer"),
-  getMyReservations
+  getMyReservations,
+);
+
+bookingRouter.get(
+  "/all_reservations",
+  verifyToken,
+  authorizeRoles("admin"),
+  getAllReservations,
 );
 
 export default bookingRouter;

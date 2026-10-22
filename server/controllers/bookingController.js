@@ -712,3 +712,34 @@ export const getMyReservations = async (req, res) => {
     });
   }
 };
+
+
+// ==========================================
+// GET ALL RESERVATIONS (ADMIN)
+// GET /api/booking/all_reservations
+// ==========================================
+ 
+export const getAllReservations = async (req, res) => {
+  try {
+    const reservations = await WorkspaceBooking.find()
+      .populate("user", "name email phone")
+      .select(
+        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+ 
+    return res.status(200).json({
+      success: true,
+      count: reservations.length,
+      reservations,
+    });
+  } catch (error) {
+    console.error("Get all reservations error:", error);
+ 
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch reservations",
+    });
+  }
+};

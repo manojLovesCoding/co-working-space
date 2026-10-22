@@ -47,6 +47,7 @@ import BookSpace from "./pages/BookSpace";
 import Checkout from "./pages/Checkout";
 import InviteVisitor from "./pages/landloard/InviteVisitor";
 import Visitors from "./pages/landloard/Visitors";
+import AdminReservations from "./pages/admin/Adminreservations";
 
 const App = () => {
   return (
@@ -152,6 +153,8 @@ const App = () => {
               path="space-master-list"
               element={<SpaceMaster />}
             />
+
+            <Route path="reservations" element={<AdminReservations />} />
 
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>
