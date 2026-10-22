@@ -48,6 +48,7 @@ import Checkout from "./pages/Checkout";
 import InviteVisitor from "./pages/landloard/InviteVisitor";
 import Visitors from "./pages/landloard/Visitors";
 import AdminReservations from "./pages/admin/Adminreservations";
+import AdminVisitors from "./pages/admin/Adminvisitors";
 
 const App = () => {
   return (
@@ -155,6 +156,7 @@ const App = () => {
             />
 
             <Route path="reservations" element={<AdminReservations />} />
+            <Route path="visitors" element={<AdminVisitors />} />
 
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>

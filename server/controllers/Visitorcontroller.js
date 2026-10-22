@@ -566,3 +566,33 @@ export const getMyVisitors = async (req, res) => {
     });
   }
 };
+
+// ==========================================
+// GET ALL VISITORS (ADMIN)
+// GET /api/visitor/all_visitors
+// ==========================================
+ 
+export const getAllVisitors = async (req, res) => {
+  try {
+    const visitors = await Visitor.find()
+      .populate("user", "name email phone")
+      .select(
+        "visitId user bookingId spaceName selectedSpaces bookingStartAt bookingEndAt name contact email companyName reason attendees hourlyRate visitHours subtotal gstAmount totalAmount paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
+      )
+      .sort({ createdAt: -1 })
+      .lean();
+ 
+    return res.status(200).json({
+      success: true,
+      count: visitors.length,
+      visitors,
+    });
+  } catch (error) {
+    console.error("Get all visitors error:", error);
+ 
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch visitors",
+    });
+  }
+};

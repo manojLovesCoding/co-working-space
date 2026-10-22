@@ -5,6 +5,7 @@ import {
   createVisitorOrder,
   confirmVisitorPayment,
   getMyVisitors,
+  getAllVisitors,
 } from "../controllers/Visitorcontroller.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -17,7 +18,7 @@ visitorRouter.get(
   "/upcoming_bookings",
   verifyToken,
   authorizeRoles("customer"),
-  getUpcomingBookings
+  getUpcomingBookings,
 );
 
 // Create Razorpay order for the visitor fee
@@ -25,7 +26,7 @@ visitorRouter.post(
   "/create_razorpay_order",
   verifyToken,
   authorizeRoles("customer"),
-  createVisitorOrder
+  createVisitorOrder,
 );
 
 // Verify payment and confirm the visitor pass
@@ -33,7 +34,7 @@ visitorRouter.post(
   "/confirm_payment",
   verifyToken,
   authorizeRoles("customer"),
-  confirmVisitorPayment
+  confirmVisitorPayment,
 );
 
 // Visitors invited by the logged-in customer
@@ -41,7 +42,14 @@ visitorRouter.get(
   "/my_visitors",
   verifyToken,
   authorizeRoles("customer"),
-  getMyVisitors
+  getMyVisitors,
+);
+
+visitorRouter.get(
+  "/all_visitors",
+  verifyToken,
+  authorizeRoles("admin"),
+  getAllVisitors,
 );
 
 export default visitorRouter;
