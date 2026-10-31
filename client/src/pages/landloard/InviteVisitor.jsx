@@ -197,21 +197,30 @@ export default function InviteVisitor() {
       setLoadingBookings(true);
       setLoadError("");
 
-      const response = await api.get("/visitor/upcoming_bookings");
+      const [bookingsResponse, companyResponse] = await Promise.all([
+        api.get("/visitor/upcoming_bookings"),
+        // A company fetch failure shouldn't block the bookings list
+        api.get("/company").catch(() => null),
+      ]);
 
-      if (!response.data?.success) {
+      if (!bookingsResponse.data?.success) {
         throw new Error(
-          response.data?.message || "Failed to load your bookings.",
+          bookingsResponse.data?.message || "Failed to load your bookings.",
         );
       }
 
       const now = Date.now();
-      const upcoming = (response.data.bookings || []).filter(
+      const upcoming = (bookingsResponse.data.bookings || []).filter(
         (booking) => new Date(booking.endAt).getTime() > now,
       );
 
       setBookings(upcoming);
-      setCompanyName(response.data.companyName || "");
+
+      setCompanyName(
+        companyResponse?.data?.company?.companyName ||
+          bookingsResponse.data.companyName ||
+          "",
+      );
     } catch (error) {
       const message =
         error.response?.data?.message ||
