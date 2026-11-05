@@ -49,6 +49,8 @@ import InviteVisitor from "./pages/landloard/InviteVisitor";
 import Visitors from "./pages/landloard/Visitors";
 import AdminReservations from "./pages/admin/Adminreservations";
 import AdminVisitors from "./pages/admin/Adminvisitors";
+import AddCoupon from "./pages/admin/AddCoupon";
+import CouponList from "./pages/admin/CouponList";
 
 const App = () => {
   return (
@@ -155,8 +157,13 @@ const App = () => {
               element={<SpaceMaster />}
             />
 
+            
+
             <Route path="reservations" element={<AdminReservations />} />
             <Route path="visitors" element={<AdminVisitors />} />
+
+            <Route path="coupons" element={<AddCoupon />} />
+            <Route path="coupon-list" element={<CouponList />} />
 
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>

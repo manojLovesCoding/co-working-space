@@ -13,6 +13,7 @@ import profileRouter2 from "./routes/profileRoutes2.js";
 import companyRouter from "./routes/companyRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import visitorRouter from "./routes/Visitorroutes.js";
+import couponRouter from "./routes/couponRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -35,6 +36,7 @@ app.use("/api/profile", profileRouter2);
 app.use("/api/company", companyRouter);
 app.use("/api/booking", bookingRouter);
 app.use("/api/visitor", visitorRouter);
+app.use("/api/coupon", couponRouter);
 
 
 await connectDB();
