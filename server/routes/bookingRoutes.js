@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
   checkWorkspaceAvailability,
+  validateCoupon,
   createRazorpayOrder,
   addWorkspaceBooking,
   getMyReservations,
@@ -19,6 +20,14 @@ bookingRouter.post(
   verifyToken,
   authorizeRoles("customer"),
   checkWorkspaceAvailability,
+);
+
+// Validate a coupon and preview the discount
+bookingRouter.post(
+  "/validate_coupon",
+  verifyToken,
+  authorizeRoles("customer"),
+  validateCoupon,
 );
 
 // Create Razorpay order

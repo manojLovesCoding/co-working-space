@@ -224,6 +224,12 @@ export default function BookSpace() {
   const [unavailableSpaces, setUnavailableSpaces] = useState([]);
   const [availabilityError, setAvailabilityError] = useState("");
 
+  // Coupon state
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState("");
+
   const isHourly = selectedPlan === "hourly";
   const isClosedDay = isSunday(selectedDate);
   const officeHours = useMemo(
@@ -280,11 +286,17 @@ export default function BookSpace() {
       ? getDailyEndDate(selectedDate, duration)
       : "";
 
+  // Subtotal before coupon
   const totalAmount = useMemo(() => {
     if (!selectedPricing) return 0;
 
     return selectedPricing.price * duration * selectedSpaces.length;
   }, [selectedPricing, duration, selectedSpaces.length]);
+
+  // Amount after coupon (display only; the server recalculates it)
+  const payableAmount = appliedCoupon
+    ? appliedCoupon.finalAmount
+    : totalAmount;
 
   const availableSpaceCount = useMemo(
     () =>
@@ -296,9 +308,20 @@ export default function BookSpace() {
     [availableSpaces, unavailableSpaces]
   );
 
+  // A coupon depends on the subtotal, space, plan and date, so any
+  // change to the booking invalidates it.
+  const removeCoupon = (message = "") => {
+    setAppliedCoupon(null);
+    setCouponError(message);
+  };
+
   const clearAvailabilityResult = () => {
     setUnavailableSpaces([]);
     setAvailabilityError("");
+
+    if (appliedCoupon) {
+      removeCoupon("Booking changed. Please apply your coupon again.");
+    }
   };
 
   const incrementDuration = () => {
@@ -382,6 +405,74 @@ export default function BookSpace() {
     );
 
     clearAvailabilityResult();
+  };
+
+  // ---------------------------------------------
+  // Apply coupon
+  // POST /api/booking/validate_coupon
+  // ---------------------------------------------
+
+  const handleApplyCoupon = async () => {
+    if (couponLoading) return;
+
+    const code = couponInput.trim().toUpperCase();
+
+    if (!code) {
+      setCouponError("Enter a coupon code.");
+      return;
+    }
+
+    if (!selectedSpaces.length || !selectedPricing) {
+      setCouponError("Select your spaces and plan first.");
+      return;
+    }
+
+    if (isClosedDay) {
+      setCouponError("Select a valid booking date first.");
+      return;
+    }
+
+    if (isHourly && !selectedTime) {
+      setCouponError("Select a start time first.");
+      return;
+    }
+
+    try {
+      setCouponLoading(true);
+      setCouponError("");
+
+      const response = await api.post("/booking/validate_coupon", {
+        couponCode: code,
+        spaceName: space.space,
+        bookingDate: selectedDate,
+        plan: selectedPlan,
+        duration,
+        selectedSpaces,
+        ...(isHourly ? { startTime: selectedTime } : {}),
+      });
+
+      if (response.data?.success) {
+        setAppliedCoupon({
+          couponCode: response.data.couponCode,
+          discountPercent: response.data.discountPercent,
+          discountAmount: response.data.discountAmount,
+          finalAmount: response.data.finalAmount,
+        });
+        setCouponInput("");
+      } else {
+        setAppliedCoupon(null);
+        setCouponError(response.data?.message || "Unable to apply coupon.");
+      }
+    } catch (error) {
+      console.error("Apply coupon error:", error);
+
+      setAppliedCoupon(null);
+      setCouponError(
+        error.response?.data?.message || "Unable to apply coupon."
+      );
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   // ---------------------------------------------
@@ -521,6 +612,9 @@ export default function BookSpace() {
           previous.filter((code) => !unavailable.includes(code))
         );
 
+        // Removing seats changes the subtotal, so the coupon is stale.
+        removeCoupon();
+
         setAvailabilityError(
           unavailable.length
             ? `These spaces are unavailable: ${unavailable.join(", ")}. Please select different spaces.`
@@ -530,9 +624,9 @@ export default function BookSpace() {
         return;
       }
 
-      // The frontend amount is for display only.
-      // The backend must recalculate the final amount when creating
-      // the Razorpay order.
+      // The frontend amounts are for display only.
+      // The backend recalculates the subtotal, applies the coupon and
+      // computes the final amount when creating the Razorpay order.
       const bookingData = {
         spaceName: space.space,
         bookingDate: selectedDate,
@@ -540,7 +634,10 @@ export default function BookSpace() {
         duration: Number(duration),
         selectedSpaces: [...selectedSpaces],
         pricePerUnit: selectedPricing.price,
-        totalAmount,
+        subtotal: totalAmount,
+        discountAmount: appliedCoupon?.discountAmount || 0,
+        couponCode: appliedCoupon?.couponCode || null,
+        totalAmount: payableAmount,
         ...(isHourly
           ? {
               startTime: selectedTime,
@@ -1179,6 +1276,7 @@ export default function BookSpace() {
                   )}
                 </div>
 
+                {/* Price breakdown, coupon and total */}
                 <div className="py-5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">
@@ -1204,12 +1302,102 @@ export default function BookSpace() {
                     </span>
                   </div>
 
+                  <div className="mt-2 flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Subtotal</span>
+                    <span className="font-medium text-gray-900">
+                      {formatPrice(totalAmount)}
+                    </span>
+                  </div>
+
+                  {/* Coupon */}
+                  <div className="mt-4 border-t border-gray-100 pt-4">
+                    {appliedCoupon ? (
+                      <div className="flex items-center justify-between rounded-xl bg-green-50 px-3 py-2.5">
+                        <div>
+                          <p className="text-sm font-semibold text-green-700">
+                            {appliedCoupon.couponCode} applied
+                          </p>
+                          <p className="text-xs text-green-600">
+                            {appliedCoupon.discountPercent}% off
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeCoupon()}
+                          className="text-xs font-semibold text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <label
+                          htmlFor="coupon-code"
+                          className="mb-2 block text-xs font-semibold text-gray-700"
+                        >
+                          Have a coupon?
+                        </label>
+
+                        <div className="flex gap-2">
+                          <input
+                            id="coupon-code"
+                            type="text"
+                            value={couponInput}
+                            onChange={(event) => {
+                              setCouponInput(event.target.value.toUpperCase());
+                              setCouponError("");
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter") {
+                                event.preventDefault();
+                                handleApplyCoupon();
+                              }
+                            }}
+                            placeholder="Enter code"
+                            maxLength={30}
+                            className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={handleApplyCoupon}
+                            disabled={couponLoading || !couponInput.trim()}
+                            className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                          >
+                            {couponLoading ? "..." : "Apply"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {couponError && (
+                      <p role="alert" className="mt-2 text-xs text-red-600">
+                        {couponError}
+                      </p>
+                    )}
+                  </div>
+
+                  {appliedCoupon && (
+                    <div className="mt-4 flex items-center justify-between text-sm">
+                      <span className="text-green-600">Coupon discount</span>
+                      <span className="font-semibold text-green-600">
+                        − {formatPrice(appliedCoupon.discountAmount)}
+                      </span>
+                    </div>
+                  )}
+
                   <div className="mt-5 flex items-end justify-between border-t border-gray-100 pt-5">
                     <div>
                       <p className="text-xs text-gray-500">Estimated Total</p>
                       <p className="mt-1 text-2xl font-bold text-gray-900">
-                        {formatPrice(totalAmount)}
+                        {formatPrice(payableAmount)}
                       </p>
+                      {appliedCoupon && (
+                        <p className="text-xs text-gray-400 line-through">
+                          {formatPrice(totalAmount)}
+                        </p>
+                      )}
                     </div>
 
                     <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-600">

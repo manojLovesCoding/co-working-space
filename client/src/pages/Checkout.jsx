@@ -46,6 +46,13 @@ const formatTime = (time) => {
   return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
 };
 
+const formatPrice = (value) => {
+  const amount = Number(value);
+  return Number.isFinite(amount)
+    ? `₹${amount.toLocaleString("en-IN")}`
+    : "₹0";
+};
+
 const unitLabel = (plan, count) => {
   const base = plan === "hourly" ? "hour" : plan === "monthly" ? "month" : "day";
   return Number(count) === 1 ? base : `${base}s`;
@@ -61,6 +68,9 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
   const [confirmedBookingId, setConfirmedBookingId] = useState("");
+
+  // Amounts confirmed by the server after the order is created.
+  const [paidSummary, setPaidSummary] = useState(null);
 
   if (!bookingData || !space) {
     return (
@@ -89,16 +99,26 @@ export default function Checkout() {
     selectedSpaces,
     startTime,
     endTime,
+    couponCode,
   } = bookingData;
 
   const isHourly = plan === "hourly";
 
+  // Display-only amounts. The server recalculates everything.
   const totalAmount = Number(
     bookingData.totalAmount ??
       bookingData.totalPrice ??
       bookingData.total ??
       0
   );
+
+  const discountAmount = Number(bookingData.discountAmount || 0);
+
+  const subtotal = Number(
+    bookingData.subtotal ?? totalAmount + discountAmount
+  );
+
+  const hasCoupon = Boolean(couponCode) && discountAmount > 0;
 
   const handlePayment = async () => {
     if (loading) return;
@@ -139,6 +159,7 @@ export default function Checkout() {
       }
 
       // Step 1: Create the order on your backend.
+      // The server validates the coupon again and calculates the final amount.
       const orderResponse = await api.post(
         "/booking/create_razorpay_order",
         {
@@ -148,6 +169,7 @@ export default function Checkout() {
           duration: Number(duration),
           selectedSpaces,
           ...(isHourly ? { startTime } : {}),
+          ...(couponCode ? { couponCode } : {}),
         }
       );
 
@@ -164,6 +186,14 @@ export default function Checkout() {
           order?.message || "Could not create the payment order."
         );
       }
+
+      // Amounts confirmed by the server (shown after payment).
+      setPaidSummary({
+        subtotal: order.subtotal,
+        discountAmount: order.discountAmount,
+        couponCode: order.couponCode,
+        totalAmount: order.totalAmount,
+      });
 
       // Step 2: Open Razorpay Checkout.
       const options = {
@@ -246,6 +276,10 @@ export default function Checkout() {
   };
 
   if (bookingConfirmed) {
+    const finalPaid = paidSummary?.totalAmount ?? totalAmount;
+    const finalDiscount = paidSummary?.discountAmount ?? discountAmount;
+    const finalCoupon = paidSummary?.couponCode ?? couponCode;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
@@ -287,6 +321,17 @@ export default function Checkout() {
                   {formatTime(startTime)} - {formatTime(endTime)}
                 </p>
               </>
+            )}
+
+            <p className="mt-4 text-sm text-gray-500">Amount paid</p>
+            <p className="mt-1 font-medium text-gray-900">
+              {formatPrice(finalPaid)}
+            </p>
+
+            {finalCoupon && Number(finalDiscount) > 0 && (
+              <p className="mt-1 text-sm text-green-600">
+                Coupon {finalCoupon} saved you {formatPrice(finalDiscount)}
+              </p>
             )}
           </div>
 
@@ -370,18 +415,39 @@ export default function Checkout() {
             </div>
 
             <div className="border-t pt-5">
+              {hasCoupon && (
+                <div className="mb-4 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium text-gray-900">
+                      {formatPrice(subtotal)}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2 text-sm">
+                    <span className="font-medium text-green-700">
+                      Coupon {couponCode}
+                    </span>
+                    <span className="font-semibold text-green-700">
+                      − {formatPrice(discountAmount)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-4">
                 <span className="text-gray-600">Amount</span>
                 <span className="text-2xl font-bold text-gray-900">
                   {Number.isFinite(totalAmount) && totalAmount > 0
-                    ? `₹${totalAmount.toLocaleString("en-IN")}`
+                    ? formatPrice(totalAmount)
                     : "Calculated securely by server"}
                 </span>
               </div>
 
               <p className="mt-2 text-xs text-gray-500">
-                The final payable amount is calculated and validated by the
-                server when your order is created.
+                The final payable amount, including any coupon discount, is
+                calculated and validated by the server when your order is
+                created.
               </p>
             </div>
 

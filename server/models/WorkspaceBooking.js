@@ -55,6 +55,27 @@ const workspaceBookingSchema = new mongoose.Schema(
       min: 0,
     },
 
+    // Price before any coupon discount
+    subtotal: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    // Coupon discount in rupees (0 when no coupon is used)
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // Stored as plain text so history survives if the coupon is deleted
+    couponCode: {
+      type: String,
+      default: null,
+    },
+
+    // Final amount charged (subtotal - discountAmount)
     totalAmount: {
       type: Number,
       required: true,
@@ -107,7 +128,7 @@ const workspaceBookingSchema = new mongoose.Schema(
 
     paymentStatus: {
       type: String,
-      enum: ["Pending", "Paid", "Failed"],
+      enum: ["Pending", "Paid", "Failed", "Refunded"],
       default: "Pending",
     },
 

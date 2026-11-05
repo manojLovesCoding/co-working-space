@@ -4,6 +4,7 @@ import Razorpay from "razorpay";
 
 import Space from "../models/Space.js";
 import WorkspaceBooking from "../models/WorkspaceBooking.js";
+import { applyCoupon } from "../utils/couponHelper.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -56,9 +57,20 @@ const addDays = (dateString, days) => {
   return date.toISOString().slice(0, 10);
 };
 
+// Clamps to the last day of the target month (Jan 31 + 1 month = Feb 28/29).
 const addMonths = (dateString, months) => {
   const date = new Date(`${dateString}T00:00:00.000Z`);
+  const day = date.getUTCDate();
+
+  date.setUTCDate(1);
   date.setUTCMonth(date.getUTCMonth() + months);
+
+  const lastDay = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)
+  ).getUTCDate();
+
+  date.setUTCDate(Math.min(day, lastDay));
+
   return date.toISOString().slice(0, 10);
 };
 
@@ -283,26 +295,50 @@ const getServerPricing = (spaces, plan) => {
   return prices[0];
 };
 
+/**
+ * Options:
+ * - excludeBookingId: ignore this booking (the one being checked)
+ * - confirmedOnly:    only Confirmed bookings block (used at payment time,
+ *                     so the first person to PAY wins, not the first to start)
+ * - pendingBeforeId:  only Pending bookings created before this booking
+ *                     block (used right after creating a pending booking,
+ *                     so two simultaneous users cannot both keep the seat)
+ */
 const getAvailability = async (
   selectedSpaces,
   startAt,
   endAt,
-  excludeBookingId = null
+  options = {}
 ) => {
+  const {
+    excludeBookingId = null,
+    confirmedOnly = false,
+    pendingBeforeId = null,
+  } = options;
+
   const pendingCutoff = new Date(Date.now() - 10 * 60 * 1000);
+
+  const blocking = [{ status: "Confirmed" }];
+
+  if (!confirmedOnly) {
+    const pending = {
+      status: "Pending",
+      paymentStatus: "Pending",
+      createdAt: { $gte: pendingCutoff },
+    };
+
+    if (pendingBeforeId) {
+      pending._id = { $lt: pendingBeforeId };
+    }
+
+    blocking.push(pending);
+  }
 
   const query = {
     selectedSpaces: { $in: selectedSpaces },
     startAt: { $lt: endAt },
     endAt: { $gt: startAt },
-    $or: [
-      { status: "Confirmed" },
-      {
-        status: "Pending",
-        paymentStatus: "Pending",
-        createdAt: { $gte: pendingCutoff },
-      },
-    ],
+    $or: blocking,
   };
 
   if (excludeBookingId) {
@@ -391,6 +427,72 @@ export const checkWorkspaceAvailability = async (req, res) => {
 };
 
 // ==========================================
+// VALIDATE COUPON
+// POST /api/booking/validate_coupon
+//
+// Previews the discount for the booking page.
+// The real discount is applied again (server side)
+// inside createRazorpayOrder.
+// ==========================================
+
+export const validateCoupon = async (req, res) => {
+  try {
+    const {
+      couponCode,
+      spaceName,
+      bookingDate,
+      plan,
+      duration,
+      selectedSpaces,
+      startTime,
+    } = req.body;
+
+    validateBookingInput({
+      spaceName,
+      bookingDate,
+      plan,
+      duration,
+      selectedSpaces,
+      startTime,
+    });
+
+    // Throws for Sundays, past dates or invalid hourly slots.
+    getBookingRange(bookingDate, plan, Number(duration), startTime);
+
+    const spaces = await getActiveSpaces(
+      spaceName.trim(),
+      selectedSpaces
+    );
+
+    const pricePerUnit = getServerPricing(spaces, plan);
+    const subtotal =
+      pricePerUnit * Number(duration) * selectedSpaces.length;
+
+    const { coupon, discountAmount, finalAmount } = await applyCoupon({
+      couponCode,
+      spaceName: spaceName.trim(),
+      plan,
+      subtotal,
+      userId: req.user.id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      couponCode: coupon.couponCode,
+      discountPercent: coupon.discount,
+      subtotal,
+      discountAmount,
+      finalAmount,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
 // CREATE RAZORPAY ORDER
 // POST /api/booking/create_razorpay_order
 // ==========================================
@@ -416,6 +518,7 @@ export const createRazorpayOrder = async (req, res) => {
       duration,
       selectedSpaces,
       startTime,
+      couponCode,
     } = req.body;
 
     validateBookingInput({
@@ -455,8 +558,27 @@ export const createRazorpayOrder = async (req, res) => {
 
     // Never trust the total amount supplied by React.
     const pricePerUnit = getServerPricing(spaces, plan);
-    const totalAmount =
+    const subtotal =
       pricePerUnit * numericDuration * selectedSpaces.length;
+
+    // Apply the coupon on the server (if one was sent).
+    let totalAmount = subtotal;
+    let discountAmount = 0;
+    let appliedCouponCode = null;
+
+    if (couponCode) {
+      const result = await applyCoupon({
+        couponCode,
+        spaceName: spaceName.trim(),
+        plan,
+        subtotal,
+        userId: req.user.id,
+      });
+
+      discountAmount = result.discountAmount;
+      totalAmount = result.finalAmount;
+      appliedCouponCode = result.coupon.couponCode;
+    }
 
     if (
       !Number.isSafeInteger(totalAmount) ||
@@ -483,6 +605,9 @@ export const createRazorpayOrder = async (req, res) => {
       duration: numericDuration,
       selectedSpaces,
       pricePerUnit,
+      subtotal,
+      discountAmount,
+      couponCode: appliedCouponCode,
       totalAmount,
       startTime: bookingStartTime, // "HH:mm" for hourly, null otherwise
       endTime, // "HH:mm" for hourly, null otherwise
@@ -492,6 +617,30 @@ export const createRazorpayOrder = async (req, res) => {
       status: "Pending",
     });
 
+    // Race-condition guard: two users can pass the first availability check
+    // at the same moment. Re-check now, counting only Confirmed bookings and
+    // Pending bookings created BEFORE this one. The later request backs off.
+    const raceCheck = await getAvailability(
+      selectedSpaces,
+      startAt,
+      endAt,
+      {
+        excludeBookingId: booking._id,
+        pendingBeforeId: booking._id,
+      }
+    );
+
+    if (!raceCheck.available) {
+      await WorkspaceBooking.deleteOne({ _id: booking._id });
+      booking = null;
+
+      return res.status(409).json({
+        success: false,
+        message: "Some selected workspaces are unavailable",
+        unavailableSpaces: raceCheck.unavailableSpaces,
+      });
+    }
+
     const order = await razorpay.orders.create({
       amount: totalAmount * 100,
       currency: "INR",
@@ -499,6 +648,7 @@ export const createRazorpayOrder = async (req, res) => {
       notes: {
         bookingId,
         userId: String(req.user.id),
+        ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
       },
     });
 
@@ -513,6 +663,9 @@ export const createRazorpayOrder = async (req, res) => {
       amount: order.amount,
       currency: order.currency,
       keyId: process.env.RAZORPAY_KEY_ID,
+      subtotal,
+      discountAmount,
+      couponCode: appliedCouponCode,
       totalAmount,
     });
   } catch (error) {
@@ -619,6 +772,7 @@ export const addWorkspaceBooking = async (req, res) => {
     }
 
     // Confirm the payment against Razorpay's API as well.
+    // booking.totalAmount is already the discounted amount.
     const payment = await razorpay.payments.fetch(razorpayPaymentId);
 
     if (
@@ -634,20 +788,48 @@ export const addWorkspaceBooking = async (req, res) => {
     }
 
     // Recheck availability immediately before confirming.
+    // Only CONFIRMED bookings block here, so the first person to pay wins
+    // and is never rejected because someone else merely started checkout.
     const availability = await getAvailability(
       booking.selectedSpaces,
       booking.startAt,
       booking.endAt,
-      booking._id
+      {
+        excludeBookingId: booking._id,
+        confirmedOnly: true,
+      }
     );
 
     if (!availability.available) {
+      // The seat was confirmed by someone else. Refund automatically.
+      let refunded = false;
+
+      try {
+        await razorpay.payments.refund(razorpayPaymentId, {
+          speed: "normal",
+          notes: { bookingId: booking.bookingId, reason: "Seat conflict" },
+        });
+        refunded = true;
+      } catch (refundError) {
+        console.error(
+          "Automatic refund failed:",
+          refundError?.error?.description || refundError.message
+        );
+      }
+
+      booking.razorpayPaymentId = razorpayPaymentId;
+      booking.paymentStatus = refunded ? "Refunded" : "Paid";
+      booking.status = "Cancelled";
+      await booking.save();
+
       return res.status(409).json({
         success: false,
-        message:
-          "Payment succeeded, but a workspace conflict was detected. Contact support for a refund.",
+        message: refunded
+          ? "Sorry, these workspaces were just booked by someone else. Your payment has been refunded and will reach you in 5-7 working days."
+          : "Sorry, these workspaces were just booked by someone else. Your refund could not be started automatically. Please contact support with your payment ID.",
         unavailableSpaces: availability.unavailableSpaces,
         paymentId: razorpayPaymentId,
+        refunded,
       });
     }
 
@@ -693,7 +875,7 @@ export const getMyReservations = async (req, res) => {
       user: userId,
     })
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
+        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
       )
       .sort({ createdAt: -1 })
       .lean();
@@ -713,22 +895,21 @@ export const getMyReservations = async (req, res) => {
   }
 };
 
-
 // ==========================================
 // GET ALL RESERVATIONS (ADMIN)
 // GET /api/booking/all_reservations
 // ==========================================
- 
+
 export const getAllReservations = async (req, res) => {
   try {
     const reservations = await WorkspaceBooking.find()
       .populate("user", "name email phone")
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
+        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
       )
       .sort({ createdAt: -1 })
       .lean();
- 
+
     return res.status(200).json({
       success: true,
       count: reservations.length,
@@ -736,7 +917,7 @@ export const getAllReservations = async (req, res) => {
     });
   } catch (error) {
     console.error("Get all reservations error:", error);
- 
+
     return res.status(500).json({
       success: false,
       message: "Failed to fetch reservations",
