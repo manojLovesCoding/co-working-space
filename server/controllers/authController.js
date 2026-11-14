@@ -2,32 +2,58 @@ import User from "../models/User.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// ==========================================
+// PUBLIC CUSTOMER REGISTRATION
+// ==========================================
 export const register = async (req, res) => {
   try {
-    const { name, email, phone, password, role } = req.body;
+    const { name, email, phone, password } = req.body;
 
-    const user = await User.findOne({
-      $or: [{ email }, { phone }],
-    });
-
-    if (user) {
+    if (!name?.trim() || !email?.trim() || !phone?.trim() || !password) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "All fields are required",
       });
     }
 
-    const hashPassword = await bcrypt.hash(password, 10);
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
 
-    const newUser = await User.create({
-      name,
-      email,
-      phone,
-      password: hashPassword,
-      role,
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
+
+    const existingUser = await User.findOne({
+      $or: [{ email: normalizedEmail }, { phone: normalizedPhone }],
     });
 
-    res.status(201).json({
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message:
+          existingUser.email === normalizedEmail
+            ? "Email address is already registered"
+            : "Phone number is already registered",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Public registration always creates a customer.
+    // Never accept role from the request body.
+    const newUser = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      password: hashedPassword,
+      role: "customer",
+      isActive: true,
+    });
+
+    return res.status(201).json({
       success: true,
       message: "Registration Successful",
       user: {
@@ -38,19 +64,45 @@ export const register = async (req, res) => {
         role: newUser.role,
       },
     });
-  } catch (err) {
-    res.status(500).json({
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email address or phone number is already registered",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: err.message,
+      message: error.message,
     });
   }
 };
 
+// ==========================================
+// LOGIN
+// ==========================================
 export const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
-    const user = await User.findOne({ email });
+    if (!email?.trim() || !password || !role) {
+      return res.status(400).json({
+        success: false,
+        message: "Email, password and role are required",
+      });
+    }
+
+    if (!["admin", "customer"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.trim().toLowerCase(),
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -59,11 +111,11 @@ export const login = async (req, res) => {
       });
     }
 
-    // Check account status
     if (!user.isActive) {
       return res.status(403).json({
         success: false,
-        message: "Your account has been deactivated. Contact your customer.",
+        message:
+          "Your account has been deactivated. Contact the administrator.",
       });
     }
 
@@ -74,16 +126,15 @@ export const login = async (req, res) => {
       });
     }
 
-    const checkPassword = await bcrypt.compare(password, user.password);
+    const passwordMatches = await bcrypt.compare(password, user.password);
 
-    if (!checkPassword) {
+    if (!passwordMatches) {
       return res.status(401).json({
         success: false,
         message: "Invalid password",
       });
     }
 
-    // Generate JWT
     const token = jwt.sign(
       {
         id: user._id,
@@ -95,7 +146,7 @@ export const login = async (req, res) => {
       },
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "Login Successful",
       token,
@@ -107,201 +158,144 @@ export const login = async (req, res) => {
         role: user.role,
       },
     });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const getUsers = async (req, res) => {
-  try {
-    const users = await User.find()
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      users,
-    });
-
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-export const createTenant = async (req, res) => {
+// ==========================================
+// ADMIN: CREATE CUSTOMER
+// ==========================================
+export const createCustomer = async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
-    const existingUser = await User.findOne({
-      $or: [{ email }, { phone }],
-    });
-
-    if (existingUser) {
+    if (!name?.trim() || !email?.trim() || !phone?.trim() || !password) {
       return res.status(400).json({
         success: false,
-        message: "User already exists",
+        message: "All fields are required",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const tenant = await User.create({
-      name,
-      email,
-      phone,
-      password: hashedPassword,
-      role: "tenant",
-      createdBy: req.user.id, // customer id
-    });
-
-    res.status(201).json({
-      success: true,
-      message: "Tenant created successfully",
-      tenant: {
-        id: tenant._id,
-        name: tenant.name,
-        email: tenant.email,
-        phone: tenant.phone,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const getTenants = async (req, res) => {
-  try {
-    const tenants = await User.find({
-      role: "tenant",
-      createdBy: req.user.id,
-    }).select("-password");
-
-    res.json({
-      success: true,
-      tenants,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const updateTenant = async (req, res) => {
-  try {
-    const { name, email, phone } = req.body;
-
-    const tenant = await User.findOne({
-      _id: req.params.id,
-      role: "tenant",
-      createdBy: req.user.id,
-    });
-
-    if (!tenant) {
-      return res.status(404).json({
-        success: false,
-        message: "Tenant not found",
-      });
-    }
-
-    tenant.name = name;
-    tenant.email = email;
-    tenant.phone = phone;
-
-    await tenant.save();
-
-    res.json({
-      success: true,
-      message: "Tenant updated successfully",
-      tenant,
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const deactivateTenant = async (req, res) => {
-  try {
-    const tenant = await User.findOne({
-      _id: req.params.id,
-      role: "tenant",
-      createdBy: req.user.id,
-    });
-
-    if (!tenant) {
-      return res.status(404).json({
-        success: false,
-        message: "Tenant not found",
-      });
-    }
-
-    tenant.isActive = false;
-
-    await tenant.save();
-
-    res.json({
-      success: true,
-      message: "Tenant deactivated successfully",
-    });
-  } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
-  }
-};
-
-export const updateTenantPassword = async (req, res) => {
-  try {
-    const { password } = req.body;
-
-    if (!password || password.length < 6) {
+    if (password.length < 6) {
       return res.status(400).json({
         success: false,
         message: "Password must be at least 6 characters",
       });
     }
 
-    const tenant = await User.findOne({
-      _id: req.params.id,
-      role: "tenant",
-      createdBy: req.user.id,
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
+
+    const existingUser = await User.findOne({
+      $or: [{ email: normalizedEmail }, { phone: normalizedPhone }],
     });
 
-    if (!tenant) {
-      return res.status(404).json({
+    if (existingUser) {
+      return res.status(409).json({
         success: false,
-        message: "Tenant not found",
+        message:
+          existingUser.email === normalizedEmail
+            ? "Email address is already registered"
+            : "Phone number is already registered",
       });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    tenant.password = hashedPassword;
-
-    await tenant.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Tenant password updated successfully",
+    const customer = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      phone: normalizedPhone,
+      password: hashedPassword,
+      role: "customer",
+      isActive: true,
     });
-  } catch (err) {
-    res.status(500).json({
+
+    return res.status(201).json({
+      success: true,
+      message: "Customer account created successfully",
+      customer: {
+        id: customer._id,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        role: customer.role,
+        isActive: customer.isActive,
+      },
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: "Email address or phone number is already registered",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: err.message,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN: GET ALL USERS
+// ==========================================
+export const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ==========================================
+// ADMIN: DEACTIVATE CUSTOMER
+// ==========================================
+export const deactivateCustomer = async (req, res) => {
+  try {
+    const customer = await User.findOne({
+      _id: req.params.id,
+      role: "customer",
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    if (!customer.isActive) {
+      return res.status(400).json({
+        success: false,
+        message: "Customer account is already inactive",
+      });
+    }
+
+    customer.isActive = false;
+    await customer.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Customer account deactivated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };

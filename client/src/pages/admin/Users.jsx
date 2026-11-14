@@ -1,19 +1,40 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api/axios.js";
 
+const EMPTY_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+};
+
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [customerForm, setCustomerForm] = useState(EMPTY_FORM);
+  const [customerError, setCustomerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // ==========================================
+  // FETCH USERS
+  // ==========================================
   const fetchUsers = async () => {
     try {
       const res = await api.get("/auth/users");
       setUsers(res.data.users || []);
     } catch (error) {
-      console.error(error);
+      console.error("Failed to fetch users:", error);
     } finally {
       setLoading(false);
     }
@@ -23,35 +44,96 @@ const Users = () => {
     fetchUsers();
   }, []);
 
-  const handleDeactivate = async (id) => {
-    const confirmDeactivate = window.confirm(
-      "Are you sure you want to deactivate this user?",
-    );
+  // ==========================================
+  // CREATE CUSTOMER
+  // ==========================================
+  const handleCreateCustomer = async (e) => {
+    e.preventDefault();
+    setCustomerError("");
 
-    if (!confirmDeactivate) return;
+    const { name, email, phone, password, confirmPassword } = customerForm;
+
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !password ||
+      !confirmPassword
+    ) {
+      setCustomerError("Please fill in all fields.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setCustomerError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setCustomerError("Passwords do not match.");
+      return;
+    }
 
     try {
-      await api.patch(`/auth/tenant/${id}/deactivate`);
+      setCreating(true);
 
-      setUsers((prev) =>
-        prev.map((user) =>
-          user._id === id
-            ? {
-                ...user,
-                isActive: false,
-              }
-            : user,
-        ),
-      );
+      await api.post("/auth/create-customer", {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        password,
+      });
+
+      setCustomerForm(EMPTY_FORM);
+      setShowCreateModal(false);
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+
+      await fetchUsers();
+
+      alert("Customer account created successfully.");
     } catch (error) {
-      console.error(error);
-      alert("Failed to deactivate user");
+      setCustomerError(
+        error.response?.data?.message || "Failed to create customer account.",
+      );
+    } finally {
+      setCreating(false);
     }
   };
 
+  // ==========================================
+  // DEACTIVATE CUSTOMER
+  // ==========================================
+  const handleDeactivate = async (id) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to deactivate this customer account?",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await api.patch(`/auth/customer/${id}/deactivate`);
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === id ? { ...user, isActive: false } : user,
+        ),
+      );
+
+      alert("Customer account deactivated successfully.");
+    } catch (error) {
+      console.error(error);
+
+      alert(error.response?.data?.message || "Failed to deactivate customer.");
+    }
+  };
+
+  // ==========================================
+  // FILTER USERS
+  // ==========================================
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
-      const searchValue = search.toLowerCase();
+      const searchValue = search.toLowerCase().trim();
 
       const matchesSearch =
         user.name?.toLowerCase().includes(searchValue) ||
@@ -69,37 +151,49 @@ const Users = () => {
     });
   }, [users, search, roleFilter, statusFilter]);
 
-  const getInitials = (name = "") => {
-    return name
+  // ==========================================
+  // HELPERS
+  // ==========================================
+  const getInitials = (name = "") =>
+    name
       .split(" ")
+      .filter(Boolean)
       .map((word) => word[0])
       .join("")
       .slice(0, 2)
       .toUpperCase();
-  };
 
   const getRoleStyle = (role) => {
     switch (role) {
       case "admin":
         return "bg-purple-50 text-purple-700 ring-purple-200";
 
-      case "landlord":
+      case "customer":
         return "bg-blue-50 text-blue-700 ring-blue-200";
-
-      case "tenant":
-        return "bg-emerald-50 text-emerald-700 ring-emerald-200";
 
       default:
         return "bg-gray-50 text-gray-700 ring-gray-200";
     }
   };
 
+  const closeCreateModal = () => {
+    if (creating) return;
+
+    setShowCreateModal(false);
+    setCustomerForm(EMPTY_FORM);
+    setCustomerError("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+  };
+
+  // ==========================================
+  // LOADING
+  // ==========================================
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-7xl animate-pulse space-y-6">
           <div className="h-36 rounded-3xl bg-white shadow-sm" />
-
           <div className="h-20 rounded-2xl bg-white shadow-sm" />
 
           <div className="rounded-3xl bg-white p-6 shadow-sm">
@@ -117,15 +211,16 @@ const Users = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
-        {/* ================= HEADER ================= */}
+        {/* ======================================
+            HEADER
+        ====================================== */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-6 text-white shadow-xl shadow-blue-100 sm:p-8">
-          {/* Decorative circles */}
           <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10" />
           <div className="absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/5" />
 
           <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold backdrop-blur">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold">
                 <span className="h-2 w-2 rounded-full bg-emerald-300" />
                 User Management
               </div>
@@ -135,38 +230,56 @@ const Users = () => {
               </h1>
 
               <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
-                Manage tenants, landlords and administrators from one
-                centralized dashboard.
+                Manage administrators and customers from one centralized
+                dashboard.
               </p>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="rounded-2xl bg-white/10 px-4 py-3 text-center backdrop-blur">
-                <p className="text-xl font-bold sm:text-2xl">{users.length}</p>
-                <p className="text-[11px] text-blue-100 sm:text-xs">Total</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                <div className="rounded-2xl bg-white/10 px-4 py-3 text-center">
+                  <p className="text-xl font-bold sm:text-2xl">
+                    {users.length}
+                  </p>
+                  <p className="text-[11px] text-blue-100 sm:text-xs">Total</p>
+                </div>
+
+                <div className="rounded-2xl bg-white/10 px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-emerald-200 sm:text-2xl">
+                    {users.filter((user) => user.isActive).length}
+                  </p>
+                  <p className="text-[11px] text-blue-100 sm:text-xs">Active</p>
+                </div>
+
+                <div className="rounded-2xl bg-white/10 px-4 py-3 text-center">
+                  <p className="text-xl font-bold text-red-200 sm:text-2xl">
+                    {users.filter((user) => !user.isActive).length}
+                  </p>
+                  <p className="text-[11px] text-blue-100 sm:text-xs">
+                    Inactive
+                  </p>
+                </div>
               </div>
 
-              <div className="rounded-2xl bg-white/10 px-4 py-3 text-center backdrop-blur">
-                <p className="text-xl font-bold text-emerald-200 sm:text-2xl">
-                  {users.filter((user) => user.isActive).length}
-                </p>
-                <p className="text-[11px] text-blue-100 sm:text-xs">Active</p>
-              </div>
-
-              <div className="rounded-2xl bg-white/10 px-4 py-3 text-center backdrop-blur">
-                <p className="text-xl font-bold text-red-200 sm:text-2xl">
-                  {users.filter((user) => !user.isActive).length}
-                </p>
-                <p className="text-[11px] text-blue-100 sm:text-xs">Inactive</p>
-              </div>
+              <button
+                onClick={() => {
+                  setCustomerError("");
+                  setShowCreateModal(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-lg transition hover:bg-blue-50"
+              >
+                <span className="text-xl">+</span>
+                Create Customer
+              </button>
             </div>
           </div>
         </section>
 
-        {/* ================= FILTERS ================= */}
+        {/* ======================================
+            FILTERS
+        ====================================== */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            {/* Search */}
             <div className="relative flex-1">
               <svg
                 className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
@@ -187,27 +300,24 @@ const Users = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search by name, email or phone..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
               />
             </div>
 
-            {/* Role */}
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
             >
               <option value="all">All Roles</option>
-              <option value="tenant">Tenant</option>
-              <option value="landlord">Landlord</option>
               <option value="admin">Admin</option>
+              <option value="customer">Customer</option>
             </select>
 
-            {/* Status */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-500"
             >
               <option value="all">All Status</option>
               <option value="active">Active</option>
@@ -221,7 +331,7 @@ const Users = () => {
                   setRoleFilter("all");
                   setStatusFilter("all");
                 }}
-                className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-500 transition hover:bg-slate-100"
               >
                 Clear
               </button>
@@ -239,31 +349,26 @@ const Users = () => {
           </div>
         </section>
 
-        {/* ================= DESKTOP TABLE ================= */}
+        {/* ======================================
+            DESKTOP TABLE
+        ====================================== */}
         <section className="hidden overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm md:block">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left">
+            <table className="w-full min-w-[850px] text-left">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80">
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    User
-                  </th>
-
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Contact
-                  </th>
-
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Role
-                  </th>
-
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Status
-                  </th>
-
-                  <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Actions
-                  </th>
+                  {["User", "Contact", "Role", "Status", "Actions"].map(
+                    (heading) => (
+                      <th
+                        key={heading}
+                        className={`px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 ${
+                          heading === "Actions" ? "text-right" : ""
+                        }`}
+                      >
+                        {heading}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
 
@@ -272,12 +377,11 @@ const Users = () => {
                   filteredUsers.map((user) => (
                     <tr
                       key={user._id}
-                      className="group transition hover:bg-blue-50/40"
+                      className="transition hover:bg-blue-50/40"
                     >
-                      {/* User */}
                       <td className="px-6 py-5">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white shadow-sm">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-sm font-bold text-white">
                             {getInitials(user.name)}
                           </div>
 
@@ -285,7 +389,6 @@ const Users = () => {
                             <p className="truncate font-semibold text-slate-800">
                               {user.name}
                             </p>
-
                             <p className="text-xs text-slate-400">
                               ID: {user._id?.slice(-8)}
                             </p>
@@ -293,18 +396,15 @@ const Users = () => {
                         </div>
                       </td>
 
-                      {/* Contact */}
                       <td className="px-6 py-5">
                         <p className="max-w-[230px] truncate text-sm font-medium text-slate-700">
                           {user.email}
                         </p>
-
                         <p className="mt-1 text-xs text-slate-400">
                           {user.phone || "No phone number"}
                         </p>
                       </td>
 
-                      {/* Role */}
                       <td className="px-6 py-5">
                         <span
                           className={`inline-flex rounded-full px-3 py-1.5 text-xs font-bold capitalize ring-1 ${getRoleStyle(
@@ -315,7 +415,6 @@ const Users = () => {
                         </span>
                       </td>
 
-                      {/* Status */}
                       <td className="px-6 py-5">
                         <span
                           className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${
@@ -329,30 +428,27 @@ const Users = () => {
                               user.isActive ? "bg-emerald-500" : "bg-red-500"
                             }`}
                           />
-
                           {user.isActive ? "Active" : "Inactive"}
                         </span>
                       </td>
 
-                      {/* Actions */}
                       <td className="px-6 py-5">
                         <div className="flex justify-end gap-2">
-                          {user.role === "tenant" && user.isActive && (
-                            <button
-                              onClick={() => handleDeactivate(user._id)}
-                              className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
-                            >
-                              Block
-                            </button>
-                          )}
-
-                          <button className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100">
+                          <button
+                            onClick={() => setSelectedUser(user)}
+                            className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100"
+                          >
                             View
                           </button>
 
-                          <button className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100">
-                            Delete
-                          </button>
+                          {user.role === "customer" && user.isActive && (
+                            <button
+                              onClick={() => handleDeactivate(user._id)}
+                              className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 hover:bg-amber-100"
+                            >
+                              Deactivate
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -360,19 +456,10 @@ const Users = () => {
                 ) : (
                   <tr>
                     <td colSpan="5" className="px-6 py-16 text-center">
-                      <div className="mx-auto flex max-w-sm flex-col items-center">
-                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
-                          👥
-                        </div>
-
-                        <h3 className="font-bold text-slate-800">
-                          No users found
-                        </h3>
-
-                        <p className="mt-1 text-sm text-slate-500">
-                          Try changing your search or filter options.
-                        </p>
-                      </div>
+                      <p className="font-bold text-slate-800">No users found</p>
+                      <p className="mt-1 text-sm text-slate-500">
+                        Try changing your search or filter options.
+                      </p>
                     </td>
                   </tr>
                 )}
@@ -381,18 +468,19 @@ const Users = () => {
           </div>
         </section>
 
-        {/* ================= MOBILE CARDS ================= */}
+        {/* ======================================
+            MOBILE CARDS
+        ====================================== */}
         <section className="space-y-4 md:hidden">
           {filteredUsers.length > 0 ? (
             filteredUsers.map((user) => (
               <div
                 key={user._id}
-                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md"
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
               >
-                {/* User header */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 font-bold text-white shadow-sm">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 font-bold text-white">
                       {getInitials(user.name)}
                     </div>
 
@@ -400,7 +488,6 @@ const Users = () => {
                       <h3 className="truncate font-bold text-slate-800">
                         {user.name}
                       </h3>
-
                       <p className="truncate text-xs text-slate-400">
                         {user.email}
                       </p>
@@ -416,13 +503,11 @@ const Users = () => {
                   </span>
                 </div>
 
-                {/* Details */}
                 <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Phone
                     </p>
-
                     <p className="mt-1 truncate text-sm font-medium text-slate-700">
                       {user.phone || "Not available"}
                     </p>
@@ -432,54 +517,38 @@ const Users = () => {
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       Status
                     </p>
-
-                    <div className="mt-1">
-                      <span
-                        className={`inline-flex items-center gap-1.5 text-sm font-semibold ${
-                          user.isActive ? "text-emerald-600" : "text-red-600"
-                        }`}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            user.isActive ? "bg-emerald-500" : "bg-red-500"
-                          }`}
-                        />
-
-                        {user.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
+                    <p
+                      className={`mt-1 text-sm font-semibold ${
+                        user.isActive ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {user.isActive ? "Active" : "Inactive"}
+                    </p>
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="mt-4 flex gap-2">
-                  <button className="flex-1 rounded-xl border border-blue-200 bg-blue-50 py-2.5 text-xs font-bold text-blue-700 transition hover:bg-blue-100">
+                  <button
+                    onClick={() => setSelectedUser(user)}
+                    className="flex-1 rounded-xl border border-blue-200 bg-blue-50 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100"
+                  >
                     View
                   </button>
 
-                  {user.role === "tenant" && user.isActive && (
+                  {user.role === "customer" && user.isActive && (
                     <button
                       onClick={() => handleDeactivate(user._id)}
-                      className="flex-1 rounded-xl border border-amber-200 bg-amber-50 py-2.5 text-xs font-bold text-amber-700 transition hover:bg-amber-100"
+                      className="flex-1 rounded-xl border border-amber-200 bg-amber-50 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-100"
                     >
-                      Block
+                      Deactivate
                     </button>
                   )}
-
-                  <button className="flex-1 rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-100">
-                    Delete
-                  </button>
                 </div>
               </div>
             ))
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
-                👥
-              </div>
-
               <h3 className="font-bold text-slate-800">No users found</h3>
-
               <p className="mt-1 text-sm text-slate-500">
                 Try changing your search or filters.
               </p>
@@ -487,6 +556,248 @@ const Users = () => {
           )}
         </section>
       </div>
+
+      {/* ======================================
+          CREATE CUSTOMER MODAL
+      ====================================== */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 p-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Create Customer
+                </h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Add a new customer account.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeCreateModal}
+                disabled={creating}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 disabled:opacity-50"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCustomer} className="space-y-4 p-6">
+              {customerError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {customerError}
+                </div>
+              )}
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={customerForm.name}
+                  onChange={(e) =>
+                    setCustomerForm((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter customer name"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={customerForm.email}
+                  onChange={(e) =>
+                    setCustomerForm((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
+                  placeholder="customer@example.com"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={customerForm.phone}
+                  onChange={(e) =>
+                    setCustomerForm((prev) => ({
+                      ...prev,
+                      phone: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter phone number"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={customerForm.password}
+                    onChange={(e) =>
+                      setCustomerForm((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    placeholder="Minimum 6 characters"
+                    autoComplete="new-password"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-16 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={customerForm.confirmPassword}
+                    onChange={(e) =>
+                      setCustomerForm((prev) => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
+                    placeholder="Confirm password"
+                    autoComplete="new-password"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 pr-16 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500"
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-blue-50 p-3 text-xs text-blue-700">
+                The account will automatically be created with the Customer role
+                and Active status.
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeCreateModal}
+                  disabled={creating}
+                  className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-sm font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {creating ? "Creating..." : "Create Customer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================
+          VIEW USER MODAL
+      ====================================== */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold text-slate-900">User Details</h2>
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-6 flex flex-col items-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-xl font-bold text-white">
+                {getInitials(selectedUser.name)}
+              </div>
+              <h3 className="mt-3 text-lg font-bold text-slate-900">
+                {selectedUser.name}
+              </h3>
+              <span
+                className={`mt-2 rounded-full px-3 py-1 text-xs font-bold capitalize ${getRoleStyle(
+                  selectedUser.role,
+                )}`}
+              >
+                {selectedUser.role}
+              </span>
+            </div>
+
+            <div className="mt-6 space-y-4 rounded-xl bg-slate-50 p-4 text-sm">
+              <div>
+                <p className="text-xs text-slate-400">Email</p>
+                <p className="mt-1 break-all font-medium text-slate-800">
+                  {selectedUser.email}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Phone</p>
+                <p className="mt-1 font-medium text-slate-800">
+                  {selectedUser.phone}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Account Status</p>
+                <p className="mt-1 font-medium text-slate-800">
+                  {selectedUser.isActive ? "Active" : "Inactive"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Account Created</p>
+                <p className="mt-1 font-medium text-slate-800">
+                  {selectedUser.createdAt
+                    ? new Date(selectedUser.createdAt).toLocaleDateString()
+                    : "Not available"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSelectedUser(null)}
+              className="mt-5 w-full rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white hover:bg-slate-800"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

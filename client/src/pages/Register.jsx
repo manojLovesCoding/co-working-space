@@ -11,7 +11,6 @@ const Register = () => {
     phone: "",
     password: "",
     confirmPassword: "",
-    role: "tenant",
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +23,6 @@ const Register = () => {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-
     setError("");
   };
 
@@ -32,23 +30,25 @@ const Register = () => {
     e.preventDefault();
     setError("");
 
+    const { name, email, phone, password, confirmPassword } = formData;
+
     if (
-      !formData.name ||
-      !formData.email ||
-      !formData.phone ||
-      !formData.password ||
-      !formData.confirmPassword
+      !name.trim() ||
+      !email.trim() ||
+      !phone.trim() ||
+      !password ||
+      !confirmPassword
     ) {
       setError("Please fill in all fields.");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
     }
@@ -57,14 +57,13 @@ const Register = () => {
       setLoading(true);
 
       const { data } = await api.post("/auth/register", {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        role: formData.role,
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+        password,
       });
 
-      alert(data.message);
+      alert(data.message || "Registration successful.");
 
       setFormData({
         name: "",
@@ -72,7 +71,6 @@ const Register = () => {
         phone: "",
         password: "",
         confirmPassword: "",
-        role: "tenant",
       });
 
       navigate("/login");
@@ -85,26 +83,20 @@ const Register = () => {
     }
   };
 
+  const inputClass =
+    "w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 px-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10";
+
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="flex min-h-screen">
-        {/* =====================================================
-            LEFT BRAND SECTION
-        ====================================================== */}
+        {/* Left branding section */}
         <div className="relative hidden overflow-hidden lg:flex lg:w-1/2">
-          {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-violet-900" />
 
-          {/* Decorative circles */}
           <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-400/20 blur-3xl" />
-
           <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-purple-400/20 blur-3xl" />
 
-          <div className="absolute right-20 top-20 h-32 w-32 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl" />
-
-          {/* Content */}
           <div className="relative z-10 flex w-full flex-col justify-between p-12 xl:p-16">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-3 text-white">
               <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-xl font-bold text-blue-600 shadow-lg">
                 R
@@ -112,14 +104,12 @@ const Register = () => {
 
               <div>
                 <p className="text-lg font-bold">RentalHub</p>
-
                 <p className="text-xs text-blue-100">Rental Management</p>
               </div>
             </Link>
 
-            {/* Main message */}
             <div className="max-w-lg">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-blue-50 backdrop-blur">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-blue-50">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
                 Your next home starts here
               </div>
@@ -134,84 +124,61 @@ const Register = () => {
                 lifestyle, budget, and needs.
               </p>
 
-              {/* Features */}
               <div className="mt-10 space-y-5">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg backdrop-blur">
-                    ✓
+                {[
+                  [
+                    "✓",
+                    "Verified Properties",
+                    "Discover quality rental listings",
+                  ],
+                  [
+                    "🔒",
+                    "Secure & Simple",
+                    "Manage your rental journey with ease",
+                  ],
+                  [
+                    "⚡",
+                    "Easy Management",
+                    "Everything in one convenient place",
+                  ],
+                ].map(([icon, title, description]) => (
+                  <div key={title} className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg">
+                      {icon}
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-white">{title}</p>
+                      <p className="text-sm text-blue-100/60">{description}</p>
+                    </div>
                   </div>
-
-                  <div>
-                    <p className="font-semibold text-white">
-                      Verified Properties
-                    </p>
-
-                    <p className="text-sm text-blue-100/60">
-                      Discover quality rental listings
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg backdrop-blur">
-                    🔒
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-white">Secure & Simple</p>
-
-                    <p className="text-sm text-blue-100/60">
-                      Manage your rental journey with ease
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg backdrop-blur">
-                    ⚡
-                  </div>
-
-                  <div>
-                    <p className="font-semibold text-white">Easy Management</p>
-
-                    <p className="text-sm text-blue-100/60">
-                      Everything in one convenient place
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
 
-            {/* Footer */}
             <p className="text-sm text-blue-100/50">
               © 2026 RentalHub. All rights reserved.
             </p>
           </div>
         </div>
 
-        {/* =====================================================
-            RIGHT REGISTER SECTION
-        ====================================================== */}
+        {/* Registration section */}
         <div className="flex w-full items-center justify-center bg-slate-50 px-4 py-10 sm:px-6 lg:w-1/2 lg:px-12">
           <div className="w-full max-w-xl">
-            {/* Mobile logo */}
             <div className="mb-8 text-center lg:hidden">
               <Link to="/" className="inline-flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white shadow-lg shadow-blue-600/20">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white">
                   R
                 </div>
 
                 <div className="text-left">
                   <p className="text-lg font-bold text-slate-900">RentalHub</p>
-
                   <p className="text-xs text-slate-500">Rental Management</p>
                 </div>
               </Link>
             </div>
 
-            {/* Card */}
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8 md:p-10">
-              {/* Heading */}
               <div className="mb-8">
                 <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-blue-600">
                   Get started
@@ -222,15 +189,13 @@ const Register = () => {
                 </h2>
 
                 <p className="mt-2 text-sm text-slate-500 sm:text-base">
-                  Join us and start managing your rental journey.
+                  Join RentalHub and start your rental journey.
                 </p>
               </div>
 
-              {/* Error */}
               {error && (
-                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                  <span className="mt-0.5">⚠️</span>
-                  <p>{error}</p>
+                <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  ⚠️ {error}
                 </div>
               )}
 
@@ -241,68 +206,48 @@ const Register = () => {
                     Full Name
                   </label>
 
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                      👤
-                    </span>
-
-                    <input
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Enter your full name"
-                      autoComplete="name"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                    />
-                  </div>
+                  <input
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    autoComplete="name"
+                    className={inputClass}
+                  />
                 </div>
 
-                {/* Email + Phone */}
+                {/* Email and phone */}
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* Email */}
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Email Address
                     </label>
 
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        ✉
-                      </span>
-
-                      <input
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="you@example.com"
-                        type="email"
-                        autoComplete="email"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                      />
-                    </div>
+                    <input
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      className={inputClass}
+                    />
                   </div>
 
-                  {/* Phone */}
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-slate-700">
                       Phone Number
                     </label>
 
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                        ☎
-                      </span>
-
-                      <input
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        placeholder="Enter phone number"
-                        type="tel"
-                        autoComplete="tel"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
-                      />
-                    </div>
+                    <input
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Enter phone number"
+                      autoComplete="tel"
+                      className={inputClass}
+                    />
                   </div>
                 </div>
 
@@ -313,10 +258,6 @@ const Register = () => {
                   </label>
 
                   <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                      🔒
-                    </span>
-
                     <input
                       name="password"
                       value={formData.password}
@@ -324,30 +265,26 @@ const Register = () => {
                       placeholder="Create a password"
                       type={showPassword ? "text" : "password"}
                       autoComplete="new-password"
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                      className={`${inputClass} pr-16`}
                     />
 
                     <button
                       type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition hover:text-slate-700"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500 hover:text-slate-800"
                     >
                       {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
                 </div>
 
-                {/* Confirm Password */}
+                {/* Confirm password */}
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Confirm Password
                   </label>
 
                   <div className="relative">
-                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
-                      🔐
-                    </span>
-
                     <input
                       name="confirmPassword"
                       value={formData.confirmPassword}
@@ -355,20 +292,18 @@ const Register = () => {
                       placeholder="Confirm your password"
                       type={showConfirmPassword ? "text" : "password"}
                       autoComplete="new-password"
-                      className={`w-full rounded-xl border bg-slate-50 py-3.5 pl-11 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:bg-white focus:ring-4 ${
+                      className={`${inputClass} pr-16 ${
                         formData.confirmPassword &&
                         formData.password !== formData.confirmPassword
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-500/10"
-                          : "border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+                          ? "border-red-300"
+                          : ""
                       }`}
                     />
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 transition hover:text-slate-700"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-500 hover:text-slate-800"
                     >
                       {showConfirmPassword ? "Hide" : "Show"}
                     </button>
@@ -382,89 +317,8 @@ const Register = () => {
                     )}
                 </div>
 
-                {/* Role */}
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-slate-700">
-                    I am a
-                  </label>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Tenant */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          role: "tenant",
-                        }))
-                      }
-                      className={`rounded-xl border p-4 text-left transition ${
-                        formData.role === "tenant"
-                          ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                            formData.role === "tenant"
-                              ? "bg-blue-600 text-white"
-                              : "bg-white text-slate-500"
-                          }`}
-                        >
-                          🏠
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">
-                            Tenant
-                          </p>
-
-                          <p className="text-xs text-slate-500">
-                            Looking for a home
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* customer */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          role: "customer",
-                        }))
-                      }
-                      className={`rounded-xl border p-4 text-left transition ${
-                        formData.role === "customer"
-                          ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                            formData.role === "customer"
-                              ? "bg-blue-600 text-white"
-                              : "bg-white text-slate-500"
-                          }`}
-                        >
-                          🏢
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-bold text-slate-900">
-                            customer
-                          </p>
-
-                          <p className="text-xs text-slate-500">
-                            Listing my property
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  </div>
+                <div className="rounded-xl bg-blue-50 p-3 text-sm text-blue-700">
+                  Your account will be registered as a customer.
                 </div>
 
                 {/* Terms */}
@@ -494,11 +348,10 @@ const Register = () => {
                   </p>
                 </div>
 
-                {/* Submit */}
                 <button
                   type="submit"
                   disabled={loading}
-                  className="group flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  className="flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3.5 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? (
                     <>
@@ -506,23 +359,17 @@ const Register = () => {
                       Creating account...
                     </>
                   ) : (
-                    <>
-                      Create Account
-                      <span className="ml-2 transition-transform group-hover:translate-x-1">
-                        →
-                      </span>
-                    </>
+                    "Create Customer Account →"
                   )}
                 </button>
               </form>
 
-              {/* Login */}
               <div className="mt-7 border-t border-slate-100 pt-6 text-center">
                 <p className="text-sm text-slate-500">
                   Already have an account?{" "}
                   <Link
                     to="/login"
-                    className="font-semibold text-blue-600 transition hover:text-blue-700"
+                    className="font-semibold text-blue-600 hover:text-blue-700"
                   >
                     Sign in
                   </Link>
@@ -530,7 +377,6 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Mobile footer */}
             <p className="mt-6 text-center text-xs text-slate-400 lg:hidden">
               © 2026 RentalHub. All rights reserved.
             </p>

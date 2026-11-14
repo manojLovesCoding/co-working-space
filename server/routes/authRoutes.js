@@ -1,27 +1,29 @@
+
 import { Router } from "express";
+
 import {
   register,
   login,
-  createTenant,
-  getTenants,
-  deactivateTenant,
-  updateTenant,
-  updateTenantPassword,
+  createCustomer,
   getUsers,
+  deactivateCustomer,
 } from "../controllers/authController.js";
+
 import { verifyToken } from "../middleware/auth.js";
 import { authorizeRoles } from "../middleware/role.js";
-//import { protect } from "../middleware/auth.js";
 
 const authRouter = Router();
 
+// Public routes
 authRouter.post("/register", register);
 authRouter.post("/login", login);
+
+// Admin-only routes
 authRouter.post(
-  "/create-tenant",
+  "/create-customer",
   verifyToken,
-  authorizeRoles("admin", "customer"),
-  createTenant,
+  authorizeRoles("admin"),
+  createCustomer
 );
 
 authRouter.get(
@@ -31,31 +33,11 @@ authRouter.get(
   getUsers
 );
 
-authRouter.get(
-  "/tenants",
-  verifyToken,
-  authorizeRoles("admin", "customer"),
-  getTenants,
-);
-authRouter.put(
-  "/tenant/:id",
-  verifyToken,
-  authorizeRoles("admin", "customer"),
-  updateTenant,
-);
-
 authRouter.patch(
-  "/tenant/:id/deactivate",
+  "/customer/:id/deactivate",
   verifyToken,
-  authorizeRoles("admin", "customer"),
-  deactivateTenant,
-);
-
-authRouter.put(
-  "/tenant/:id/password",
-  verifyToken,
-  authorizeRoles("admin", "customer"),
-  updateTenantPassword,
+  authorizeRoles("admin"),
+  deactivateCustomer
 );
 
 export default authRouter;

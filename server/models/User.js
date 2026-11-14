@@ -29,65 +29,34 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
     },
 
-    /*
-     * Role is used for authorization.
-     *
-     * Example:
-     * admin
-     * customer
-     * tenant
-     */
     role: {
       type: String,
-      enum: ["customer", "tenant", "admin"],
-      default: "tenant",
+      enum: ["admin", "customer"],
+      default: "customer",
+      required: true,
     },
 
-    /*
-     * Designation is profile information.
-     *
-     * Example:
-     * Manager
-     * Accountant
-     * Receptionist
-     * Software Developer
-     */
     designation: {
       type: String,
       default: "",
       trim: true,
     },
 
-    /*
-     * Date of birth
-     */
     dob: {
       type: Date,
       default: null,
     },
 
-    /*
-     * User address
-     */
     address: {
       type: String,
       default: "",
       trim: true,
     },
 
-    /*
-     * Cloudinary profile image URL
-     */
     profilePic: {
       type: String,
       default: "",
       trim: true,
-    },
-
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
     },
 
     isActive: {
@@ -97,7 +66,9 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+export default User;

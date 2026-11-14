@@ -10,7 +10,7 @@ const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "tenant",
+    role: "customer",
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,15 @@ const Login = () => {
     setError("");
   };
 
+  const handleRoleChange = (role) => {
+    setFormData((prev) => ({
+      ...prev,
+      role,
+    }));
+
+    setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -45,7 +54,11 @@ const Login = () => {
     try {
       setLoading(true);
 
-      const { data } = await api.post("/auth/login", formData);
+      const { data } = await api.post("/auth/login", {
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+        role: formData.role,
+      });
 
       login(data);
 
@@ -65,14 +78,10 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="flex min-h-screen">
-        {/* =====================================================
-            LEFT BRANDING SECTION
-        ====================================================== */}
+        {/* LEFT BRANDING SECTION */}
         <div className="relative hidden overflow-hidden lg:flex lg:w-1/2">
-          {/* Background */}
           <div className="absolute inset-0 bg-gradient-to-br from-blue-700 via-indigo-700 to-violet-900" />
 
-          {/* Glow effects */}
           <div className="absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-blue-400/20 blur-3xl" />
 
           <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-purple-400/20 blur-3xl" />
@@ -81,7 +90,6 @@ const Login = () => {
 
           <div className="absolute bottom-32 left-20 h-20 w-20 rounded-full border border-white/10 bg-white/5 backdrop-blur-xl" />
 
-          {/* Content */}
           <div className="relative z-10 flex w-full flex-col justify-between p-12 xl:p-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 text-white">
@@ -91,12 +99,11 @@ const Login = () => {
 
               <div>
                 <p className="text-lg font-bold">Vayuhu</p>
-
                 <p className="text-xs text-blue-100">Rental Management</p>
               </div>
             </Link>
 
-            {/* Main content */}
+            {/* Main Content */}
             <div className="max-w-lg">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-blue-50 backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -113,7 +120,7 @@ const Login = () => {
                 stay connected with your rental community.
               </p>
 
-              {/* Feature cards */}
+              {/* Feature Cards */}
               <div className="mt-10 grid max-w-md grid-cols-2 gap-4">
                 <div className="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-xl">
                   <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
@@ -148,12 +155,10 @@ const Login = () => {
           </div>
         </div>
 
-        {/* =====================================================
-            RIGHT LOGIN SECTION
-        ====================================================== */}
+        {/* RIGHT LOGIN SECTION */}
         <div className="flex w-full items-center justify-center bg-slate-50 px-4 py-10 sm:px-6 lg:w-1/2 lg:px-12">
           <div className="w-full max-w-xl">
-            {/* Mobile logo */}
+            {/* Mobile Logo */}
             <div className="mb-8 text-center lg:hidden">
               <Link to="/" className="inline-flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-xl font-bold text-white shadow-lg shadow-blue-600/20">
@@ -189,15 +194,12 @@ const Login = () => {
               {error && (
                 <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                   <span className="mt-0.5">⚠️</span>
-
                   <p>{error}</p>
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* =================================================
-                    EMAIL
-                ================================================== */}
+                {/* EMAIL */}
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-slate-700">
                     Email Address
@@ -221,9 +223,7 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* =================================================
-                    PASSWORD
-                ================================================== */}
+                {/* PASSWORD */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <label className="text-sm font-semibold text-slate-700">
@@ -265,57 +265,19 @@ const Login = () => {
                   </div>
                 </div>
 
-                {/* =================================================
-                    ROLE SELECTOR
-                ================================================== */}
+                {/* ROLE SELECTOR */}
                 <div>
                   <label className="mb-3 block text-sm font-semibold text-slate-700">
                     Sign in as
                   </label>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    {/* Tenant */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* CUSTOMER */}
                     <button
                       type="button"
                       disabled={loading}
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          role: "tenant",
-                        }))
-                      }
-                      className={`rounded-xl border p-3 transition sm:p-4 ${
-                        formData.role === "tenant"
-                          ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                      }`}
-                    >
-                      <div
-                        className={`mx-auto flex h-10 w-10 items-center justify-center rounded-lg ${
-                          formData.role === "tenant"
-                            ? "bg-blue-600 text-white"
-                            : "bg-white text-slate-500"
-                        }`}
-                      >
-                        🏠
-                      </div>
-
-                      <p className="mt-2 text-xs font-bold text-slate-900 sm:text-sm">
-                        Tenant
-                      </p>
-                    </button>
-
-                    {/* customer */}
-                    <button
-                      type="button"
-                      disabled={loading}
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          role: "customer",
-                        }))
-                      }
-                      className={`rounded-xl border p-3 transition sm:p-4 ${
+                      onClick={() => handleRoleChange("customer")}
+                      className={`rounded-xl border p-4 transition ${
                         formData.role === "customer"
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
                           : "border-slate-200 bg-slate-50 hover:border-slate-300"
@@ -331,22 +293,17 @@ const Login = () => {
                         🏢
                       </div>
 
-                      <p className="mt-2 text-xs font-bold text-slate-900 sm:text-sm">
-                        customer
+                      <p className="mt-2 text-sm font-bold text-slate-900">
+                        Customer
                       </p>
                     </button>
 
-                    {/* Admin */}
+                    {/* ADMIN */}
                     <button
                       type="button"
                       disabled={loading}
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          role: "admin",
-                        }))
-                      }
-                      className={`rounded-xl border p-3 transition sm:p-4 ${
+                      onClick={() => handleRoleChange("admin")}
+                      className={`rounded-xl border p-4 transition ${
                         formData.role === "admin"
                           ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/10"
                           : "border-slate-200 bg-slate-50 hover:border-slate-300"
@@ -362,14 +319,14 @@ const Login = () => {
                         🛡️
                       </div>
 
-                      <p className="mt-2 text-xs font-bold text-slate-900 sm:text-sm">
+                      <p className="mt-2 text-sm font-bold text-slate-900">
                         Admin
                       </p>
                     </button>
                   </div>
                 </div>
 
-                {/* Remember me */}
+                {/* REMEMBER ME */}
                 <div className="flex items-center justify-between">
                   <label className="flex cursor-pointer items-center gap-3">
                     <input
@@ -381,9 +338,7 @@ const Login = () => {
                   </label>
                 </div>
 
-                {/* =================================================
-                    LOGIN BUTTON
-                ================================================== */}
+                {/* LOGIN BUTTON */}
                 <button
                   type="submit"
                   disabled={loading}
@@ -425,7 +380,7 @@ const Login = () => {
               </Link>
             </div>
 
-            {/* Mobile footer */}
+            {/* Mobile Footer */}
             <p className="mt-6 text-center text-xs text-slate-400 lg:hidden">
               © 2026 RentalHub. All rights reserved.
             </p>
