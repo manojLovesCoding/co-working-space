@@ -9,55 +9,61 @@ const AdminSidebar = () => {
   const [open, setOpen] = useState(false);
 
   const menuItems = [
-  {
-    label: "Dashboard",
-    path: "",
-    icon: "▦",
-    description: "Overview",
-  },
-  {
-    label: "Users",
-    path: "users",
-    icon: "♙",
-    description: "Manage users",
-  },
-  {
-    label: "Properties",
-    path: "properties",
-    icon: "⌂",
-    description: "Manage listings",
-  },
-  {
-    label: "Payments",
-    path: "payments",
-    icon: "₹",
-    description: "Transactions",
-  },
-  {
-    label: "Add Space Master",
-    path: "add-space-master",
-    icon: "＋",
-    description: "Add new space",
-  },
-  {
-    label: "Space Master List",
-    path: "space-master-list",
-    icon: "▤",
-    description: "Manage spaces",
-  },
-  {
-    label: "Reservations",
-    path: "reservations",
-    icon: "▣",
-    description: "Manage reservations",
-  },
-  {
-    label: "Visitors",
-    path: "visitors",
-    icon: "♧",
-    description: "Manage visitors",
-  },
-];
+    {
+      label: "Dashboard",
+      path: "",
+      icon: "▦",
+      description: "Overview",
+    },
+    {
+      label: "Users",
+      path: "users",
+      icon: "♙",
+      description: "Manage users",
+    },
+    {
+      label: "Team Management",
+      path: "team-management",
+      icon: "♧",
+      description: "Manage customer teams",
+    },
+    {
+      label: "Properties",
+      path: "properties",
+      icon: "⌂",
+      description: "Manage listings",
+    },
+    {
+      label: "Payments",
+      path: "payments",
+      icon: "₹",
+      description: "Transactions",
+    },
+    {
+      label: "Add Space Master",
+      path: "add-space-master",
+      icon: "＋",
+      description: "Add new space",
+    },
+    {
+      label: "Space Master List",
+      path: "space-master-list",
+      icon: "▤",
+      description: "Manage spaces",
+    },
+    {
+      label: "Reservations",
+      path: "reservations",
+      icon: "▣",
+      description: "Manage reservations",
+    },
+    {
+      label: "Visitors",
+      path: "visitors",
+      icon: "♧",
+      description: "Manage visitors",
+    },
+  ];
 
   const handleLogout = () => {
     logout();
@@ -83,7 +89,6 @@ const AdminSidebar = () => {
 
           <div>
             <p className="text-sm font-bold text-slate-900">Admin Panel</p>
-
             <p className="text-[11px] text-slate-500">Rent Management</p>
           </div>
         </div>
@@ -106,9 +111,7 @@ const AdminSidebar = () => {
           border-r border-slate-200
           flex flex-col
           z-50
-
           transform transition-transform duration-300 ease-out
-
           ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
@@ -127,7 +130,6 @@ const AdminSidebar = () => {
               <h1 className="text-base font-bold text-slate-900 truncate">
                 Admin Panel
               </h1>
-
               <p className="text-xs text-slate-500 truncate">Rent Management</p>
             </div>
 
@@ -135,6 +137,7 @@ const AdminSidebar = () => {
             <button
               onClick={() => setOpen(false)}
               className="md:hidden w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500"
+              aria-label="Close menu"
             >
               ✕
             </button>
@@ -156,7 +159,6 @@ const AdminSidebar = () => {
 
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-
                   <span className="text-xs text-slate-500">Online</span>
                 </div>
               </div>
@@ -179,16 +181,15 @@ const AdminSidebar = () => {
                 onClick={() => setOpen(false)}
                 className={({ isActive }) =>
                   `
-                  group relative flex items-center gap-3
-                  px-3 py-3
-                  rounded-xl
-                  transition-all duration-200
-
-                  ${
-                    isActive
-                      ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 shadow-sm"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-indigo-600"
-                  }
+                    group relative flex items-center gap-3
+                    px-3 py-3
+                    rounded-xl
+                    transition-all duration-200
+                    ${
+                      isActive
+                        ? "bg-gradient-to-r from-indigo-50 to-violet-50 text-indigo-700 shadow-sm"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-indigo-600"
+                    }
                   `
                 }
               >
@@ -206,7 +207,6 @@ const AdminSidebar = () => {
                         flex items-center justify-center
                         text-lg
                         transition-all
-
                         ${
                           isActive
                             ? "bg-indigo-600 text-white shadow-md shadow-indigo-200"
@@ -271,21 +271,20 @@ const AdminSidebar = () => {
           >
             <span
               className="
-              w-10 h-10
-              rounded-xl
-              bg-red-50
-              flex items-center justify-center
-              text-lg
-              group-hover:bg-red-100
-              transition
-            "
+                w-10 h-10
+                rounded-xl
+                bg-red-50
+                flex items-center justify-center
+                text-lg
+                group-hover:bg-red-100
+                transition
+              "
             >
               ↪
             </span>
 
             <span className="flex-1">
               <span className="block text-sm font-semibold">Logout</span>
-
               <span className="block text-[11px] text-red-300 mt-0.5">
                 Sign out of account
               </span>
@@ -298,10 +297,7 @@ const AdminSidebar = () => {
           <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-slate-600">
-                  Vayuhu
-                </p>
-
+                <p className="text-xs font-semibold text-slate-600">Vayuhu</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   Admin Console
                 </p>

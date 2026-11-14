@@ -20,6 +20,11 @@ const LandlordSidebar = () => {
       icon: "▤",
     },
     {
+      label: "My Team",
+      path: "my-team",
+      icon: "👥",
+    },
+    {
       label: "Invite Visitor",
       path: "invite-visitor",
       icon: "✉️",
@@ -119,7 +124,6 @@ const LandlordSidebar = () => {
             </div>
 
             {/* Close mobile */}
-
             <button
               onClick={closeMobileMenu}
               className="ml-auto flex h-9 w-9 items-center justify-center rounded-xl text-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 md:hidden"
@@ -188,13 +192,11 @@ const LandlordSidebar = () => {
               {({ isActive }) => (
                 <>
                   {/* Active indicator */}
-
                   {isActive && (
                     <span className="absolute -left-4 h-7 w-1 rounded-r-full bg-blue-600" />
                   )}
 
                   {/* Icon */}
-
                   <span
                     className={`
                       flex h-9 w-9 shrink-0
@@ -212,11 +214,9 @@ const LandlordSidebar = () => {
                   </span>
 
                   {/* Label */}
-
                   <span className="truncate">{item.label}</span>
 
                   {/* Arrow */}
-
                   <span
                     className={`
                       ml-auto text-xs transition-transform
@@ -235,11 +235,9 @@ const LandlordSidebar = () => {
           ))}
 
           {/* Divider */}
-
           <div className="my-4 border-t border-slate-100" />
 
           {/* Logout */}
-
           <button
             onClick={handleLogout}
             className="group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-500 transition hover:bg-red-50 hover:text-red-600"
