@@ -22,8 +22,7 @@ const loadRazorpayScript = () =>
 // ---------------------------------------------
 
 const isSunday = (dateString) =>
-  Boolean(dateString) &&
-  new Date(`${dateString}T00:00:00Z`).getUTCDay() === 0;
+  Boolean(dateString) && new Date(`${dateString}T00:00:00Z`).getUTCDay() === 0;
 
 const formatDate = (dateString) => {
   if (!dateString) return "";
@@ -48,13 +47,12 @@ const formatTime = (time) => {
 
 const formatPrice = (value) => {
   const amount = Number(value);
-  return Number.isFinite(amount)
-    ? `₹${amount.toLocaleString("en-IN")}`
-    : "₹0";
+  return Number.isFinite(amount) ? `₹${amount.toLocaleString("en-IN")}` : "₹0";
 };
 
 const unitLabel = (plan, count) => {
-  const base = plan === "hourly" ? "hour" : plan === "monthly" ? "month" : "day";
+  const base =
+    plan === "hourly" ? "hour" : plan === "monthly" ? "month" : "day";
   return Number(count) === 1 ? base : `${base}s`;
 };
 
@@ -97,6 +95,7 @@ export default function Checkout() {
     plan,
     duration,
     selectedSpaces,
+    seatAssignments,
     startTime,
     endTime,
     couponCode,
@@ -104,19 +103,21 @@ export default function Checkout() {
 
   const isHourly = plan === "hourly";
 
+  // "A1 (Myself), A2 (Priya)" when assignments exist, otherwise just codes.
+  const seatsText = (
+    Array.isArray(seatAssignments) && seatAssignments.length
+      ? seatAssignments.map((seat) => `${seat.spaceCode} (${seat.label})`)
+      : selectedSpaces
+  ).join(", ");
+
   // Display-only amounts. The server recalculates everything.
   const totalAmount = Number(
-    bookingData.totalAmount ??
-      bookingData.totalPrice ??
-      bookingData.total ??
-      0
+    bookingData.totalAmount ?? bookingData.totalPrice ?? bookingData.total ?? 0,
   );
 
   const discountAmount = Number(bookingData.discountAmount || 0);
 
-  const subtotal = Number(
-    bookingData.subtotal ?? totalAmount + discountAmount
-  );
+  const subtotal = Number(bookingData.subtotal ?? totalAmount + discountAmount);
 
   const hasCoupon = Boolean(couponCode) && discountAmount > 0;
 
@@ -132,14 +133,26 @@ export default function Checkout() {
       !Array.isArray(selectedSpaces) ||
       selectedSpaces.length === 0
     ) {
-      toast.error("Booking details are incomplete. Please select your workspace again.");
+      toast.error(
+        "Booking details are incomplete. Please select your workspace again.",
+      );
+      return;
+    }
+
+    if (
+      !Array.isArray(seatAssignments) ||
+      seatAssignments.length !== selectedSpaces.length
+    ) {
+      toast.error(
+        "Every seat must be assigned to you or a team member. Please select your workspace again.",
+      );
       return;
     }
 
     // Office is closed on Sundays (the server enforces this as well).
     if (isSunday(bookingDate)) {
       toast.error(
-        "Our office is closed on Sundays. Please select another date."
+        "Our office is closed on Sundays. Please select another date.",
       );
       return;
     }
@@ -159,19 +172,24 @@ export default function Checkout() {
       }
 
       // Step 1: Create the order on your backend.
-      // The server validates the coupon again and calculates the final amount.
-      const orderResponse = await api.post(
-        "/booking/create_razorpay_order",
-        {
-          spaceName,
-          bookingDate,
-          plan,
-          duration: Number(duration),
-          selectedSpaces,
-          ...(isHourly ? { startTime } : {}),
-          ...(couponCode ? { couponCode } : {}),
-        }
-      );
+      // The server validates the coupon and seat assignments again and
+      // calculates the final amount.
+      const orderResponse = await api.post("/booking/create_razorpay_order", {
+        spaceName,
+        bookingDate,
+        plan,
+        duration: Number(duration),
+        selectedSpaces,
+        seatAssignments: seatAssignments.map(
+          ({ spaceCode, assigneeType, teamMemberId }) => ({
+            spaceCode,
+            assigneeType,
+            ...(assigneeType === "team" ? { teamMemberId } : {}),
+          }),
+        ),
+        ...(isHourly ? { startTime } : {}),
+        ...(couponCode ? { couponCode } : {}),
+      });
 
       const order = orderResponse.data;
 
@@ -183,7 +201,7 @@ export default function Checkout() {
         !Number.isFinite(Number(order.amount))
       ) {
         throw new Error(
-          order?.message || "Could not create the payment order."
+          order?.message || "Could not create the payment order.",
         );
       }
 
@@ -214,18 +232,17 @@ export default function Checkout() {
                 razorpayOrderId: paymentResponse.razorpay_order_id,
                 razorpayPaymentId: paymentResponse.razorpay_payment_id,
                 razorpaySignature: paymentResponse.razorpay_signature,
-              }
+              },
             );
 
             if (!verifyResponse.data?.success) {
               throw new Error(
-                verifyResponse.data?.message ||
-                  "Payment verification failed."
+                verifyResponse.data?.message || "Payment verification failed.",
               );
             }
 
             setConfirmedBookingId(
-              verifyResponse.data.booking?.bookingId || order.bookingId
+              verifyResponse.data.booking?.bookingId || order.bookingId,
             );
             setBookingConfirmed(true);
             toast.success("Payment verified and booking confirmed!");
@@ -234,7 +251,7 @@ export default function Checkout() {
             toast.error(
               error.response?.data?.message ||
                 error.message ||
-                "Payment verification failed. Contact support before paying again."
+                "Payment verification failed. Contact support before paying again.",
             );
           } finally {
             setLoading(false);
@@ -258,7 +275,7 @@ export default function Checkout() {
       razorpay.on("payment.failed", (response) => {
         console.error("Razorpay payment failed:", response.error);
         toast.error(
-          response.error?.description || "Payment failed. Please try again."
+          response.error?.description || "Payment failed. Please try again.",
         );
         setLoading(false);
       });
@@ -269,7 +286,7 @@ export default function Checkout() {
       toast.error(
         error.response?.data?.message ||
           error.message ||
-          "Unable to start checkout."
+          "Unable to start checkout.",
       );
       setLoading(false);
     }
@@ -305,9 +322,7 @@ export default function Checkout() {
             <p className="mt-1 font-medium text-gray-900">{spaceName}</p>
 
             <p className="mt-4 text-sm text-gray-500">Selected seats</p>
-            <p className="mt-1 font-medium text-gray-900">
-              {selectedSpaces.join(", ")}
-            </p>
+            <p className="mt-1 font-medium text-gray-900">{seatsText}</p>
 
             <p className="mt-4 text-sm text-gray-500">Booking date</p>
             <p className="mt-1 font-medium text-gray-900">
@@ -409,7 +424,7 @@ export default function Checkout() {
               <div className="rounded-lg bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">Selected seats</p>
                 <p className="mt-1 break-words font-semibold text-gray-900">
-                  {selectedSpaces.join(", ")}
+                  {seatsText}
                 </p>
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -14,6 +14,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import api from "../api/axios.js";
+
+// Value used in the assignment dropdown for "the logged-in customer".
+const SELF = "self";
 
 // ---------------------------------------------
 // Office hours (minutes from midnight)
@@ -39,9 +42,7 @@ const formatPrice = (price) => {
   }
 
   const amount = Number(price);
-  return Number.isFinite(amount)
-    ? `₹${amount.toLocaleString("en-IN")}`
-    : "₹0";
+  return Number.isFinite(amount) ? `₹${amount.toLocaleString("en-IN")}` : "₹0";
 };
 
 const getToday = () => {
@@ -97,7 +98,7 @@ const timeToMinutes = (time) => {
 
 const minutesToTime = (totalMinutes) =>
   `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(
-    totalMinutes % 60
+    totalMinutes % 60,
   ).padStart(2, "0")}`;
 
 const formatTime = (time) => {
@@ -172,8 +173,7 @@ const getPricingOptions = (space) => {
 const getDurationLimits = (space, plan, dateString, startTime) => {
   const min = Math.max(1, Number(space?.minDuration) || 1);
 
-  const defaultMax =
-    plan === "hourly" ? 12 : plan === "daily" ? 30 : 12;
+  const defaultMax = plan === "hourly" ? 12 : plan === "daily" ? 30 : 12;
 
   const configuredMax = Number(space?.maxDuration) || defaultMax;
   let max = Math.max(min, configuredMax);
@@ -182,9 +182,7 @@ const getDurationLimits = (space, plan, dateString, startTime) => {
     const hours = getOfficeHours(dateString);
 
     if (hours) {
-      const startMinutes = startTime
-        ? timeToMinutes(startTime)
-        : hours.open;
+      const startMinutes = startTime ? timeToMinutes(startTime) : hours.open;
 
       const hoursLeft = Math.floor((hours.close - startMinutes) / 60);
       max = Math.min(max, hoursLeft);
@@ -209,13 +207,11 @@ export default function BookSpace() {
   const availableSpaces = useMemo(() => getSpaces(space), [space]);
 
   const [selectedPlan, setSelectedPlan] = useState(
-    pricingOptions[0]?.id || "daily"
+    pricingOptions[0]?.id || "daily",
   );
 
   // If today is Sunday, start from Monday.
-  const [selectedDate, setSelectedDate] = useState(
-    getNextOpenDate(getToday())
-  );
+  const [selectedDate, setSelectedDate] = useState(getNextOpenDate(getToday()));
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedSpaces, setSelectedSpaces] = useState([]);
   const [duration, setDuration] = useState(1);
@@ -224,29 +220,57 @@ export default function BookSpace() {
   const [unavailableSpaces, setUnavailableSpaces] = useState([]);
   const [availabilityError, setAvailabilityError] = useState("");
 
+  // Team members and who each seat is booked for
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [teamLoading, setTeamLoading] = useState(true);
+  const [assignments, setAssignments] = useState({}); // { [spaceCode]: "self" | teamMemberId }
+
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
+  // Load the logged-in customer's team (read only)
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const response = await api.get("/team/my-team");
+
+        if (active && response.data?.success) {
+          setTeamMembers(response.data.teamMembers || []);
+        }
+      } catch (error) {
+        console.error("Load team error:", error);
+      } finally {
+        if (active) setTeamLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const isHourly = selectedPlan === "hourly";
   const isClosedDay = isSunday(selectedDate);
   const officeHours = useMemo(
     () => getOfficeHours(selectedDate),
-    [selectedDate]
+    [selectedDate],
   );
 
   const selectedPricing = useMemo(
     () =>
       pricingOptions.find((option) => option.id === selectedPlan) ||
       pricingOptions[0],
-    [pricingOptions, selectedPlan]
+    [pricingOptions, selectedPlan],
   );
 
   const { min: minDuration, max: maxDuration } = useMemo(
     () => getDurationLimits(space, selectedPlan, selectedDate, selectedTime),
-    [space, selectedPlan, selectedDate, selectedTime]
+    [space, selectedPlan, selectedDate, selectedTime],
   );
 
   const baseMinDuration = Math.max(1, Number(space?.minDuration) || 1);
@@ -294,19 +318,32 @@ export default function BookSpace() {
   }, [selectedPricing, duration, selectedSpaces.length]);
 
   // Amount after coupon (display only; the server recalculates it)
-  const payableAmount = appliedCoupon
-    ? appliedCoupon.finalAmount
-    : totalAmount;
+  const payableAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
 
   const availableSpaceCount = useMemo(
     () =>
       availableSpaces.filter(
         (item) =>
           item.status === "Active" &&
-          !unavailableSpaces.includes(item.spaceCode)
+          !unavailableSpaces.includes(item.spaceCode),
       ).length,
-    [availableSpaces, unavailableSpaces]
+    [availableSpaces, unavailableSpaces],
   );
+
+  // Every selected seat must be assigned to the customer or a team member.
+  const assignmentsComplete =
+    selectedSpaces.length > 0 &&
+    selectedSpaces.every((code) => Boolean(assignments[code]));
+
+  // People who already hold a seat (each person can take only one).
+  const takenAssignees = new Set(Object.values(assignments));
+
+  const getAssigneeName = (value) => {
+    if (!value) return "";
+    if (value === SELF) return "Me";
+
+    return teamMembers.find((member) => member._id === value)?.name || "";
+  };
 
   // A coupon depends on the subtotal, space, plan and date, so any
   // change to the booking invalidates it.
@@ -341,25 +378,42 @@ export default function BookSpace() {
   const toggleSpace = (spaceCode) => {
     clearAvailabilityResult();
 
+    // Deselecting a seat also removes its assignment.
+    if (selectedSpaces.includes(spaceCode)) {
+      setAssignments((previous) => {
+        const next = { ...previous };
+        delete next[spaceCode];
+        return next;
+      });
+    }
+
     setSelectedSpaces((previous) =>
       previous.includes(spaceCode)
         ? previous.filter((code) => code !== spaceCode)
-        : [...previous, spaceCode]
+        : [...previous, spaceCode],
     );
+  };
+
+  const handleAssign = (spaceCode, value) => {
+    setAssignments((previous) => {
+      const next = { ...previous };
+
+      if (value) next[spaceCode] = value;
+      else delete next[spaceCode];
+
+      return next;
+    });
+
+    setAvailabilityError("");
   };
 
   const handlePlanChange = (planId) => {
     setSelectedPlan(planId);
 
-    const limits = getDurationLimits(
-      space,
-      planId,
-      selectedDate,
-      selectedTime
-    );
+    const limits = getDurationLimits(space, planId, selectedDate, selectedTime);
 
     setDuration((previous) =>
-      Math.min(Math.max(previous, limits.min), limits.max)
+      Math.min(Math.max(previous, limits.min), limits.max),
     );
 
     clearAvailabilityResult();
@@ -373,10 +427,7 @@ export default function BookSpace() {
     const hours = getOfficeHours(value);
     let nextTime = selectedTime;
 
-    if (
-      selectedTime &&
-      (!hours || timeToMinutes(selectedTime) < hours.open)
-    ) {
+    if (selectedTime && (!hours || timeToMinutes(selectedTime) < hours.open)) {
       nextTime = "";
       setSelectedTime("");
     }
@@ -384,7 +435,7 @@ export default function BookSpace() {
     const limits = getDurationLimits(space, selectedPlan, value, nextTime);
 
     setDuration((previous) =>
-      Math.min(Math.max(previous, limits.min), limits.max)
+      Math.min(Math.max(previous, limits.min), limits.max),
     );
 
     clearAvailabilityResult();
@@ -393,15 +444,10 @@ export default function BookSpace() {
   const handleTimeChange = (time) => {
     setSelectedTime(time);
 
-    const limits = getDurationLimits(
-      space,
-      selectedPlan,
-      selectedDate,
-      time
-    );
+    const limits = getDurationLimits(space, selectedPlan, selectedDate, time);
 
     setDuration((previous) =>
-      Math.min(Math.max(previous, limits.min), limits.max)
+      Math.min(Math.max(previous, limits.min), limits.max),
     );
 
     clearAvailabilityResult();
@@ -468,7 +514,7 @@ export default function BookSpace() {
 
       setAppliedCoupon(null);
       setCouponError(
-        error.response?.data?.message || "Unable to apply coupon."
+        error.response?.data?.message || "Unable to apply coupon.",
       );
     } finally {
       setCouponLoading(false);
@@ -500,7 +546,7 @@ export default function BookSpace() {
 
     if (isSunday(selectedDate)) {
       setAvailabilityError(
-        "Our office is closed on Sundays. Please select another date."
+        "Our office is closed on Sundays. Please select another date.",
       );
       return;
     }
@@ -512,6 +558,20 @@ export default function BookSpace() {
 
     if (new Set(selectedSpaces).size !== selectedSpaces.length) {
       setAvailabilityError("Duplicate spaces are not allowed.");
+      return;
+    }
+
+    if (!selectedSpaces.every((code) => assignments[code])) {
+      setAvailabilityError(
+        "Please assign every selected seat to yourself or a team member.",
+      );
+      return;
+    }
+
+    const assignedValues = selectedSpaces.map((code) => assignments[code]);
+
+    if (new Set(assignedValues).size !== assignedValues.length) {
+      setAvailabilityError("One person cannot be assigned to multiple seats.");
       return;
     }
 
@@ -544,7 +604,7 @@ export default function BookSpace() {
         endMinutes > officeHours.close
       ) {
         setAvailabilityError(
-          "Selected time is outside office hours. Please choose another time."
+          "Selected time is outside office hours. Please choose another time.",
         );
         return;
       }
@@ -555,7 +615,7 @@ export default function BookSpace() {
 
         if (startMinutes <= nowMinutes) {
           setAvailabilityError(
-            "Selected time has already passed. Please choose a later time."
+            "Selected time has already passed. Please choose a later time.",
           );
           return;
         }
@@ -565,12 +625,12 @@ export default function BookSpace() {
     const selectedCodes = new Set(
       availableSpaces
         .filter((item) => item.status === "Active")
-        .map((item) => item.spaceCode)
+        .map((item) => item.spaceCode),
     );
 
     if (selectedSpaces.some((code) => !selectedCodes.has(code))) {
       setAvailabilityError(
-        "One or more selected spaces are no longer active. Please select again."
+        "One or more selected spaces are no longer active. Please select again.",
       );
       return;
     }
@@ -580,23 +640,20 @@ export default function BookSpace() {
     setUnavailableSpaces([]);
 
     try {
-      const response = await api.post(
-        "/booking/check_workspace_availability",
-        {
-          spaceName: space.space,
-          bookingDate: selectedDate,
-          plan: selectedPlan,
-          duration,
-          selectedSpaces,
-          ...(isHourly ? { startTime: selectedTime } : {}),
-        }
-      );
+      const response = await api.post("/booking/check_workspace_availability", {
+        spaceName: space.space,
+        bookingDate: selectedDate,
+        plan: selectedPlan,
+        duration,
+        selectedSpaces,
+        ...(isHourly ? { startTime: selectedTime } : {}),
+      });
 
       const result = response.data;
 
       if (!result?.success) {
         setAvailabilityError(
-          result?.message || "Unable to check workspace availability."
+          result?.message || "Unable to check workspace availability.",
         );
         return;
       }
@@ -609,8 +666,15 @@ export default function BookSpace() {
         setUnavailableSpaces(unavailable);
 
         setSelectedSpaces((previous) =>
-          previous.filter((code) => !unavailable.includes(code))
+          previous.filter((code) => !unavailable.includes(code)),
         );
+
+        // Drop assignments for the seats that were removed.
+        setAssignments((previous) => {
+          const next = { ...previous };
+          unavailable.forEach((code) => delete next[code]);
+          return next;
+        });
 
         // Removing seats changes the subtotal, so the coupon is stale.
         removeCoupon();
@@ -618,7 +682,7 @@ export default function BookSpace() {
         setAvailabilityError(
           unavailable.length
             ? `These spaces are unavailable: ${unavailable.join(", ")}. Please select different spaces.`
-            : "The selected spaces are unavailable. Please select different spaces."
+            : "The selected spaces are unavailable. Please select different spaces.",
         );
 
         return;
@@ -633,6 +697,19 @@ export default function BookSpace() {
         plan: selectedPlan,
         duration: Number(duration),
         selectedSpaces: [...selectedSpaces],
+        seatAssignments: selectedSpaces.map((code) => {
+          const value = assignments[code];
+          const member = teamMembers.find((item) => item._id === value);
+
+          return value === SELF
+            ? { spaceCode: code, assigneeType: "self", label: "Myself" }
+            : {
+                spaceCode: code,
+                assigneeType: "team",
+                teamMemberId: value,
+                label: member?.name || "Team member",
+              };
+        }),
         pricePerUnit: selectedPricing.price,
         subtotal: totalAmount,
         discountAmount: appliedCoupon?.discountAmount || 0,
@@ -661,7 +738,7 @@ export default function BookSpace() {
 
       setAvailabilityError(
         error.response?.data?.message ||
-          "Unable to check availability. Please try again."
+          "Unable to check availability. Please try again.",
       );
     } finally {
       setCheckingAvailability(false);
@@ -670,6 +747,7 @@ export default function BookSpace() {
 
   const continueDisabled =
     !selectedSpaces.length ||
+    !assignmentsComplete ||
     !selectedPricing ||
     checkingAvailability ||
     isClosedDay ||
@@ -726,12 +804,8 @@ export default function BookSpace() {
           </button>
 
           <div className="text-center">
-            <h1 className="text-lg font-bold text-gray-900">
-              Book Your Space
-            </h1>
-            <p className="text-xs text-gray-500">
-              Select your preferred space
-            </p>
+            <h1 className="text-lg font-bold text-gray-900">Book Your Space</h1>
+            <p className="text-xs text-gray-500">Select your preferred space</p>
           </div>
 
           <div className="w-12" />
@@ -910,9 +984,7 @@ export default function BookSpace() {
                       type="date"
                       min={getToday()}
                       value={selectedDate}
-                      onChange={(event) =>
-                        handleDateChange(event.target.value)
-                      }
+                      onChange={(event) => handleDateChange(event.target.value)}
                       className={`w-full rounded-xl border bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:ring-2 ${
                         isClosedDay
                           ? "border-red-300 focus:border-red-400 focus:ring-red-100"
@@ -947,9 +1019,7 @@ export default function BookSpace() {
                     <button
                       type="button"
                       onClick={decrementDuration}
-                      disabled={
-                        duration <= minDuration || checkingAvailability
-                      }
+                      disabled={duration <= minDuration || checkingAvailability}
                       className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Minus size={17} />
@@ -966,9 +1036,7 @@ export default function BookSpace() {
                     <button
                       type="button"
                       onClick={incrementDuration}
-                      disabled={
-                        duration >= maxDuration || checkingAvailability
-                      }
+                      disabled={duration >= maxDuration || checkingAvailability}
                       className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Plus size={17} />
@@ -1119,9 +1187,7 @@ export default function BookSpace() {
                           )}
 
                           {isSelected && (
-                            <span className="mt-0.5 text-[9px]">
-                              Selected
-                            </span>
+                            <span className="mt-0.5 text-[9px]">Selected</span>
                           )}
 
                           {!isAvailable && (
@@ -1164,6 +1230,85 @@ export default function BookSpace() {
                         {spaceCode}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Assign each selected seat to the customer or a team member */}
+              {selectedSpaces.length > 0 && (
+                <div className="mt-5 rounded-xl border border-gray-200 p-4">
+                  <p className="text-sm font-semibold text-gray-900">
+                    Who is each seat for?{" "}
+                    <span className="text-red-500">*</span>
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Assign every seat to yourself or a team member. Each person
+                    can take one seat.
+                  </p>
+
+                  {!teamLoading && teamMembers.length === 0 && (
+                    <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      No team members are linked to your account, so you can
+                      only book a seat for yourself.
+                    </p>
+                  )}
+
+                  <div className="mt-3 space-y-2">
+                    {selectedSpaces.map((code) => {
+                      const current = assignments[code] || "";
+
+                      return (
+                        <div
+                          key={code}
+                          className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2"
+                        >
+                          <span className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">
+                            {code}
+                          </span>
+
+                          <select
+                            value={current}
+                            onChange={(event) =>
+                              handleAssign(code, event.target.value)
+                            }
+                            disabled={checkingAvailability || teamLoading}
+                            aria-label={`Assign seat ${code}`}
+                            className={`min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:ring-2 ${
+                              current
+                                ? "border-gray-200 focus:border-blue-500 focus:ring-blue-100"
+                                : "border-red-300 focus:border-red-400 focus:ring-red-100"
+                            }`}
+                          >
+                            <option value="">Select person</option>
+
+                            <option
+                              value={SELF}
+                              disabled={
+                                takenAssignees.has(SELF) && current !== SELF
+                              }
+                            >
+                              Myself
+                            </option>
+
+                            {teamMembers.map((member) => (
+                              <option
+                                key={member._id}
+                                value={member._id}
+                                disabled={
+                                  takenAssignees.has(member._id) &&
+                                  current !== member._id
+                                }
+                              >
+                                {member.name}
+                                {member.designation
+                                  ? ` (${member.designation})`
+                                  : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -1260,14 +1405,21 @@ export default function BookSpace() {
 
                   {selectedSpaces.length > 0 ? (
                     <div className="mt-3 flex flex-wrap gap-1.5">
-                      {selectedSpaces.map((spaceCode) => (
-                        <span
-                          key={spaceCode}
-                          className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700"
-                        >
-                          {spaceCode}
-                        </span>
-                      ))}
+                      {selectedSpaces.map((spaceCode) => {
+                        const assigneeName = getAssigneeName(
+                          assignments[spaceCode],
+                        );
+
+                        return (
+                          <span
+                            key={spaceCode}
+                            className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700"
+                          >
+                            {spaceCode}
+                            {assigneeName && ` · ${assigneeName}`}
+                          </span>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="mt-2 text-xs text-gray-400">
@@ -1433,10 +1585,14 @@ export default function BookSpace() {
                   <p className="mt-3 text-center text-xs text-gray-400">
                     Select a start time to continue.
                   </p>
+                ) : !selectedSpaces.length ? (
+                  <p className="mt-3 text-center text-xs text-gray-400">
+                    Select at least one space to continue.
+                  </p>
                 ) : (
-                  !selectedSpaces.length && (
+                  !assignmentsComplete && (
                     <p className="mt-3 text-center text-xs text-gray-400">
-                      Select at least one space to continue.
+                      Assign each seat to a person to continue.
                     </p>
                   )
                 )}

@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import Razorpay from "razorpay";
 
 import Space from "../models/Space.js";
+import User from "../models/User.js";
+import TeamMember from "../models/TeamMember.js";
 import WorkspaceBooking from "../models/WorkspaceBooking.js";
 import { applyCoupon } from "../utils/couponHelper.js";
 
@@ -66,7 +68,7 @@ const addMonths = (dateString, months) => {
   date.setUTCMonth(date.getUTCMonth() + months);
 
   const lastDay = new Date(
-    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0)
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0),
   ).getUTCDate();
 
   date.setUTCDate(Math.min(day, lastDay));
@@ -98,7 +100,7 @@ const timeToMinutes = (time) => {
 
 const minutesToTime = (totalMinutes) =>
   `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(
-    totalMinutes % 60
+    totalMinutes % 60,
   ).padStart(2, "0")}`;
 
 const formatMinutes = (totalMinutes) => {
@@ -131,7 +133,7 @@ const getBookingRange = (bookingDate, plan, duration, startTime) => {
 
   if (!hours) {
     throw new Error(
-      "The office is closed on Sundays. Please select another date."
+      "The office is closed on Sundays. Please select another date.",
     );
   }
 
@@ -142,8 +144,8 @@ const getBookingRange = (bookingDate, plan, duration, startTime) => {
     if (startMinutes < hours.open || endMinutes > hours.close) {
       throw new Error(
         `Hourly bookings must be within office hours (${formatMinutes(
-          hours.open
-        )} - ${formatMinutes(hours.close)}) on the selected day`
+          hours.open,
+        )} - ${formatMinutes(hours.close)}) on the selected day`,
       );
     }
 
@@ -239,21 +241,112 @@ const validateBookingInput = ({
     }
   }
 
-  if (
-    !Array.isArray(selectedSpaces) ||
-    selectedSpaces.length === 0
-  ) {
+  if (!Array.isArray(selectedSpaces) || selectedSpaces.length === 0) {
     throw new Error("Select at least one workspace");
   }
 
   if (
-    selectedSpaces.some(
-      (code) => typeof code !== "string" || !code.trim()
-    ) ||
+    selectedSpaces.some((code) => typeof code !== "string" || !code.trim()) ||
     new Set(selectedSpaces).size !== selectedSpaces.length
   ) {
     throw new Error("Invalid or duplicate workspace codes");
   }
+};
+
+/**
+ * Every selected seat must be assigned to the logged-in customer
+ * ("self") or to one of their active team members ("team").
+ * Each person can hold only one seat per booking.
+ *
+ * Returns a snapshot of each assignee to store on the booking.
+ */
+const resolveSeatAssignments = async (
+  userId,
+  selectedSpaces,
+  seatAssignments,
+) => {
+  if (
+    !Array.isArray(seatAssignments) ||
+    seatAssignments.length !== selectedSpaces.length
+  ) {
+    throw new Error("Assign every selected seat to yourself or a team member");
+  }
+
+  const validCodes = new Set(selectedSpaces);
+  const seenCodes = new Set();
+  const memberIds = [];
+  let selfCount = 0;
+
+  for (const item of seatAssignments) {
+    if (
+      !item ||
+      !validCodes.has(item.spaceCode) ||
+      seenCodes.has(item.spaceCode)
+    ) {
+      throw new Error("Invalid seat assignment");
+    }
+
+    seenCodes.add(item.spaceCode);
+
+    if (item.assigneeType === "self") {
+      selfCount += 1;
+    } else if (item.assigneeType === "team") {
+      if (!mongoose.Types.ObjectId.isValid(item.teamMemberId)) {
+        throw new Error("Invalid team member");
+      }
+
+      memberIds.push(String(item.teamMemberId));
+    } else {
+      throw new Error("Invalid seat assignment");
+    }
+  }
+
+  if (selfCount > 1 || new Set(memberIds).size !== memberIds.length) {
+    throw new Error("One person cannot be assigned to more than one seat");
+  }
+
+  const [customer, members] = await Promise.all([
+    User.findOne({ _id: userId, role: "customer", isActive: true }),
+    TeamMember.find({
+      _id: { $in: memberIds },
+      customer: userId,
+      isActive: true,
+    }),
+  ]);
+
+  if (!customer) {
+    throw new Error("Customer account not found");
+  }
+
+  if (members.length !== memberIds.length) {
+    throw new Error("One or more team members are invalid or inactive");
+  }
+
+  const memberMap = new Map(members.map((m) => [String(m._id), m]));
+
+  return seatAssignments.map((item) => {
+    if (item.assigneeType === "self") {
+      return {
+        spaceCode: item.spaceCode,
+        assigneeType: "self",
+        teamMember: null,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+      };
+    }
+
+    const member = memberMap.get(String(item.teamMemberId));
+
+    return {
+      spaceCode: item.spaceCode,
+      assigneeType: "team",
+      teamMember: member._id,
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+    };
+  });
 };
 
 const getActiveSpaces = async (spaceName, selectedSpaces) => {
@@ -264,9 +357,7 @@ const getActiveSpaces = async (spaceName, selectedSpaces) => {
   });
 
   if (spaces.length !== selectedSpaces.length) {
-    throw new Error(
-      "One or more selected workspaces are invalid or inactive"
-    );
+    throw new Error("One or more selected workspaces are invalid or inactive");
   }
 
   return spaces;
@@ -282,14 +373,10 @@ const getServerPricing = (spaces, plan) => {
   const prices = spaces.map((space) => Number(space[priceField]));
 
   if (
-    prices.some(
-      (price) => !Number.isFinite(price) || price < 0
-    ) ||
+    prices.some((price) => !Number.isFinite(price) || price < 0) ||
     prices.some((price) => price !== prices[0])
   ) {
-    throw new Error(
-      "Workspace pricing is invalid or inconsistent"
-    );
+    throw new Error("Workspace pricing is invalid or inconsistent");
   }
 
   return prices[0];
@@ -308,7 +395,7 @@ const getAvailability = async (
   selectedSpaces,
   startAt,
   endAt,
-  options = {}
+  options = {},
 ) => {
   const {
     excludeBookingId = null,
@@ -346,16 +433,15 @@ const getAvailability = async (
   }
 
   // Check ALL overlapping bookings, not just the first one found.
-  const conflictingBookings = await WorkspaceBooking.find(query).select(
-    "selectedSpaces"
-  );
+  const conflictingBookings =
+    await WorkspaceBooking.find(query).select("selectedSpaces");
 
   const takenCodes = new Set(
-    conflictingBookings.flatMap((booking) => booking.selectedSpaces)
+    conflictingBookings.flatMap((booking) => booking.selectedSpaces),
   );
 
   const unavailableSpaces = selectedSpaces.filter((code) =>
-    takenCodes.has(code)
+    takenCodes.has(code),
   );
 
   return {
@@ -393,24 +479,19 @@ export const checkWorkspaceAvailability = async (req, res) => {
       bookingDate,
       plan,
       Number(duration),
-      startTime
+      startTime,
     );
 
     await getActiveSpaces(spaceName.trim(), selectedSpaces);
 
-    const availability = await getAvailability(
-      selectedSpaces,
-      startAt,
-      endAt
-    );
+    const availability = await getAvailability(selectedSpaces, startAt, endAt);
 
     return res.status(200).json({
       success: true,
       ...availability,
       availableCount: availability.available
         ? selectedSpaces.length
-        : selectedSpaces.length -
-          availability.unavailableSpaces.length,
+        : selectedSpaces.length - availability.unavailableSpaces.length,
       unavailableSpaces: availability.unavailableSpaces,
       bookingDate,
       plan,
@@ -459,14 +540,10 @@ export const validateCoupon = async (req, res) => {
     // Throws for Sundays, past dates or invalid hourly slots.
     getBookingRange(bookingDate, plan, Number(duration), startTime);
 
-    const spaces = await getActiveSpaces(
-      spaceName.trim(),
-      selectedSpaces
-    );
+    const spaces = await getActiveSpaces(spaceName.trim(), selectedSpaces);
 
     const pricePerUnit = getServerPricing(spaces, plan);
-    const subtotal =
-      pricePerUnit * Number(duration) * selectedSpaces.length;
+    const subtotal = pricePerUnit * Number(duration) * selectedSpaces.length;
 
     const { coupon, discountAmount, finalAmount } = await applyCoupon({
       couponCode,
@@ -501,10 +578,7 @@ export const createRazorpayOrder = async (req, res) => {
   let booking = null;
 
   try {
-    if (
-      !process.env.RAZORPAY_KEY_ID ||
-      !process.env.RAZORPAY_KEY_SECRET
-    ) {
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       return res.status(500).json({
         success: false,
         message: "Razorpay is not configured",
@@ -517,6 +591,7 @@ export const createRazorpayOrder = async (req, res) => {
       plan,
       duration,
       selectedSpaces,
+      seatAssignments,
       startTime,
       couponCode,
     } = req.body;
@@ -530,23 +605,27 @@ export const createRazorpayOrder = async (req, res) => {
       startTime,
     });
 
+    // Every seat must belong to the customer or one of their team members.
+    const resolvedAssignments = await resolveSeatAssignments(
+      req.user.id,
+      selectedSpaces,
+      seatAssignments,
+    );
+
     const numericDuration = Number(duration);
 
     // Sunday / office-hours rules are enforced here, so payment can
     // never be started for a closed day or time.
-    const { startAt, endAt, startTime: bookingStartTime, endTime } =
-      getBookingRange(bookingDate, plan, numericDuration, startTime);
-
-    const spaces = await getActiveSpaces(
-      spaceName.trim(),
-      selectedSpaces
-    );
-
-    const availability = await getAvailability(
-      selectedSpaces,
+    const {
       startAt,
-      endAt
-    );
+      endAt,
+      startTime: bookingStartTime,
+      endTime,
+    } = getBookingRange(bookingDate, plan, numericDuration, startTime);
+
+    const spaces = await getActiveSpaces(spaceName.trim(), selectedSpaces);
+
+    const availability = await getAvailability(selectedSpaces, startAt, endAt);
 
     if (!availability.available) {
       return res.status(409).json({
@@ -558,8 +637,7 @@ export const createRazorpayOrder = async (req, res) => {
 
     // Never trust the total amount supplied by React.
     const pricePerUnit = getServerPricing(spaces, plan);
-    const subtotal =
-      pricePerUnit * numericDuration * selectedSpaces.length;
+    const subtotal = pricePerUnit * numericDuration * selectedSpaces.length;
 
     // Apply the coupon on the server (if one was sent).
     let totalAmount = subtotal;
@@ -604,6 +682,7 @@ export const createRazorpayOrder = async (req, res) => {
       plan,
       duration: numericDuration,
       selectedSpaces,
+      seatAssignments: resolvedAssignments,
       pricePerUnit,
       subtotal,
       discountAmount,
@@ -620,15 +699,10 @@ export const createRazorpayOrder = async (req, res) => {
     // Race-condition guard: two users can pass the first availability check
     // at the same moment. Re-check now, counting only Confirmed bookings and
     // Pending bookings created BEFORE this one. The later request backs off.
-    const raceCheck = await getAvailability(
-      selectedSpaces,
-      startAt,
-      endAt,
-      {
-        excludeBookingId: booking._id,
-        pendingBeforeId: booking._id,
-      }
-    );
+    const raceCheck = await getAvailability(selectedSpaces, startAt, endAt, {
+      excludeBookingId: booking._id,
+      pendingBeforeId: booking._id,
+    });
 
     if (!raceCheck.available) {
       await WorkspaceBooking.deleteOne({ _id: booking._id });
@@ -675,7 +749,7 @@ export const createRazorpayOrder = async (req, res) => {
     if (booking && !booking.razorpayOrderId) {
       await WorkspaceBooking.deleteOne({ _id: booking._id }).catch(
         (cleanupError) =>
-          console.error("Booking cleanup error:", cleanupError.message)
+          console.error("Booking cleanup error:", cleanupError.message),
       );
     }
 
@@ -693,12 +767,8 @@ export const createRazorpayOrder = async (req, res) => {
 
 export const addWorkspaceBooking = async (req, res) => {
   try {
-    const {
-      bookingId,
-      razorpayOrderId,
-      razorpayPaymentId,
-      razorpaySignature,
-    } = req.body;
+    const { bookingId, razorpayOrderId, razorpayPaymentId, razorpaySignature } =
+      req.body;
 
     if (
       !bookingId ||
@@ -724,10 +794,7 @@ export const addWorkspaceBooking = async (req, res) => {
       });
     }
 
-    if (
-      booking.status === "Confirmed" &&
-      booking.paymentStatus === "Paid"
-    ) {
+    if (booking.status === "Confirmed" && booking.paymentStatus === "Paid") {
       if (booking.razorpayPaymentId === razorpayPaymentId) {
         return res.status(200).json({
           success: true,
@@ -797,7 +864,7 @@ export const addWorkspaceBooking = async (req, res) => {
       {
         excludeBookingId: booking._id,
         confirmedOnly: true,
-      }
+      },
     );
 
     if (!availability.available) {
@@ -813,7 +880,7 @@ export const addWorkspaceBooking = async (req, res) => {
       } catch (refundError) {
         console.error(
           "Automatic refund failed:",
-          refundError?.error?.description || refundError.message
+          refundError?.error?.description || refundError.message,
         );
       }
 
@@ -875,7 +942,7 @@ export const getMyReservations = async (req, res) => {
       user: userId,
     })
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
+        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
       )
       .sort({ createdAt: -1 })
       .lean();
@@ -905,7 +972,7 @@ export const getAllReservations = async (req, res) => {
     const reservations = await WorkspaceBooking.find()
       .populate("user", "name email phone")
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt"
+        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
       )
       .sort({ createdAt: -1 })
       .lean();

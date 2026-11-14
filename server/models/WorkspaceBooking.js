@@ -43,10 +43,34 @@ const workspaceBookingSchema = new mongoose.Schema(
       type: [String],
       required: true,
       validate: {
-        validator: (spaces) =>
-          Array.isArray(spaces) && spaces.length > 0,
+        validator: (spaces) => Array.isArray(spaces) && spaces.length > 0,
         message: "Select at least one workspace",
       },
+    },
+
+    // Who each seat is booked for (snapshot, so history survives edits
+    // or deactivation of team members)
+    seatAssignments: {
+      type: [
+        {
+          _id: false,
+          spaceCode: { type: String, required: true },
+          assigneeType: {
+            type: String,
+            enum: ["self", "team"],
+            required: true,
+          },
+          teamMember: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "TeamMember",
+            default: null,
+          },
+          name: { type: String, required: true, trim: true },
+          email: { type: String, default: "", trim: true },
+          phone: { type: String, default: "", trim: true },
+        },
+      ],
+      default: [],
     },
 
     pricePerUnit: {
@@ -140,7 +164,7 @@ const workspaceBookingSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Availability query
@@ -161,10 +185,7 @@ workspaceBookingSchema.index(
       status: "Pending",
       paymentStatus: "Pending",
     },
-  }
+  },
 );
 
-export default mongoose.model(
-  "WorkspaceBooking",
-  workspaceBookingSchema
-);
+export default mongoose.model("WorkspaceBooking", workspaceBookingSchema);
