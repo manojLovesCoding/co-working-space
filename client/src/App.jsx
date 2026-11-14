@@ -42,6 +42,10 @@ import AdminPayments from "./pages/admin/Payments";
 import AddSpaceMaster from "./pages/admin/AddSpaceMaster";
 import SpaceMaster from "./pages/admin/SpaceMaster";
 
+/* Team Management pages */
+import TeamManagement from "./pages/admin/TeamManagement";
+import MyTeam from "./pages/landloard/MyTeam";
+
 /* Workspace booking pages */
 import BookSpace from "./pages/BookSpace";
 import Checkout from "./pages/Checkout";
@@ -82,7 +86,7 @@ const App = () => {
 
         {/* ================= CUSTOMER ROUTES ================= */}
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
-          {/* Checkout: /checkout */}
+          {/* Checkout */}
           <Route path="/checkout" element={<Checkout />} />
 
           {/* Customer layout */}
@@ -121,6 +125,9 @@ const App = () => {
 
             <Route path="invite-visitor" element={<InviteVisitor />} />
             <Route path="visitors" element={<Visitors />} />
+
+            {/* Customer Team - Read Only */}
+            <Route path="my-team" element={<MyTeam />} />
           </Route>
         </Route>
 
@@ -142,6 +149,9 @@ const App = () => {
 
             <Route path="coupons" element={<AddCoupon />} />
             <Route path="coupon-list" element={<CouponList />} />
+
+            {/* Team Management */}
+            <Route path="team-management" element={<TeamManagement />} />
 
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>
