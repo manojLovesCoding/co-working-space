@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Clock, MapPin, RefreshCw } from "lucide-react";
+import { CalendarDays, Clock, MapPin, RefreshCw, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios.js";
 
@@ -91,6 +91,26 @@ const getDisplayStatus = (reservation) => {
   return status;
 };
 
+// One row per seat with the person it is booked for.
+// Bookings made before seat assignments existed fall back to seat codes only.
+const getSeatRows = (reservation) => {
+  const assignments = Array.isArray(reservation.seatAssignments)
+    ? reservation.seatAssignments
+    : [];
+
+  if (assignments.length > 0) {
+    return assignments.map((item) => ({
+      spaceCode: item.spaceCode,
+      name: item.assigneeType === "self" ? "You" : item.name || "Team member",
+      isSelf: item.assigneeType === "self",
+    }));
+  }
+
+  return (
+    Array.isArray(reservation.selectedSpaces) ? reservation.selectedSpaces : []
+  ).map((code) => ({ spaceCode: code, name: "", isSelf: false }));
+};
+
 const getScheduleRows = (reservation) => {
   if (reservation.plan === "hourly") {
     return [
@@ -100,7 +120,7 @@ const getScheduleRows = (reservation) => {
         // Older hourly bookings were saved without a time (full day).
         value: reservation.startTime
           ? `${formatTime(reservation.startTime)} - ${formatTime(
-              reservation.endTime
+              reservation.endTime,
             )}`
           : "Full day",
       },
@@ -151,7 +171,7 @@ const Reservations = () => {
         setReservations(response.data.reservations || []);
       } else {
         throw new Error(
-          response.data?.message || "Failed to fetch reservations."
+          response.data?.message || "Failed to fetch reservations.",
         );
       }
     } catch (err) {
@@ -173,7 +193,7 @@ const Reservations = () => {
 
   const countByStatus = (...statuses) =>
     reservations.filter((item) =>
-      statuses.includes(getDisplayStatus(item).toLowerCase())
+      statuses.includes(getDisplayStatus(item).toLowerCase()),
     ).length;
 
   return (
@@ -197,10 +217,7 @@ const Reservations = () => {
             disabled={loading}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw
-              size={16}
-              className={loading ? "animate-spin" : ""}
-            />
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             Refresh
           </button>
         </div>
@@ -245,9 +262,7 @@ const Reservations = () => {
               size={32}
               className="mx-auto animate-spin text-blue-600"
             />
-            <p className="mt-4 text-gray-500">
-              Loading your reservations...
-            </p>
+            <p className="mt-4 text-gray-500">Loading your reservations...</p>
           </div>
         )}
 
@@ -272,17 +287,15 @@ const Reservations = () => {
         {/* Empty state */}
         {!loading && !error && reservations.length === 0 && (
           <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
-            <CalendarDays
-              size={44}
-              className="mx-auto text-gray-400"
-            />
+            <CalendarDays size={44} className="mx-auto text-gray-400" />
 
             <h2 className="mt-4 text-lg font-semibold text-gray-900">
               No reservations yet
             </h2>
 
             <p className="mt-2 text-sm text-gray-500">
-              Your workspace bookings will appear here once you make a reservation.
+              Your workspace bookings will appear here once you make a
+              reservation.
             </p>
           </div>
         )}
@@ -292,6 +305,7 @@ const Reservations = () => {
           <div className="space-y-5">
             {reservations.map((reservation) => {
               const displayStatus = getDisplayStatus(reservation);
+              const seatRows = getSeatRows(reservation);
 
               return (
                 <div
@@ -312,7 +326,7 @@ const Reservations = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-                          displayStatus
+                          displayStatus,
                         )}`}
                       >
                         {displayStatus}
@@ -322,9 +336,10 @@ const Reservations = () => {
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           reservation.paymentStatus?.toLowerCase() === "paid"
                             ? "bg-green-100 text-green-700"
-                            : reservation.paymentStatus?.toLowerCase() === "failed"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-gray-100 text-gray-700"
+                            : reservation.paymentStatus?.toLowerCase() ===
+                                "failed"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-700"
                         }`}
                       >
                         Payment: {reservation.paymentStatus || "Unknown"}
@@ -345,10 +360,8 @@ const Reservations = () => {
                       </p>
 
                       <p className="mt-1 text-sm text-gray-500">
-                        Selected seats:{" "}
-                        {Array.isArray(reservation.selectedSpaces)
-                          ? reservation.selectedSpaces.join(", ")
-                          : "—"}
+                        {seatRows.length}{" "}
+                        {seatRows.length === 1 ? "seat" : "seats"}
                       </p>
                     </div>
 
@@ -370,10 +383,10 @@ const Reservations = () => {
                         {reservation.plan === "hourly"
                           ? "hour(s)"
                           : reservation.plan === "daily"
-                          ? "day(s)"
-                          : reservation.plan === "monthly"
-                          ? "month(s)"
-                          : ""}
+                            ? "day(s)"
+                            : reservation.plan === "monthly"
+                              ? "month(s)"
+                              : ""}
                       </p>
                     </div>
 
@@ -398,6 +411,43 @@ const Reservations = () => {
                         {formatCurrency(reservation.totalAmount)}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Seats and who they are booked for */}
+                  <div className="border-t border-gray-100 px-5 py-4">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Users size={17} />
+                      <span className="text-sm">Seats</span>
+                    </div>
+
+                    {seatRows.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {seatRows.map((seat) => (
+                          <div
+                            key={seat.spaceCode}
+                            className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2"
+                          >
+                            <span className="rounded-md bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white">
+                              {seat.spaceCode}
+                            </span>
+
+                            {seat.name && (
+                              <span
+                                className={`text-sm ${
+                                  seat.isSelf
+                                    ? "font-semibold text-blue-700"
+                                    : "text-gray-700"
+                                }`}
+                              >
+                                {seat.name}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-gray-500">—</p>
+                    )}
                   </div>
 
                   <div className="border-t border-gray-100 bg-gray-50 px-5 py-3">

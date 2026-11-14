@@ -118,7 +118,7 @@ const getSchedule = (reservation) => {
 
     return reservation.startTime
       ? `${date}, ${formatTime(reservation.startTime)} - ${formatTime(
-          reservation.endTime
+          reservation.endTime,
         )}`
       : `${date}, Full day`;
   }
@@ -136,10 +136,10 @@ const getDurationLabel = (reservation) => {
     reservation.plan === "hourly"
       ? "hour(s)"
       : reservation.plan === "daily"
-      ? "day(s)"
-      : reservation.plan === "monthly"
-      ? "month(s)"
-      : "";
+        ? "day(s)"
+        : reservation.plan === "monthly"
+          ? "month(s)"
+          : "";
 
   return `${reservation.duration ?? "—"} ${unit}`.trim();
 };
@@ -156,6 +156,34 @@ const getCustomer = (reservation) => {
   }
 
   return { name: "Deleted user", email: "", phone: "" };
+};
+
+// One row per seat with the person it is booked for.
+// Bookings made before seat assignments existed fall back to seat codes only.
+const getSeatRows = (reservation) => {
+  const assignments = Array.isArray(reservation.seatAssignments)
+    ? reservation.seatAssignments
+    : [];
+
+  if (assignments.length > 0) {
+    return assignments.map((item) => ({
+      spaceCode: item.spaceCode,
+      name: item.name || "",
+      email: item.email || "",
+      phone: item.phone || "",
+      isSelf: item.assigneeType === "self",
+    }));
+  }
+
+  return (
+    Array.isArray(reservation.selectedSpaces) ? reservation.selectedSpaces : []
+  ).map((code) => ({
+    spaceCode: code,
+    name: "",
+    email: "",
+    phone: "",
+    isSelf: false,
+  }));
 };
 
 /* ---------- styles ---------- */
@@ -219,15 +247,13 @@ const AdminReservations = () => {
       if (response.data?.success) {
         setReservations(response.data.reservations || []);
       } else {
-        toast.error(
-          response.data?.message || "Failed to load reservations"
-        );
+        toast.error(response.data?.message || "Failed to load reservations");
       }
     } catch (error) {
       console.error("Fetch reservations error:", error);
 
       toast.error(
-        error.response?.data?.message || "Failed to load reservations"
+        error.response?.data?.message || "Failed to load reservations",
       );
     } finally {
       setLoading(false);
@@ -239,16 +265,13 @@ const AdminReservations = () => {
   }, [fetchReservations]);
 
   /*
-   * Filter + search.
+   * Filter + search (includes the people the seats are booked for).
    */
   const filtered = useMemo(() => {
     const value = search.trim().toLowerCase();
 
     return reservations.filter((item) => {
-      if (
-        statusFilter !== "All" &&
-        getDisplayStatus(item) !== statusFilter
-      ) {
+      if (statusFilter !== "All" && getDisplayStatus(item) !== statusFilter) {
         return false;
       }
 
@@ -264,6 +287,13 @@ const AdminReservations = () => {
 
       const customer = getCustomer(item);
 
+      const seatFields = getSeatRows(item).flatMap((seat) => [
+        seat.spaceCode,
+        seat.name,
+        seat.email,
+        seat.phone,
+      ]);
+
       return [
         item.bookingId,
         item.spaceName,
@@ -271,6 +301,7 @@ const AdminReservations = () => {
         customer.email,
         customer.phone,
         ...(Array.isArray(item.selectedSpaces) ? item.selectedSpaces : []),
+        ...seatFields,
       ].some((field) => field?.toLowerCase().includes(value));
     });
   }, [reservations, search, statusFilter, planFilter, paymentFilter]);
@@ -301,10 +332,7 @@ const AdminReservations = () => {
   /*
    * Pagination.
    */
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filtered.length / ITEMS_PER_PAGE)
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -324,12 +352,12 @@ const AdminReservations = () => {
 
       setCurrentPage(page);
     },
-    [totalPages]
+    [totalPages],
   );
 
   const pageNumbers = useMemo(
     () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages]
+    [totalPages],
   );
 
   /*
@@ -345,7 +373,7 @@ const AdminReservations = () => {
       setter(event.target.value);
       setCurrentPage(1);
     },
-    []
+    [],
   );
 
   const hasActiveFilters =
@@ -369,6 +397,7 @@ const AdminReservations = () => {
 
   const selectedCustomer = selected ? getCustomer(selected) : null;
   const selectedStatus = selected ? getDisplayStatus(selected) : null;
+  const selectedSeatRows = selected ? getSeatRows(selected) : [];
 
   return (
     <div className="p-6">
@@ -431,7 +460,7 @@ const AdminReservations = () => {
             type="text"
             value={search}
             onChange={handleSearch}
-            placeholder="Search by booking ID, customer, email, space or seat code..."
+            placeholder="Search by booking ID, customer, seat holder, email, space or seat code..."
             className="flex-1 border border-orange-400 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-orange-200"
           />
 
@@ -521,11 +550,9 @@ const AdminReservations = () => {
                     Customer
                   </th>
                   <th className="text-left p-3 text-sm font-semibold">
-                    Space
+                    Space &amp; Seat Holders
                   </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Plan
-                  </th>
+                  <th className="text-left p-3 text-sm font-semibold">Plan</th>
                   <th className="text-left p-3 text-sm font-semibold">
                     Schedule
                   </th>
@@ -548,6 +575,7 @@ const AdminReservations = () => {
                 {paginated.map((item, index) => {
                   const customer = getCustomer(item);
                   const displayStatus = getDisplayStatus(item);
+                  const seatRows = getSeatRows(item);
 
                   return (
                     <tr
@@ -580,16 +608,39 @@ const AdminReservations = () => {
                         )}
                       </td>
 
-                      <td className="p-3">
+                      <td className="p-3 min-w-48">
                         <div className="font-medium text-sm">
                           {item.spaceName || "—"}
                         </div>
 
-                        <div className="text-xs text-gray-400 mt-1">
-                          {Array.isArray(item.selectedSpaces)
-                            ? item.selectedSpaces.join(", ")
-                            : "—"}
-                        </div>
+                        {seatRows.length > 0 ? (
+                          <div className="mt-1 space-y-0.5">
+                            {seatRows.map((seat) => (
+                              <div
+                                key={seat.spaceCode}
+                                className="text-xs text-gray-500"
+                              >
+                                <span className="font-semibold text-gray-700">
+                                  {seat.spaceCode}
+                                </span>
+                                {seat.name && (
+                                  <>
+                                    {" "}
+                                    – {seat.name}
+                                    {seat.isSelf && (
+                                      <span className="text-gray-400">
+                                        {" "}
+                                        (customer)
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 mt-1">—</div>
+                        )}
                       </td>
 
                       <td className="p-3 text-sm capitalize">
@@ -611,7 +662,7 @@ const AdminReservations = () => {
                       <td className="p-3">
                         <span
                           className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                            displayStatus
+                            displayStatus,
                           )}`}
                         >
                           {displayStatus}
@@ -621,7 +672,7 @@ const AdminReservations = () => {
                       <td className="p-3">
                         <span
                           className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getPaymentStyle(
-                            item.paymentStatus
+                            item.paymentStatus,
                           )}`}
                         >
                           {item.paymentStatus || "Unknown"}
@@ -737,7 +788,7 @@ const AdminReservations = () => {
 
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Customer
+                  Customer (booked by)
                 </h3>
 
                 <p className="font-medium">{selectedCustomer.name}</p>
@@ -765,7 +816,7 @@ const AdminReservations = () => {
                 <div className="flex flex-wrap gap-2">
                   <span
                     className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                      selectedStatus
+                      selectedStatus,
                     )}`}
                   >
                     {selectedStatus}
@@ -773,7 +824,7 @@ const AdminReservations = () => {
 
                   <span
                     className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getPaymentStyle(
-                      selected.paymentStatus
+                      selected.paymentStatus,
                     )}`}
                   >
                     Payment: {selected.paymentStatus || "Unknown"}
@@ -795,10 +846,8 @@ const AdminReservations = () => {
                 <p className="font-medium">{selected.spaceName || "—"}</p>
 
                 <p className="text-sm text-gray-500 mt-1">
-                  Seats:{" "}
-                  {Array.isArray(selected.selectedSpaces)
-                    ? selected.selectedSpaces.join(", ")
-                    : "—"}
+                  {selectedSeatRows.length}{" "}
+                  {selectedSeatRows.length === 1 ? "seat" : "seats"}
                 </p>
               </div>
 
@@ -823,6 +872,63 @@ const AdminReservations = () => {
                   <span className="font-medium">When:</span>{" "}
                   {getSchedule(selected)}
                 </p>
+              </div>
+
+              {/* SEAT HOLDERS */}
+
+              <div className="md:col-span-2">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                  Seat Holders
+                </h3>
+
+                {selectedSeatRows.length > 0 ? (
+                  <div className="overflow-x-auto border rounded-lg">
+                    <table className="w-full border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b">
+                          <th className="text-left p-2 font-semibold">Seat</th>
+                          <th className="text-left p-2 font-semibold">
+                            Person
+                          </th>
+                          <th className="text-left p-2 font-semibold">Email</th>
+                          <th className="text-left p-2 font-semibold">Phone</th>
+                        </tr>
+                      </thead>
+
+                      <tbody>
+                        {selectedSeatRows.map((seat) => (
+                          <tr
+                            key={seat.spaceCode}
+                            className="border-b last:border-b-0"
+                          >
+                            <td className="p-2 font-semibold text-orange-600">
+                              {seat.spaceCode}
+                            </td>
+
+                            <td className="p-2">
+                              {seat.name || "—"}
+                              {seat.isSelf && (
+                                <span className="ml-2 rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-600">
+                                  Customer
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="p-2 text-gray-600 break-all">
+                              {seat.email || "—"}
+                            </td>
+
+                            <td className="p-2 text-gray-600">
+                              {seat.phone || "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">—</p>
+                )}
               </div>
 
               {/* AMOUNT */}
