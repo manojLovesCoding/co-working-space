@@ -10,23 +10,53 @@ const couponSchema = new mongoose.Schema(
       trim: true,
       maxlength: 30,
     },
-
     validFrom: {
       type: Date,
       required: true,
     },
-
     validTo: {
       type: Date,
       required: true,
     },
-
     userType: {
       type: String,
       required: true,
-      enum: ["All Users", "First Time Users", "Existing Users"],
+      enum: [
+        "All Users",
+        "First Time Users",
+        "Existing Users",
+        "Selected Email Addresses",
+      ],
     },
-
+    selectedEmails: {
+      type: [String],
+      default: [],
+      set: (emails) =>
+        Array.isArray(emails)
+          ? [
+              ...new Set(
+                emails
+                  .map((email) => String(email).trim().toLowerCase())
+                  .filter(Boolean)
+              ),
+            ]
+          : [],
+      validate: {
+        validator: function (emails) {
+          if (this.userType !== "Selected Email Addresses") {
+            return emails.length === 0;
+          }
+          return (
+            emails.length > 0 &&
+            emails.every((email) =>
+              /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+            )
+          );
+        },
+        message:
+          "Selected Email Addresses coupons require at least one valid email address.",
+      },
+    },
     spaceType: {
       type: String,
       required: true,
@@ -40,26 +70,22 @@ const couponSchema = new mongoose.Schema(
         "CEO Cabin",
       ],
     },
-
     discount: {
       type: Number,
       required: true,
       min: 1,
       max: 100,
     },
-
     minimumPrice: {
       type: Number,
       required: true,
       min: 0,
     },
-
     maximumPrice: {
       type: Number,
       required: true,
       min: 0,
     },
-
     packType: {
       type: String,
       required: true,
@@ -72,7 +98,6 @@ const couponSchema = new mongoose.Schema(
         "Per Month",
       ],
     },
-
     status: {
       type: String,
       enum: ["Active", "Inactive"],
@@ -81,9 +106,10 @@ const couponSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const Coupon = mongoose.models.Coupon || mongoose.model("Coupon", couponSchema);
+const Coupon =
+  mongoose.models.Coupon || mongoose.model("Coupon", couponSchema);
 
 export default Coupon;

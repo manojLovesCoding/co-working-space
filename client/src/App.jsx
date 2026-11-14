@@ -1,5 +1,5 @@
 import { Toaster } from "react-hot-toast";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 import TenantLayout from "./layouts/TenantLayout";
@@ -87,33 +87,25 @@ const App = () => {
 
           {/* Customer layout */}
           <Route path="/customer" element={<LandlordLayout />}>
-            <Route index element={<LandlordDashboard />} />
+            {/* Default page */}
+            <Route index element={<Navigate to="reservations" replace />} />
 
             <Route path="properties" element={<PropertyList />} />
             <Route path="add-property" element={<AddProperty />} />
 
-            <Route
-              path="property/edit/:id"
-              element={<EditProperty />}
-            />
+            <Route path="property/edit/:id" element={<EditProperty />} />
 
             <Route
               path="property/:id/assign-tenant"
               element={<AssignTenant />}
             />
 
-            <Route
-              path="assigned-tenants"
-              element={<AssignedTenants />}
-            />
+            <Route path="assigned-tenants" element={<AssignedTenants />} />
 
             <Route path="tenants" element={<TenantList />} />
             <Route path="add-tenant" element={<AddTenant />} />
 
-            <Route
-              path="tenant/edit/:id"
-              element={<EditTenant />}
-            />
+            <Route path="tenant/edit/:id" element={<EditTenant />} />
 
             <Route
               path="tenant/password/:id"
@@ -122,19 +114,13 @@ const App = () => {
 
             <Route path="payments" element={<Payments />} />
 
-            {/* Customer workspace reservations */}
             <Route path="reservations" element={<Reservations />} />
 
             <Route path="profile2" element={<Profile2 />} />
-            <Route
-              path="company-profile"
-              element={<CompanyProfile />}
-            />
+            <Route path="company-profile" element={<CompanyProfile />} />
 
             <Route path="invite-visitor" element={<InviteVisitor />} />
             <Route path="visitors" element={<Visitors />} />
-
-            {/* <Route path="reports" element={<Reports />} /> */}
           </Route>
         </Route>
 
@@ -147,17 +133,9 @@ const App = () => {
             <Route path="properties" element={<AdminProperties />} />
             <Route path="payments" element={<AdminPayments />} />
 
-            <Route
-              path="add-space-master"
-              element={<AddSpaceMaster />}
-            />
+            <Route path="add-space-master" element={<AddSpaceMaster />} />
 
-            <Route
-              path="space-master-list"
-              element={<SpaceMaster />}
-            />
-
-            
+            <Route path="space-master-list" element={<SpaceMaster />} />
 
             <Route path="reservations" element={<AdminReservations />} />
             <Route path="visitors" element={<AdminVisitors />} />
