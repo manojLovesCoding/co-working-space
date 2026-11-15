@@ -21,6 +21,9 @@ const loadRazorpayScript = () =>
 // Helpers
 // ---------------------------------------------
 
+// 15-character Indian GSTIN (the server validates it again).
+const GSTIN_REGEX = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+
 const isSunday = (dateString) =>
   Boolean(dateString) && new Date(`${dateString}T00:00:00Z`).getUTCDay() === 0;
 
@@ -69,6 +72,17 @@ export default function Checkout() {
 
   // Amounts confirmed by the server after the order is created.
   const [paidSummary, setPaidSummary] = useState(null);
+
+  // Invoice: the customer gets ONE invoice, either personal or business (GST).
+  const [invoiceType, setInvoiceType] = useState("customer");
+  const [billing, setBilling] = useState({
+    businessName: "",
+    gstin: "",
+    address: "",
+  });
+
+  const updateBilling = (field, value) =>
+    setBilling((previous) => ({ ...previous, [field]: value }));
 
   if (!bookingData || !space) {
     return (
@@ -162,6 +176,23 @@ export default function Checkout() {
       return;
     }
 
+    if (invoiceType === "business") {
+      if (!billing.businessName.trim()) {
+        toast.error("Enter your business name for the invoice.");
+        return;
+      }
+
+      if (!GSTIN_REGEX.test(billing.gstin.trim().toUpperCase())) {
+        toast.error("Enter a valid 15-character GSTIN.");
+        return;
+      }
+
+      if (billing.address.trim().length < 10) {
+        toast.error("Enter your business billing address.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -188,6 +219,16 @@ export default function Checkout() {
           }),
         ),
         ...(isHourly ? { startTime } : {}),
+        invoiceType,
+        ...(invoiceType === "business"
+          ? {
+              billingDetails: {
+                businessName: billing.businessName.trim(),
+                gstin: billing.gstin.trim().toUpperCase(),
+                address: billing.address.trim(),
+              },
+            }
+          : {}),
         ...(couponCode ? { couponCode } : {}),
       });
 
@@ -351,8 +392,15 @@ export default function Checkout() {
           </div>
 
           <button
+            onClick={() => navigate(`/customer/invoice/${confirmedBookingId}`)}
+            className="mt-6 w-full rounded-lg border border-blue-600 px-5 py-3 font-semibold text-blue-600 hover:bg-blue-50"
+          >
+            View {invoiceType === "business" ? "Business" : "Personal"} Invoice
+          </button>
+
+          <button
             onClick={() => navigate("/customer")}
-            className="mt-6 w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
+            className="mt-3 w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
           >
             Go to Dashboard
           </button>
@@ -464,6 +512,129 @@ export default function Checkout() {
                 calculated and validated by the server when your order is
                 created.
               </p>
+            </div>
+
+            {/* Invoice type: customer OR business, not both */}
+            <div className="border-t pt-5">
+              <p className="text-sm font-semibold text-gray-900">
+                Invoice type
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                Choose one. Your invoice is generated after payment is confirmed
+                and cannot be switched later.
+              </p>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {[
+                  {
+                    id: "customer",
+                    title: "Personal invoice",
+                    text: "In your name, without GST details.",
+                  },
+                  {
+                    id: "business",
+                    title: "Business invoice (GST)",
+                    text: "In your business name with your GSTIN.",
+                  },
+                ].map((option) => (
+                  <label
+                    key={option.id}
+                    className={`cursor-pointer rounded-xl border-2 p-4 transition ${
+                      invoiceType === option.id
+                        ? "border-blue-600 bg-blue-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    } ${loading ? "pointer-events-none opacity-60" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="invoiceType"
+                      value={option.id}
+                      checked={invoiceType === option.id}
+                      onChange={() => setInvoiceType(option.id)}
+                      disabled={loading}
+                      className="sr-only"
+                    />
+                    <p className="text-sm font-semibold text-gray-900">
+                      {option.title}
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500">{option.text}</p>
+                  </label>
+                ))}
+              </div>
+
+              {invoiceType === "business" && (
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label
+                      htmlFor="business-name"
+                      className="mb-1 block text-xs font-semibold text-gray-700"
+                    >
+                      Business name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="business-name"
+                      type="text"
+                      value={billing.businessName}
+                      onChange={(event) =>
+                        updateBilling("businessName", event.target.value)
+                      }
+                      maxLength={150}
+                      disabled={loading}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="business-gstin"
+                      className="mb-1 block text-xs font-semibold text-gray-700"
+                    >
+                      GSTIN <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="business-gstin"
+                      type="text"
+                      value={billing.gstin}
+                      onChange={(event) =>
+                        updateBilling(
+                          "gstin",
+                          event.target.value.toUpperCase().replace(/\s/g, ""),
+                        )
+                      }
+                      maxLength={15}
+                      placeholder="15-character GSTIN"
+                      disabled={loading}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                    {billing.gstin.length === 15 &&
+                      !GSTIN_REGEX.test(billing.gstin) && (
+                        <p className="mt-1 text-xs text-red-600">
+                          This GSTIN does not look valid.
+                        </p>
+                      )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="business-address"
+                      className="mb-1 block text-xs font-semibold text-gray-700"
+                    >
+                      Billing address <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="business-address"
+                      rows={3}
+                      value={billing.address}
+                      onChange={(event) =>
+                        updateBilling("address", event.target.value)
+                      }
+                      maxLength={300}
+                      disabled={loading}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

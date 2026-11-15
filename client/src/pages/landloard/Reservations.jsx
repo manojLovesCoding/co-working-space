@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Clock, MapPin, RefreshCw, Users } from "lucide-react";
+import {
+  CalendarDays,
+  Clock,
+  FileText,
+  MapPin,
+  RefreshCw,
+  Users,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api/axios.js";
 
@@ -106,8 +114,9 @@ const getSeatRows = (reservation) => {
     }));
   }
 
-  return (
-    Array.isArray(reservation.selectedSpaces) ? reservation.selectedSpaces : []
+  return (Array.isArray(reservation.selectedSpaces)
+    ? reservation.selectedSpaces
+    : []
   ).map((code) => ({ spaceCode: code, name: "", isSelf: false }));
 };
 
@@ -120,7 +129,7 @@ const getScheduleRows = (reservation) => {
         // Older hourly bookings were saved without a time (full day).
         value: reservation.startTime
           ? `${formatTime(reservation.startTime)} - ${formatTime(
-              reservation.endTime,
+              reservation.endTime
             )}`
           : "Full day",
       },
@@ -156,6 +165,7 @@ const getStatusStyle = (status) => {
 };
 
 const Reservations = () => {
+  const navigate = useNavigate();
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -171,7 +181,7 @@ const Reservations = () => {
         setReservations(response.data.reservations || []);
       } else {
         throw new Error(
-          response.data?.message || "Failed to fetch reservations.",
+          response.data?.message || "Failed to fetch reservations."
         );
       }
     } catch (err) {
@@ -193,7 +203,7 @@ const Reservations = () => {
 
   const countByStatus = (...statuses) =>
     reservations.filter((item) =>
-      statuses.includes(getDisplayStatus(item).toLowerCase()),
+      statuses.includes(getDisplayStatus(item).toLowerCase())
     ).length;
 
   return (
@@ -217,7 +227,10 @@ const Reservations = () => {
             disabled={loading}
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+            <RefreshCw
+              size={16}
+              className={loading ? "animate-spin" : ""}
+            />
             Refresh
           </button>
         </div>
@@ -262,7 +275,9 @@ const Reservations = () => {
               size={32}
               className="mx-auto animate-spin text-blue-600"
             />
-            <p className="mt-4 text-gray-500">Loading your reservations...</p>
+            <p className="mt-4 text-gray-500">
+              Loading your reservations...
+            </p>
           </div>
         )}
 
@@ -287,15 +302,17 @@ const Reservations = () => {
         {/* Empty state */}
         {!loading && !error && reservations.length === 0 && (
           <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
-            <CalendarDays size={44} className="mx-auto text-gray-400" />
+            <CalendarDays
+              size={44}
+              className="mx-auto text-gray-400"
+            />
 
             <h2 className="mt-4 text-lg font-semibold text-gray-900">
               No reservations yet
             </h2>
 
             <p className="mt-2 text-sm text-gray-500">
-              Your workspace bookings will appear here once you make a
-              reservation.
+              Your workspace bookings will appear here once you make a reservation.
             </p>
           </div>
         )}
@@ -326,7 +343,7 @@ const Reservations = () => {
                     <div className="flex flex-wrap items-center gap-2">
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(
-                          displayStatus,
+                          displayStatus
                         )}`}
                       >
                         {displayStatus}
@@ -336,10 +353,9 @@ const Reservations = () => {
                         className={`rounded-full px-3 py-1 text-xs font-semibold ${
                           reservation.paymentStatus?.toLowerCase() === "paid"
                             ? "bg-green-100 text-green-700"
-                            : reservation.paymentStatus?.toLowerCase() ===
-                                "failed"
-                              ? "bg-red-100 text-red-700"
-                              : "bg-gray-100 text-gray-700"
+                            : reservation.paymentStatus?.toLowerCase() === "failed"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-gray-100 text-gray-700"
                         }`}
                       >
                         Payment: {reservation.paymentStatus || "Unknown"}
@@ -383,10 +399,10 @@ const Reservations = () => {
                         {reservation.plan === "hourly"
                           ? "hour(s)"
                           : reservation.plan === "daily"
-                            ? "day(s)"
-                            : reservation.plan === "monthly"
-                              ? "month(s)"
-                              : ""}
+                          ? "day(s)"
+                          : reservation.plan === "monthly"
+                          ? "month(s)"
+                          : ""}
                       </p>
                     </div>
 
@@ -450,10 +466,24 @@ const Reservations = () => {
                     )}
                   </div>
 
-                  <div className="border-t border-gray-100 bg-gray-50 px-5 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 bg-gray-50 px-5 py-3">
                     <p className="text-xs text-gray-500">
                       Created: {formatDate(reservation.createdAt)}
                     </p>
+
+                    {reservation.status === "Confirmed" &&
+                      reservation.paymentStatus === "Paid" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            navigate(`/customer/invoice/${reservation.bookingId}`)
+                          }
+                          className="inline-flex items-center gap-2 rounded-lg border border-blue-600 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:bg-blue-50"
+                        >
+                          <FileText size={14} />
+                          View Invoice
+                        </button>
+                      )}
                   </div>
                 </div>
               );

@@ -7,6 +7,10 @@ import User from "../models/User.js";
 import TeamMember from "../models/TeamMember.js";
 import WorkspaceBooking from "../models/WorkspaceBooking.js";
 import { applyCoupon } from "../utils/couponHelper.js";
+import {
+  createInvoiceForBooking,
+  resolveInvoiceDetails,
+} from "../utils/invoiceHelper.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -592,6 +596,8 @@ export const createRazorpayOrder = async (req, res) => {
       duration,
       selectedSpaces,
       seatAssignments,
+      invoiceType,
+      billingDetails,
       startTime,
       couponCode,
     } = req.body;
@@ -611,6 +617,9 @@ export const createRazorpayOrder = async (req, res) => {
       selectedSpaces,
       seatAssignments,
     );
+
+    // One invoice type per booking: customer OR business, never both.
+    const invoiceInfo = resolveInvoiceDetails(invoiceType, billingDetails);
 
     const numericDuration = Number(duration);
 
@@ -683,6 +692,8 @@ export const createRazorpayOrder = async (req, res) => {
       duration: numericDuration,
       selectedSpaces,
       seatAssignments: resolvedAssignments,
+      invoiceType: invoiceInfo.invoiceType,
+      billingDetails: invoiceInfo.billingDetails,
       pricePerUnit,
       subtotal,
       discountAmount,
@@ -906,10 +917,22 @@ export const addWorkspaceBooking = async (req, res) => {
 
     await booking.save();
 
+    // Generate the invoice (customer OR business, as chosen at checkout).
+    // A failure here must never undo a confirmed, paid booking: the
+    // invoice is created on demand the first time it is opened.
+    let invoice = null;
+
+    try {
+      invoice = await createInvoiceForBooking(booking);
+    } catch (invoiceError) {
+      console.error("Invoice generation error:", invoiceError.message);
+    }
+
     return res.status(200).json({
       success: true,
       message: "Workspace booking confirmed successfully",
       booking,
+      invoiceNumber: invoice?.invoiceNumber || null,
     });
   } catch (error) {
     console.error("Add workspace booking error:", error);

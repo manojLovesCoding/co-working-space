@@ -55,6 +55,8 @@ import AdminReservations from "./pages/admin/Adminreservations";
 import AdminVisitors from "./pages/admin/Adminvisitors";
 import AddCoupon from "./pages/admin/AddCoupon";
 import CouponList from "./pages/admin/CouponList";
+import InvoicePage from "./pages/admin/InvoicePage";
+import AdminInvoices from "./pages/admin/AdminInvoices";
 
 const App = () => {
   return (
@@ -128,6 +130,11 @@ const App = () => {
 
             {/* Customer Team - Read Only */}
             <Route path="my-team" element={<MyTeam />} />
+
+            <Route
+              path="/customer/invoice/:bookingId"
+              element={<InvoicePage mode="customer" />}
+            />
           </Route>
         </Route>
 
@@ -152,6 +159,8 @@ const App = () => {
 
             {/* Team Management */}
             <Route path="team-management" element={<TeamManagement />} />
+            <Route path="invoices/:id" element={<InvoicePage mode="admin" />} />
+            <Route path="invoices" element={<AdminInvoices />} />
 
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>

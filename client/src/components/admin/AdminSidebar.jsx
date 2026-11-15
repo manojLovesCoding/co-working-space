@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -38,6 +39,12 @@ const AdminSidebar = () => {
       path: "payments",
       icon: "₹",
       description: "Transactions",
+    },
+    {
+      label: "Invoices",
+      path: "invoices",
+      icon: "🧾",
+      description: "Manage invoices",
     },
     {
       label: "Add Space Master",
@@ -130,7 +137,9 @@ const AdminSidebar = () => {
               <h1 className="text-base font-bold text-slate-900 truncate">
                 Admin Panel
               </h1>
-              <p className="text-xs text-slate-500 truncate">Rent Management</p>
+              <p className="text-xs text-slate-500 truncate">
+                Rent Management
+              </p>
             </div>
 
             {/* Close button mobile */}
@@ -297,7 +306,9 @@ const AdminSidebar = () => {
           <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-slate-600">Vayuhu</p>
+                <p className="text-xs font-semibold text-slate-600">
+                  Vayuhu
+                </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   Admin Console
                 </p>

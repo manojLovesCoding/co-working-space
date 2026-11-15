@@ -73,6 +73,24 @@ const workspaceBookingSchema = new mongoose.Schema(
       default: [],
     },
 
+    // The customer picks ONE invoice type at checkout:
+    // "customer" (personal) or "business" (GST invoice with GSTIN).
+    invoiceType: {
+      type: String,
+      enum: ["customer", "business"],
+      default: "customer",
+    },
+
+    // Only filled for business invoices. Copied onto the invoice
+    // when the booking is confirmed and paid.
+    billingDetails: {
+      businessName: { type: String, default: "", trim: true },
+      gstin: { type: String, default: "", trim: true },
+      address: { type: String, default: "", trim: true },
+      state: { type: String, default: "", trim: true },
+      stateCode: { type: String, default: "", trim: true },
+    },
+
     pricePerUnit: {
       type: Number,
       required: true,
