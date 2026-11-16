@@ -1057,3 +1057,102 @@ export const getAllReservations = async (req, res) => {
     });
   }
 };
+
+// ==========================================
+// SEAT STATUS (which seats are already booked)
+// POST /api/booking/seat_status
+//
+// Uses the same blocking rules as getAvailability: Confirmed bookings
+// and Pending bookings younger than 10 minutes.
+//
+// Response: { seats: { [spaceCode]: { fullDay, bookedSlots } } }
+//  - hourly request: hourly bookings -> bookedSlots, daily/monthly -> fullDay
+//  - daily/monthly request: any overlapping booking -> fullDay
+// ==========================================
+
+export const getSeatStatus = async (req, res) => {
+  try {
+    const { spaceName, bookingDate, plan, duration } = req.body;
+
+    if (typeof spaceName !== "string" || !spaceName.trim()) {
+      throw new Error("Workspace name is required");
+    }
+
+    if (!["hourly", "daily", "monthly"].includes(plan)) {
+      throw new Error("Invalid booking plan");
+    }
+
+    if (!isValidDateString(bookingDate)) {
+      throw new Error("Invalid booking date");
+    }
+
+    const numericDuration = Number(duration);
+
+    if (
+      !Number.isInteger(numericDuration) ||
+      numericDuration < 1 ||
+      numericDuration > MAX_DURATION[plan]
+    ) {
+      throw new Error("Invalid booking duration");
+    }
+
+    // Nothing to show for past dates or Sundays.
+    if (bookingDate < getTodayIST() || !getOfficeHours(bookingDate)) {
+      return res.status(200).json({ success: true, seats: {} });
+    }
+
+    let startAt;
+    let endAt;
+
+    if (plan === "hourly") {
+      // The whole selected day; the page checks the chosen time itself.
+      startAt = istMidnight(bookingDate);
+      endAt = istMidnight(addDays(bookingDate, 1));
+    } else {
+      ({ startAt, endAt } = getBookingRange(
+        bookingDate,
+        plan,
+        numericDuration,
+      ));
+    }
+
+    const pendingCutoff = new Date(Date.now() - 10 * 60 * 1000);
+
+    const bookings = await WorkspaceBooking.find({
+      spaceName: spaceName.trim(),
+      startAt: { $lt: endAt },
+      endAt: { $gt: startAt },
+      $or: [
+        { status: "Confirmed" },
+        {
+          status: "Pending",
+          paymentStatus: "Pending",
+          createdAt: { $gte: pendingCutoff },
+        },
+      ],
+    })
+      .select("plan selectedSpaces startTime endTime")
+      .lean();
+
+    const seats = {};
+
+    for (const booking of bookings) {
+      for (const code of booking.selectedSpaces) {
+        if (!seats[code]) seats[code] = { fullDay: false, bookedSlots: [] };
+
+        if (plan === "hourly" && booking.plan === "hourly") {
+          seats[code].bookedSlots.push({
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+          });
+        } else {
+          seats[code].fullDay = true;
+        }
+      }
+    }
+
+    return res.status(200).json({ success: true, seats });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};

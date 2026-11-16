@@ -7,6 +7,7 @@ import {
   addWorkspaceBooking,
   getMyReservations,
   getAllReservations,
+  getSeatStatus,
 } from "../controllers/bookingController.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -58,6 +59,14 @@ bookingRouter.get(
   verifyToken,
   authorizeRoles("admin"),
   getAllReservations,
+);
+
+// Which seats are already booked for a date / plan
+bookingRouter.post(
+  "/seat_status",
+  verifyToken,
+  authorizeRoles("customer"),
+  getSeatStatus,
 );
 
 export default bookingRouter;

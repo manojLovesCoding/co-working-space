@@ -42,6 +42,7 @@ app.use("/api/coupon", couponRouter);
 app.use("/api/team", teamRouter);
 app.use("/api/invoice", invoiceRouter);
 
+
 await connectDB();
 connectCloudinary();
 

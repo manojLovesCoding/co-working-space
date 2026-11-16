@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -201,6 +201,40 @@ const getDurationLimits = (space, plan, dateString, startTime) => {
   return { min, max: Math.max(min, max) };
 };
 
+// True when two [start, end) ranges overlap.
+const overlaps = (aStart, aEnd, bStart, bEnd) => aStart < bEnd && bStart < aEnd;
+
+// Start times where [start, start + duration] doesn't clash with any booked slot.
+const getFreeStartTimes = (
+  bookedSlots,
+  hours,
+  durationHours,
+  minStart = -1,
+) => {
+  if (!hours) return [];
+
+  const free = [];
+
+  for (let m = hours.open; m + durationHours * 60 <= hours.close; m += 60) {
+    if (m <= minStart) continue;
+
+    const end = m + durationHours * 60;
+
+    const clash = bookedSlots.some((slot) =>
+      overlaps(
+        m,
+        end,
+        timeToMinutes(slot.startTime),
+        timeToMinutes(slot.endTime),
+      ),
+    );
+
+    if (!clash) free.push(minutesToTime(m));
+  }
+
+  return free;
+};
+
 // ---------------------------------------------
 // BookSpace Component
 // ---------------------------------------------
@@ -228,6 +262,11 @@ export default function BookSpace() {
   const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [unavailableSpaces, setUnavailableSpaces] = useState([]);
   const [availabilityError, setAvailabilityError] = useState("");
+
+  // Already-booked info per seat, fetched from the server:
+  // { [spaceCode]: { fullDay: boolean, bookedSlots: [{ startTime, endTime }] } }
+  const [seatStatus, setSeatStatus] = useState({});
+  const [toast, setToast] = useState(null);
 
   // Team members and who each seat is booked for
   const [teamMembers, setTeamMembers] = useState([]);
@@ -335,14 +374,17 @@ export default function BookSpace() {
   // Final payable amount including GST
   const payableAmount = round2(taxableAmount + gstAmount);
 
+  // A seat is unavailable for the whole selection when it is booked
+  // on a daily/monthly plan for the chosen date range.
   const availableSpaceCount = useMemo(
     () =>
       availableSpaces.filter(
         (item) =>
           item.status === "Active" &&
-          !unavailableSpaces.includes(item.spaceCode),
+          !unavailableSpaces.includes(item.spaceCode) &&
+          !seatStatus[item.spaceCode]?.fullDay,
       ).length,
-    [availableSpaces, unavailableSpaces],
+    [availableSpaces, unavailableSpaces, seatStatus],
   );
 
   // Every selected seat must be assigned to the customer or a team member.
@@ -376,6 +418,132 @@ export default function BookSpace() {
     }
   };
 
+  // ---------------------------------------------
+  // Toast
+  // ---------------------------------------------
+
+  const showToast = (message, type = "error") => {
+    setToast({ message, type, id: Date.now() });
+  };
+
+  useEffect(() => {
+    if (!toast) return;
+
+    const timer = setTimeout(() => setToast(null), 7000);
+
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  // ---------------------------------------------
+  // Seat status (already booked seats)
+  // POST /api/booking/seat_status
+  // ---------------------------------------------
+
+  const refreshSeatStatus = useCallback(async () => {
+    if (!space?.space || !selectedDate || isClosedDay || !selectedPlan) {
+      setSeatStatus({});
+      return {};
+    }
+
+    try {
+      const response = await api.post("/booking/seat_status", {
+        spaceName: space.space,
+        bookingDate: selectedDate,
+        plan: selectedPlan,
+        duration,
+      });
+
+      const seats = response.data?.success ? response.data.seats || {} : {};
+
+      setSeatStatus(seats);
+      return seats;
+    } catch (error) {
+      console.error("Seat status error:", error);
+      return {};
+    }
+  }, [space?.space, selectedDate, selectedPlan, duration, isClosedDay]);
+
+  useEffect(() => {
+    refreshSeatStatus();
+  }, [refreshSeatStatus]);
+
+  // null = free, "full" = booked on a daily/monthly plan,
+  // "time" = hourly clash with the selected time
+  const getSeatBlock = (code, status = seatStatus) => {
+    const info = status[code];
+
+    if (!info) return null;
+    if (info.fullDay) return "full";
+
+    if (isHourly && selectedTime) {
+      const start = timeToMinutes(selectedTime);
+      const end = start + duration * 60;
+
+      const clash = (info.bookedSlots || []).some((slot) =>
+        overlaps(
+          start,
+          end,
+          timeToMinutes(slot.startTime),
+          timeToMinutes(slot.endTime),
+        ),
+      );
+
+      if (clash) return "time";
+    }
+
+    return null;
+  };
+
+  const notifySeatBooked = (code, status = seatStatus) => {
+    const info = status[code];
+
+    if (info?.fullDay) {
+      showToast(`Seat ${code} is already booked for the selected date(s).`);
+      return;
+    }
+
+    const slots = info?.bookedSlots || [];
+
+    const now = new Date();
+    const minStart =
+      selectedDate === getToday() ? now.getHours() * 60 + now.getMinutes() : -1;
+
+    const free = getFreeStartTimes(slots, officeHours, duration, minStart);
+
+    const when = selectedTime
+      ? `${formatTime(selectedTime)} - ${formatTime(endTime)}`
+      : "the selected time";
+
+    showToast(
+      `Seat ${code} is already booked for ${when}. ` +
+        (free.length
+          ? `Available start times: ${free.map(formatTime).join(", ")}.`
+          : "No other times are available on this date."),
+    );
+  };
+
+  // If a change in time, duration or date makes selected seats
+  // unavailable, drop them and tell the customer.
+  useEffect(() => {
+    const conflicts = selectedSpaces.filter((code) => getSeatBlock(code));
+
+    if (!conflicts.length) return;
+
+    setSelectedSpaces((previous) =>
+      previous.filter((code) => !conflicts.includes(code)),
+    );
+
+    setAssignments((previous) => {
+      const next = { ...previous };
+      conflicts.forEach((code) => delete next[code]);
+      return next;
+    });
+
+    removeCoupon();
+    notifySeatBooked(conflicts[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seatStatus, selectedTime, duration]);
+
   const incrementDuration = () => {
     if (duration < maxDuration) {
       setDuration((previous) => previous + 1);
@@ -391,6 +559,12 @@ export default function BookSpace() {
   };
 
   const toggleSpace = (spaceCode) => {
+    // Seat is booked for the chosen time: explain instead of selecting.
+    if (!selectedSpaces.includes(spaceCode) && getSeatBlock(spaceCode)) {
+      notifySeatBooked(spaceCode);
+      return;
+    }
+
     clearAvailabilityResult();
 
     // Deselecting a seat also removes its assignment.
@@ -425,6 +599,9 @@ export default function BookSpace() {
   const handlePlanChange = (planId) => {
     setSelectedPlan(planId);
 
+    // Old status belongs to the previous plan; clear until the refetch lands.
+    setSeatStatus({});
+
     const limits = getDurationLimits(space, planId, selectedDate, selectedTime);
 
     setDuration((previous) =>
@@ -436,6 +613,9 @@ export default function BookSpace() {
 
   const handleDateChange = (value) => {
     setSelectedDate(value);
+
+    // Old status belongs to the previous date; clear until the refetch lands.
+    setSeatStatus({});
 
     // Reset the time if it is not valid for the new date
     // (e.g. 08:00 AM is not available on Saturday).
@@ -695,6 +875,10 @@ export default function BookSpace() {
         // Removing seats changes the subtotal, so the coupon is stale.
         removeCoupon();
 
+        // Refresh booked info and explain with a toast (incl. free times).
+        const latest = await refreshSeatStatus();
+        if (unavailable[0]) notifySeatBooked(unavailable[0], latest);
+
         setAvailabilityError(
           unavailable.length
             ? `These spaces are unavailable: ${unavailable.join(", ")}. Please select different spaces.`
@@ -812,6 +996,26 @@ export default function BookSpace() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast notification */}
+      {toast && (
+        <div
+          key={toast.id}
+          role="alert"
+          className="fixed right-4 top-4 z-50 flex max-w-sm items-start gap-3 rounded-xl border border-red-200 bg-white p-4 text-sm text-gray-800 shadow-lg"
+        >
+          <AlertCircle size={20} className="mt-0.5 shrink-0 text-red-500" />
+          <p className="flex-1">{toast.message}</p>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            aria-label="Close notification"
+            className="text-xs font-semibold text-gray-400 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <button
@@ -1166,7 +1370,7 @@ export default function BookSpace() {
 
                 <div className="flex items-center gap-2">
                   <span className="h-4 w-4 rounded-md bg-gray-300" />
-                  Unavailable
+                  Booked / Unavailable
                 </div>
               </div>
 
@@ -1185,10 +1389,16 @@ export default function BookSpace() {
                     {availableSpaces.map((spaceItem) => {
                       const seatCode = spaceItem.spaceCode;
                       const isSelected = selectedSpaces.includes(seatCode);
+                      const block = getSeatBlock(seatCode);
 
                       const isAvailable =
                         spaceItem.status === "Active" &&
-                        !unavailableSpaces.includes(seatCode);
+                        !unavailableSpaces.includes(seatCode) &&
+                        block !== "full"; // daily/monthly booked -> gray + disabled
+
+                      // Hourly clash stays clickable so the toast can
+                      // explain and list the free times.
+                      const hourlyClash = block === "time";
 
                       return (
                         <button
@@ -1198,8 +1408,12 @@ export default function BookSpace() {
                           onClick={() => toggleSpace(seatCode)}
                           aria-pressed={isSelected}
                           className={`relative flex aspect-square min-h-[58px] flex-col items-center justify-center rounded-xl border-2 text-xs font-semibold transition sm:min-h-[64px] ${
-                            !isAvailable
-                              ? "cursor-not-allowed border-gray-200 bg-gray-300 text-gray-500"
+                            !isAvailable || hourlyClash
+                              ? `border-gray-200 bg-gray-300 text-gray-500 ${
+                                  !isAvailable
+                                    ? "cursor-not-allowed"
+                                    : "cursor-pointer"
+                                }`
                               : isSelected
                                 ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
                                 : "border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50"
@@ -1215,8 +1429,8 @@ export default function BookSpace() {
                             <span className="mt-0.5 text-[9px]">Selected</span>
                           )}
 
-                          {!isAvailable && (
-                            <span className="text-[9px]">Unavailable</span>
+                          {(!isAvailable || hourlyClash) && (
+                            <span className="text-[9px]">Booked</span>
                           )}
                         </button>
                       );
