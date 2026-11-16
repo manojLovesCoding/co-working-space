@@ -48,9 +48,13 @@ const formatTime = (time) => {
   return `${hour12}:${String(minutes).padStart(2, "0")} ${suffix}`;
 };
 
+// Shows up to 2 decimals so GST paise are displayed correctly.
 const formatPrice = (value) => {
   const amount = Number(value);
-  return Number.isFinite(amount) ? `₹${amount.toLocaleString("en-IN")}` : "₹0";
+
+  return Number.isFinite(amount)
+    ? `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+    : "₹0";
 };
 
 const unitLabel = (plan, count) => {
@@ -125,13 +129,25 @@ export default function Checkout() {
   ).join(", ");
 
   // Display-only amounts. The server recalculates everything.
+  // totalAmount = final payable amount including GST.
   const totalAmount = Number(
     bookingData.totalAmount ?? bookingData.totalPrice ?? bookingData.total ?? 0,
   );
 
   const discountAmount = Number(bookingData.discountAmount || 0);
 
-  const subtotal = Number(bookingData.subtotal ?? totalAmount + discountAmount);
+  const gstRate = Number(bookingData.gstRate ?? 18);
+  const gstAmount = Number(bookingData.gstAmount || 0);
+
+  // Amount after coupon, before GST.
+  const taxableAmount = Number(
+    bookingData.taxableAmount ?? totalAmount - gstAmount,
+  );
+
+  // Price before coupon and GST.
+  const subtotal = Number(
+    bookingData.subtotal ?? taxableAmount + discountAmount,
+  );
 
   const hasCoupon = Boolean(couponCode) && discountAmount > 0;
 
@@ -204,7 +220,7 @@ export default function Checkout() {
 
       // Step 1: Create the order on your backend.
       // The server validates the coupon and seat assignments again and
-      // calculates the final amount.
+      // calculates the final amount (coupon + 18% GST).
       const orderResponse = await api.post("/booking/create_razorpay_order", {
         spaceName,
         bookingDate,
@@ -251,6 +267,9 @@ export default function Checkout() {
         subtotal: order.subtotal,
         discountAmount: order.discountAmount,
         couponCode: order.couponCode,
+        taxableAmount: order.taxableAmount,
+        gstRate: order.gstRate,
+        gstAmount: order.gstAmount,
         totalAmount: order.totalAmount,
       });
 
@@ -337,6 +356,8 @@ export default function Checkout() {
     const finalPaid = paidSummary?.totalAmount ?? totalAmount;
     const finalDiscount = paidSummary?.discountAmount ?? discountAmount;
     const finalCoupon = paidSummary?.couponCode ?? couponCode;
+    const finalGst = paidSummary?.gstAmount ?? gstAmount;
+    const finalGstRate = paidSummary?.gstRate ?? gstRate;
 
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -379,10 +400,18 @@ export default function Checkout() {
               </>
             )}
 
-            <p className="mt-4 text-sm text-gray-500">Amount paid</p>
+            <p className="mt-4 text-sm text-gray-500">
+              Amount paid (incl. GST)
+            </p>
             <p className="mt-1 font-medium text-gray-900">
               {formatPrice(finalPaid)}
             </p>
+
+            {Number(finalGst) > 0 && (
+              <p className="mt-1 text-sm text-gray-500">
+                Includes GST ({finalGstRate}%) of {formatPrice(finalGst)}
+              </p>
+            )}
 
             {finalCoupon && Number(finalDiscount) > 0 && (
               <p className="mt-1 text-sm text-green-600">
@@ -478,15 +507,15 @@ export default function Checkout() {
             </div>
 
             <div className="border-t pt-5">
-              {hasCoupon && (
-                <div className="mb-4 space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium text-gray-900">
-                      {formatPrice(subtotal)}
-                    </span>
-                  </div>
+              <div className="mb-4 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(subtotal)}
+                  </span>
+                </div>
 
+                {hasCoupon && (
                   <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2 text-sm">
                     <span className="font-medium text-green-700">
                       Coupon {couponCode}
@@ -495,11 +524,25 @@ export default function Checkout() {
                       − {formatPrice(discountAmount)}
                     </span>
                   </div>
-                </div>
-              )}
+                )}
 
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-gray-600">Amount</span>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Taxable amount</span>
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(taxableAmount)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">GST ({gstRate}%)</span>
+                  <span className="font-medium text-gray-900">
+                    {formatPrice(gstAmount)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 border-t pt-4">
+                <span className="text-gray-600">Total (incl. GST)</span>
                 <span className="text-2xl font-bold text-gray-900">
                   {Number.isFinite(totalAmount) && totalAmount > 0
                     ? formatPrice(totalAmount)
@@ -508,8 +551,8 @@ export default function Checkout() {
               </div>
 
               <p className="mt-2 text-xs text-gray-500">
-                The final payable amount, including any coupon discount, is
-                calculated and validated by the server when your order is
+                The final payable amount, including any coupon discount and GST,
+                is calculated and validated by the server when your order is
                 created.
               </p>
             </div>

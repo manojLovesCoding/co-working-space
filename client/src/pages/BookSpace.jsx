@@ -18,6 +18,11 @@ import api from "../api/axios.js";
 // Value used in the assignment dropdown for "the logged-in customer".
 const SELF = "self";
 
+// GST rate in percent (the server applies the same rate; this is for display).
+const GST_RATE = 18;
+
+const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
 // ---------------------------------------------
 // Office hours (minutes from midnight)
 // Mon-Fri: 08:00 - 19:00 | Sat: 09:00 - 19:00 | Sun: closed
@@ -36,13 +41,17 @@ const OFFICE_HOURS_TEXT =
 // Helpers
 // ---------------------------------------------
 
+// Shows up to 2 decimals so GST paise are displayed correctly.
 const formatPrice = (price) => {
   if (price === null || price === undefined || price === "") {
     return "₹0";
   }
 
   const amount = Number(price);
-  return Number.isFinite(amount) ? `₹${amount.toLocaleString("en-IN")}` : "₹0";
+
+  return Number.isFinite(amount)
+    ? `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+    : "₹0";
 };
 
 const getToday = () => {
@@ -310,15 +319,21 @@ export default function BookSpace() {
       ? getDailyEndDate(selectedDate, duration)
       : "";
 
-  // Subtotal before coupon
+  // Subtotal before coupon and GST
   const totalAmount = useMemo(() => {
     if (!selectedPricing) return 0;
 
     return selectedPricing.price * duration * selectedSpaces.length;
   }, [selectedPricing, duration, selectedSpaces.length]);
 
-  // Amount after coupon (display only; the server recalculates it)
-  const payableAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
+  // Taxable amount = after coupon, before GST (display only; the server recalculates it)
+  const taxableAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
+
+  // GST is charged on the taxable amount
+  const gstAmount = round2((taxableAmount * GST_RATE) / 100);
+
+  // Final payable amount including GST
+  const payableAmount = round2(taxableAmount + gstAmount);
 
   const availableSpaceCount = useMemo(
     () =>
@@ -498,6 +513,7 @@ export default function BookSpace() {
       });
 
       if (response.data?.success) {
+        // finalAmount = after coupon, before GST
         setAppliedCoupon({
           couponCode: response.data.couponCode,
           discountPercent: response.data.discountPercent,
@@ -689,8 +705,9 @@ export default function BookSpace() {
       }
 
       // The frontend amounts are for display only.
-      // The backend recalculates the subtotal, applies the coupon and
-      // computes the final amount when creating the Razorpay order.
+      // The backend recalculates the subtotal, applies the coupon,
+      // adds GST and computes the final amount when creating the
+      // Razorpay order.
       const bookingData = {
         spaceName: space.space,
         bookingDate: selectedDate,
@@ -714,7 +731,10 @@ export default function BookSpace() {
         subtotal: totalAmount,
         discountAmount: appliedCoupon?.discountAmount || 0,
         couponCode: appliedCoupon?.couponCode || null,
-        totalAmount: payableAmount,
+        taxableAmount,
+        gstRate: GST_RATE,
+        gstAmount,
+        totalAmount: payableAmount, // final amount including GST
         ...(isHourly
           ? {
               startTime: selectedTime,
@@ -885,6 +905,11 @@ export default function BookSpace() {
                       </div>
                     )}
                   </div>
+
+                  <p className="mt-3 text-xs text-gray-400">
+                    Prices are exclusive of GST. {GST_RATE}% GST is added at
+                    checkout.
+                  </p>
                 </div>
               </div>
             </section>
@@ -1428,7 +1453,7 @@ export default function BookSpace() {
                   )}
                 </div>
 
-                {/* Price breakdown, coupon and total */}
+                {/* Price breakdown, coupon, GST and total */}
                 <div className="py-5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">
@@ -1539,6 +1564,13 @@ export default function BookSpace() {
                     </div>
                   )}
 
+                  <div className="mt-4 flex items-center justify-between text-sm">
+                    <span className="text-gray-500">GST ({GST_RATE}%)</span>
+                    <span className="font-medium text-gray-900">
+                      {formatPrice(gstAmount)}
+                    </span>
+                  </div>
+
                   <div className="mt-5 flex items-end justify-between border-t border-gray-100 pt-5">
                     <div>
                       <p className="text-xs text-gray-500">Estimated Total</p>
@@ -1547,13 +1579,15 @@ export default function BookSpace() {
                       </p>
                       {appliedCoupon && (
                         <p className="text-xs text-gray-400 line-through">
-                          {formatPrice(totalAmount)}
+                          {formatPrice(
+                            round2(totalAmount * (1 + GST_RATE / 100)),
+                          )}
                         </p>
                       )}
                     </div>
 
                     <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-600">
-                      Before taxes
+                      Incl. GST
                     </span>
                   </div>
                 </div>

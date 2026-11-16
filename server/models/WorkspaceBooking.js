@@ -117,7 +117,28 @@ const workspaceBookingSchema = new mongoose.Schema(
       default: null,
     },
 
-    // Final amount charged (subtotal - discountAmount)
+    // Amount after coupon, before GST (the taxable value)
+    taxableAmount: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+
+    // GST rate in percent applied to this booking (snapshot)
+    gstRate: {
+      type: Number,
+      default: 18,
+      min: 0,
+    },
+
+    // GST in rupees = taxableAmount * gstRate / 100
+    gstAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    // Final amount charged = taxableAmount + gstAmount
     totalAmount: {
       type: Number,
       required: true,

@@ -38,6 +38,31 @@ const MAX_DURATION = {
   monthly: 36,
 };
 
+// ==========================================
+// GST
+// GST is charged on the amount AFTER the coupon discount.
+// totalAmount (what the customer pays) = taxableAmount + gstAmount.
+// ==========================================
+
+const GST_RATE = 18; // percent
+
+const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+// taxable = amount after coupon, before GST
+const withGst = (taxable) => {
+  const taxableAmount = round2(taxable);
+  const gstAmount = round2((taxableAmount * GST_RATE) / 100);
+
+  return {
+    taxableAmount,
+    gstAmount,
+    totalAmount: round2(taxableAmount + gstAmount),
+  };
+};
+
+// Razorpay works in paise (integer)
+const toPaise = (rupees) => Math.round(rupees * 100);
+
 const getPriceField = (plan) => {
   const fields = {
     hourly: "perHour",
@@ -518,6 +543,9 @@ export const checkWorkspaceAvailability = async (req, res) => {
 // Previews the discount for the booking page.
 // The real discount is applied again (server side)
 // inside createRazorpayOrder.
+//
+// finalAmount = after coupon, BEFORE GST.
+// gstAmount / totalAmount include the 18% GST.
 // ==========================================
 
 export const validateCoupon = async (req, res) => {
@@ -557,13 +585,18 @@ export const validateCoupon = async (req, res) => {
       userId: req.user.id,
     });
 
+    const gst = withGst(finalAmount);
+
     return res.status(200).json({
       success: true,
       couponCode: coupon.couponCode,
       discountPercent: coupon.discount,
       subtotal,
       discountAmount,
-      finalAmount,
+      finalAmount, // after coupon, before GST
+      gstRate: GST_RATE,
+      gstAmount: gst.gstAmount,
+      totalAmount: gst.totalAmount,
     });
   } catch (error) {
     return res.status(400).json({
@@ -649,7 +682,7 @@ export const createRazorpayOrder = async (req, res) => {
     const subtotal = pricePerUnit * numericDuration * selectedSpaces.length;
 
     // Apply the coupon on the server (if one was sent).
-    let totalAmount = subtotal;
+    let taxable = subtotal;
     let discountAmount = 0;
     let appliedCouponCode = null;
 
@@ -663,14 +696,18 @@ export const createRazorpayOrder = async (req, res) => {
       });
 
       discountAmount = result.discountAmount;
-      totalAmount = result.finalAmount;
+      taxable = result.finalAmount;
       appliedCouponCode = result.coupon.couponCode;
     }
 
+    // GST (18%) is added on the amount after the coupon discount.
+    const { taxableAmount, gstAmount, totalAmount } = withGst(taxable);
+    const amountInPaise = toPaise(totalAmount);
+
     if (
-      !Number.isSafeInteger(totalAmount) ||
+      !Number.isFinite(totalAmount) ||
       totalAmount <= 0 ||
-      !Number.isSafeInteger(totalAmount * 100)
+      !Number.isSafeInteger(amountInPaise)
     ) {
       return res.status(400).json({
         success: false,
@@ -698,7 +735,10 @@ export const createRazorpayOrder = async (req, res) => {
       subtotal,
       discountAmount,
       couponCode: appliedCouponCode,
-      totalAmount,
+      taxableAmount,
+      gstRate: GST_RATE,
+      gstAmount,
+      totalAmount, // final amount charged, including GST
       startTime: bookingStartTime, // "HH:mm" for hourly, null otherwise
       endTime, // "HH:mm" for hourly, null otherwise
       startAt,
@@ -727,7 +767,7 @@ export const createRazorpayOrder = async (req, res) => {
     }
 
     const order = await razorpay.orders.create({
-      amount: totalAmount * 100,
+      amount: amountInPaise,
       currency: "INR",
       receipt: bookingId,
       notes: {
@@ -751,6 +791,9 @@ export const createRazorpayOrder = async (req, res) => {
       subtotal,
       discountAmount,
       couponCode: appliedCouponCode,
+      taxableAmount,
+      gstRate: GST_RATE,
+      gstAmount,
       totalAmount,
     });
   } catch (error) {
@@ -850,13 +893,13 @@ export const addWorkspaceBooking = async (req, res) => {
     }
 
     // Confirm the payment against Razorpay's API as well.
-    // booking.totalAmount is already the discounted amount.
+    // booking.totalAmount is the discounted amount including GST.
     const payment = await razorpay.payments.fetch(razorpayPaymentId);
 
     if (
       payment.order_id !== razorpayOrderId ||
       payment.status !== "captured" ||
-      payment.amount !== booking.totalAmount * 100 ||
+      payment.amount !== toPaise(booking.totalAmount) ||
       payment.currency !== "INR"
     ) {
       return res.status(400).json({
@@ -965,7 +1008,7 @@ export const getMyReservations = async (req, res) => {
       user: userId,
     })
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
+        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode taxableAmount gstRate gstAmount totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
       )
       .sort({ createdAt: -1 })
       .lean();
@@ -995,7 +1038,7 @@ export const getAllReservations = async (req, res) => {
     const reservations = await WorkspaceBooking.find()
       .populate("user", "name email phone")
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
+        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode taxableAmount gstRate gstAmount totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
       )
       .sort({ createdAt: -1 })
       .lean();
