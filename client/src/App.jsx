@@ -57,6 +57,7 @@ import AddCoupon from "./pages/admin/AddCoupon";
 import CouponList from "./pages/admin/CouponList";
 import InvoicePage from "./pages/admin/InvoicePage";
 import AdminInvoices from "./pages/admin/AdminInvoices";
+import AdminOccupancyDashboard from "./pages/admin/AdminOccupancyDashboard";
 
 const App = () => {
   return (
@@ -148,7 +149,7 @@ const App = () => {
             <Route path="payments" element={<AdminPayments />} />
 
             <Route path="add-space-master" element={<AddSpaceMaster />} />
-
+            <Route path="occupancy" element={<AdminOccupancyDashboard />} />
             <Route path="space-master-list" element={<SpaceMaster />} />
 
             <Route path="reservations" element={<AdminReservations />} />
