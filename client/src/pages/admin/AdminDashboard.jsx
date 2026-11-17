@@ -1,535 +1,490 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import api from "../../api/axios.js";
 
+// Bookings are made in India Standard Time, so months and days are
+// always calculated in IST.
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+const PERIODS = [
+  { id: "today", label: "Today", days: 0 },
+  { id: "7d", label: "Last 7 days", days: 7 },
+  { id: "30d", label: "Last 30 days", days: 30 },
+];
+
+/* ---------- helpers ---------- */
+
+const toIst = (date) => new Date(new Date(date).getTime() + IST_OFFSET_MS);
+
+const istDateKey = (date) => toIst(date).toISOString().slice(0, 10);
+
+const istMonthKey = (date) => toIst(date).toISOString().slice(0, 7);
+
+const formatCurrency = (amount) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(amount) || 0);
+
+// 1,25,000 -> ₹1.25L, 45,000 -> ₹45K
+const formatCompact = (amount) => {
+  const value = Number(amount) || 0;
+
+  if (value >= 10000000) return `₹${+(value / 10000000).toFixed(2)}Cr`;
+  if (value >= 100000) return `₹${+(value / 100000).toFixed(2)}L`;
+  if (value >= 1000) return `₹${+(value / 1000).toFixed(1)}K`;
+
+  return `₹${Math.round(value)}`;
+};
+
+// Rounds the top of the chart up to a clean number (e.g. 83,400 -> 100,000).
+const niceMax = (value) => {
+  if (value <= 0) return 1000;
+
+  const magnitude = 10 ** Math.floor(Math.log10(value));
+  const normalized = value / magnitude;
+
+  const step =
+    normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10;
+
+  return step * magnitude;
+};
+
+// Only paid and confirmed bookings count as real reservations.
+const isConfirmed = (reservation) =>
+  reservation.status === "Confirmed" && reservation.paymentStatus === "Paid";
+
+// Last 12 months (including the current one), oldest first.
+const getLastMonths = (count = 3) => {
+  const [year, month] = istMonthKey(Date.now()).split("-").map(Number);
+
+  return Array.from({ length: count }, (_, index) => {
+    const date = new Date(Date.UTC(year, month - 1 - (count - 1 - index), 1));
+
+    return {
+      key: date.toISOString().slice(0, 7),
+      label: date.toLocaleDateString("en-IN", {
+        month: "short",
+        timeZone: "UTC",
+      }),
+      year: date.toLocaleDateString("en-IN", {
+        year: "2-digit",
+        timeZone: "UTC",
+      }),
+      fullLabel: date.toLocaleDateString("en-IN", {
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC",
+      }),
+    };
+  });
+};
+
+/* ---------- small components ---------- */
+
+const StatCard = ({ title, value, hint, tone, children }) => (
+  <div className="bg-white shadow-sm rounded-lg p-5">
+    <div className="flex items-start justify-between gap-2">
+      <p className="text-sm text-gray-500">{title}</p>
+      {children}
+    </div>
+
+    <p className={`mt-2 text-3xl font-semibold ${tone}`}>{value}</p>
+
+    {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+  </div>
+);
+
+const RevenueChart = ({ data }) => {
+  const [activeKey, setActiveKey] = useState(null);
+
+  const max = useMemo(
+    () => niceMax(Math.max(...data.map((item) => item.value), 0)),
+    [data],
+  );
+
+  const ticks = [1, 0.75, 0.5, 0.25, 0];
+
+  return (
+    <div className="flex gap-3">
+      {/* Y axis */}
+      <div className="flex h-64 flex-col justify-between pb-0 text-right text-[11px] text-gray-400">
+        {ticks.map((tick) => (
+          <span key={tick} className="leading-none">
+            {formatCompact(max * tick)}
+          </span>
+        ))}
+      </div>
+
+      <div className="min-w-0 flex-1 overflow-x-auto">
+        <div className="min-w-[520px]">
+          {/* Plot area */}
+          <div className="relative h-64">
+            {/* Grid lines */}
+            {ticks.map((tick) => (
+              <div
+                key={tick}
+                className="absolute left-0 right-0 border-t border-dashed border-gray-200"
+                style={{ top: `${(1 - tick) * 100}%` }}
+              />
+            ))}
+
+            {/* Bars */}
+            <div className="absolute inset-0 flex items-end gap-2">
+              {data.map((item) => {
+                const height = (item.value / max) * 100;
+                const isActive = activeKey === item.key;
+
+                return (
+                  <div
+                    key={item.key}
+                    className="relative flex h-full flex-1 items-end justify-center"
+                    onMouseEnter={() => setActiveKey(item.key)}
+                    onMouseLeave={() => setActiveKey(null)}
+                    onFocus={() => setActiveKey(item.key)}
+                    onBlur={() => setActiveKey(null)}
+                  >
+                    {isActive && (
+                      <div
+                        className="absolute z-10 whitespace-nowrap rounded bg-gray-900 px-2 py-1 text-xs text-white shadow"
+                        style={{ bottom: `calc(${height}% + 8px)` }}
+                      >
+                        {item.fullLabel}: {formatCurrency(item.value)}
+                        <span className="ml-1 text-gray-300">
+                          ({item.count}{" "}
+                          {item.count === 1 ? "booking" : "bookings"})
+                        </span>
+                      </div>
+                    )}
+
+                    <div
+                      tabIndex={0}
+                      role="img"
+                      aria-label={`${item.fullLabel}: ${formatCurrency(
+                        item.value,
+                      )}`}
+                      className={`w-full max-w-10 rounded-t transition-colors ${
+                        item.isCurrent
+                          ? isActive
+                            ? "bg-orange-600"
+                            : "bg-orange-500"
+                          : isActive
+                            ? "bg-orange-400"
+                            : "bg-orange-300"
+                      }`}
+                      style={{
+                        height: item.value > 0 ? `max(${height}%, 3px)` : "0",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* X axis */}
+          <div className="mt-2 flex gap-2">
+            {data.map((item) => (
+              <div
+                key={item.key}
+                className="flex-1 text-center text-[11px] text-gray-500"
+              >
+                <div className="font-medium">{item.label}</div>
+                <div className="text-gray-400">&apos;{item.year}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ---------- component ---------- */
+
 const AdminDashboard = () => {
-  const [stats, setStats] = useState({});
-  const [activities, setActivities] = useState([]);
+  const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const fetchDashboard = async () => {
+  const [period, setPeriod] = useState("7d");
+  const [includeGst, setIncludeGst] = useState(true);
+
+  const fetchReservations = useCallback(async () => {
     try {
-      const res = await api.get("/payment/admin-summary");
+      setLoading(true);
+      setError("");
 
-      setStats(res.data.stats || {});
-      setActivities(res.data.activities || []);
-    } catch (error) {
-      console.error(error);
+      const response = await api.get("/booking/all_reservations");
+
+      if (response.data?.success) {
+        setReservations(response.data.reservations || []);
+      } else {
+        const message = response.data?.message || "Failed to load dashboard";
+        setError(message);
+        toast.error(message);
+      }
+    } catch (err) {
+      console.error("Fetch dashboard error:", err);
+
+      const message = err.response?.data?.message || "Failed to load dashboard";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchDashboard();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
-          {/* Header Skeleton */}
-          <div className="h-44 bg-slate-200 rounded-3xl" />
+  useEffect(() => {
+    fetchReservations();
+  }, [fetchReservations]);
 
-          {/* Stats Skeleton */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div
-                key={item}
-                className="h-32 bg-white rounded-2xl border border-slate-100"
-              />
-            ))}
-          </div>
+  /*
+   * Reservation counts.
+   *
+   * New       = confirmed bookings created in the selected period
+   * Ongoing   = confirmed bookings happening right now (startAt <= now < endAt)
+   * Completed = confirmed bookings whose end time has passed
+   * Upcoming  = confirmed bookings that have not started yet
+   */
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const today = istDateKey(now);
 
-          {/* Activity Skeleton */}
-          <div className="h-80 bg-white rounded-3xl border border-slate-100" />
-        </div>
-      </div>
+    const selectedPeriod = PERIODS.find((item) => item.id === period);
+
+    const oldestDay = istDateKey(
+      now - Math.max(selectedPeriod.days - 1, 0) * 24 * 60 * 60 * 1000,
     );
-  }
 
-  const statCards = [
-    {
-      label: "Total Users",
-      value: stats.totalUsers || 0,
-      icon: "♙",
-      color: "indigo",
-      description: "Registered users",
-    },
-    {
-      label: "Tenants",
-      value: stats.totalTenants || 0,
-      icon: "♟",
-      color: "blue",
-      description: "Active tenants",
-    },
-    {
-      label: "Landlords",
-      value: stats.totalLandlords || 0,
-      icon: "♙",
-      color: "violet",
-      description: "Property owners",
-    },
-    {
-      label: "Properties",
-      value: stats.totalProperties || 0,
-      icon: "⌂",
-      color: "cyan",
-      description: "Total listings",
-    },
-    {
-      label: "Revenue",
-      value: `₹${Number(stats.revenue || 0).toLocaleString("en-IN")}`,
-      icon: "₹",
-      color: "emerald",
-      description: "Total collected",
-    },
-    {
-      label: "Pending Payments",
-      value: stats.pendingPayments || 0,
-      icon: "!",
-      color: "amber",
-      description: "Awaiting payment",
-    },
-  ];
+    const result = { newCount: 0, ongoing: 0, completed: 0, upcoming: 0 };
+    let confirmedTotal = 0;
 
-  const colorStyles = {
-    indigo: {
-      icon: "bg-indigo-50 text-indigo-600",
-      accent: "bg-indigo-500",
-    },
-    blue: {
-      icon: "bg-blue-50 text-blue-600",
-      accent: "bg-blue-500",
-    },
-    violet: {
-      icon: "bg-violet-50 text-violet-600",
-      accent: "bg-violet-500",
-    },
-    cyan: {
-      icon: "bg-cyan-50 text-cyan-600",
-      accent: "bg-cyan-500",
-    },
-    emerald: {
-      icon: "bg-emerald-50 text-emerald-600",
-      accent: "bg-emerald-500",
-    },
-    amber: {
-      icon: "bg-amber-50 text-amber-600",
-      accent: "bg-amber-500",
-    },
-  };
+    reservations.forEach((item) => {
+      if (!isConfirmed(item)) return;
+
+      confirmedTotal += 1;
+
+      const created = item.createdAt ? istDateKey(item.createdAt) : null;
+
+      if (created && created >= oldestDay && created <= today) {
+        result.newCount += 1;
+      }
+
+      const start = new Date(item.startAt).getTime();
+      const end = new Date(item.endAt).getTime();
+
+      if (Number.isNaN(start) || Number.isNaN(end)) return;
+
+      if (now >= end) result.completed += 1;
+      else if (now >= start) result.ongoing += 1;
+      else result.upcoming += 1;
+    });
+
+    return { ...result, confirmedTotal };
+  }, [reservations, period]);
+
+  /*
+   * Monthly revenue for the last 12 months.
+   *
+   * Only paid and confirmed bookings count (cancelled and refunded
+   * bookings are excluded). Grouped by the month the booking was made.
+   * "Incl. GST" uses totalAmount, "Excl. GST" uses taxableAmount.
+   */
+  const monthlyRevenue = useMemo(() => {
+    const months = getLastMonths(3).map((month, index, all) => ({
+      ...month,
+      value: 0,
+      count: 0,
+      isCurrent: index === all.length - 1,
+    }));
+
+    const byKey = new Map(months.map((month) => [month.key, month]));
+
+    reservations.forEach((item) => {
+      if (!isConfirmed(item) || !item.createdAt) return;
+
+      const month = byKey.get(istMonthKey(item.createdAt));
+
+      if (!month) return;
+
+      const amount = includeGst
+        ? Number(item.totalAmount)
+        : Number(item.taxableAmount ?? item.totalAmount);
+
+      month.value += Number.isFinite(amount) ? amount : 0;
+      month.count += 1;
+    });
+
+    return months.map((month) => ({
+      ...month,
+      value: Math.round(month.value * 100) / 100,
+    }));
+  }, [reservations, includeGst]);
+
+  const revenueTotals = useMemo(() => {
+    const total = monthlyRevenue.reduce((sum, month) => sum + month.value, 0);
+
+    return {
+      total,
+      thisMonth: monthlyRevenue[monthlyRevenue.length - 1]?.value || 0,
+      lastMonth: monthlyRevenue[monthlyRevenue.length - 2]?.value || 0,
+    };
+  }, [monthlyRevenue]);
+
+  const periodLabel = PERIODS.find((item) => item.id === period)?.label;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* =====================================================
-            HERO HEADER
-        ====================================================== */}
-        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-blue-600 to-violet-600 p-6 sm:p-8 lg:p-10 shadow-xl shadow-indigo-100">
-          {/* Decorative background */}
-          <div className="absolute -top-24 -right-20 w-72 h-72 rounded-full bg-white/10" />
+    <div className="p-6">
+      {/* HEADER */}
 
-          <div className="absolute -bottom-32 right-32 w-96 h-96 rounded-full bg-white/5" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-semibold">Dashboard</h1>
 
-          <div className="absolute top-1/2 -left-20 w-48 h-48 rounded-full bg-violet-400/10" />
+          <p className="text-sm text-gray-500 mt-1">
+            Overview of workspace reservations and revenue
+          </p>
+        </div>
 
-          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 mb-5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <button
+          type="button"
+          onClick={fetchReservations}
+          disabled={loading}
+          className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-60"
+        >
+          {loading ? "Loading..." : "Refresh"}
+        </button>
+      </div>
 
-                <span className="text-xs font-medium text-blue-50">
-                  System is running
-                </span>
-              </div>
+      {error && !loading && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight">
-                Admin Dashboard
-              </h1>
+      {/* RESERVATION STATS */}
 
-              <p className="mt-3 text-sm sm:text-base text-blue-100 leading-relaxed max-w-xl">
-                Monitor users, properties, payments and rental activity from one
-                centralized dashboard.
-              </p>
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="New Reservations"
+          value={loading ? "—" : stats.newCount}
+          hint={`Booked ${periodLabel?.toLowerCase()}`}
+          tone="text-orange-600"
+        >
+          <select
+            value={period}
+            onChange={(event) => setPeriod(event.target.value)}
+            aria-label="New reservations period"
+            className="rounded border border-orange-400 bg-white px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-orange-200"
+          >
+            {PERIODS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </StatCard>
 
-            {/* Quick Overview */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 min-w-full sm:min-w-[230px] lg:min-w-[250px]">
-              <p className="text-xs uppercase tracking-wider font-semibold text-blue-100">
-                Total Revenue
-              </p>
+        <StatCard
+          title="Ongoing Reservations"
+          value={loading ? "—" : stats.ongoing}
+          hint="Happening right now"
+          tone="text-green-600"
+        />
 
-              <p className="text-3xl font-bold text-white mt-2">
-                ₹{Number(stats.revenue || 0).toLocaleString("en-IN")}
-              </p>
+        <StatCard
+          title="Completed Reservations"
+          value={loading ? "—" : stats.completed}
+          hint="Booking period has ended"
+          tone="text-blue-600"
+        />
 
-              <div className="flex items-center gap-2 mt-3">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-400/20 text-emerald-200 text-xs">
-                  ↗
-                </span>
+        <StatCard
+          title="Upcoming Reservations"
+          value={loading ? "—" : stats.upcoming}
+          hint={loading ? "" : `${stats.confirmedTotal} confirmed in total`}
+          tone="text-gray-700"
+        />
+      </div>
 
-                <span className="text-xs text-blue-100">
-                  Overall collected revenue
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
+      {/* MONTHLY REVENUE */}
 
-        {/* =====================================================
-            SECTION TITLE
-        ====================================================== */}
-        <div className="flex items-center justify-between">
+      <div className="bg-white shadow-sm rounded-lg p-5">
+        <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-              Platform Overview
-            </h2>
+            <h2 className="text-lg font-semibold">Monthly Revenue</h2>
 
-            <p className="text-sm text-slate-500 mt-1">
-              Key metrics from your rental platform
+            <p className="text-sm text-gray-500 mt-1">
+              Last 12 months, paid bookings only
             </p>
           </div>
-        </div>
 
-        {/* =====================================================
-            STATS GRID
-        ====================================================== */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
-          {statCards.map((item) => {
-            const colors = colorStyles[item.color];
+          <div className="flex flex-wrap items-center gap-6">
+            <div>
+              <p className="text-xs text-gray-500">This month</p>
+              <p className="text-lg font-semibold text-orange-600">
+                {formatCurrency(revenueTotals.thisMonth)}
+              </p>
+            </div>
 
-            return (
-              <div
-                key={item.label}
-                className="
-                  group relative
-                  bg-white
-                  border border-slate-100
-                  rounded-2xl
-                  p-5
-                  sm:p-6
-                  shadow-sm
-                  hover:shadow-xl
-                  hover:-translate-y-1
-                  transition-all duration-300
-                  overflow-hidden
-                "
+            <div>
+              <p className="text-xs text-gray-500">Last month</p>
+              <p className="text-lg font-semibold text-gray-700">
+                {formatCurrency(revenueTotals.lastMonth)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-gray-500">12-month total</p>
+              <p className="text-lg font-semibold text-gray-700">
+                {formatCurrency(revenueTotals.total)}
+              </p>
+            </div>
+
+            <div className="inline-flex overflow-hidden rounded border border-orange-400 text-sm">
+              <button
+                type="button"
+                onClick={() => setIncludeGst(true)}
+                className={`px-3 py-1.5 ${
+                  includeGst
+                    ? "bg-orange-500 text-white"
+                    : "bg-white text-gray-600 hover:bg-orange-50"
+                }`}
               >
-                {/* Accent */}
-                <div
-                  className={`
-                    absolute top-0 left-0 right-0 h-1
-                    ${colors.accent}
-                  `}
-                />
+                Incl. GST
+              </button>
 
-                <div className="flex items-start justify-between gap-4">
-                  {/* Text */}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-500">
-                      {item.label}
-                    </p>
-
-                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2 truncate">
-                      {item.value}
-                    </h3>
-
-                    <p className="text-xs text-slate-400 mt-2">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  {/* Icon */}
-                  <div
-                    className={`
-                      flex-shrink-0
-                      w-12 h-12
-                      rounded-2xl
-                      flex items-center justify-center
-                      text-xl font-bold
-                      ${colors.icon}
-                      group-hover:scale-110
-                      transition-transform duration-300
-                    `}
-                  >
-                    {item.icon}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* =====================================================
-            BOTTOM GRID
-        ====================================================== */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* =================================================
-              ACTIVITY
-          ================================================== */}
-          <div className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
-            {/* Header */}
-            <div className="px-5 sm:px-6 py-5 border-b border-slate-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-                    Recent Activity
-                  </h2>
-
-                  <p className="text-sm text-slate-500 mt-1">
-                    Latest payment activity across the platform
-                  </p>
-                </div>
-
-                <div className="hidden sm:flex items-center gap-2 text-xs text-slate-500">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500" />
-                  Live activity
-                </div>
-              </div>
-            </div>
-
-            {/* Activity */}
-            <div className="p-5 sm:p-6">
-              {activities.length > 0 ? (
-                <div className="space-y-2">
-                  {activities.map((item, index) => (
-                    <div
-                      key={item._id}
-                      className="
-                        group
-                        flex items-start gap-4
-                        p-4
-                        rounded-2xl
-                        hover:bg-slate-50
-                        transition-colors
-                      "
-                    >
-                      {/* Timeline */}
-                      <div className="flex flex-col items-center">
-                        <div
-                          className="
-                          w-10 h-10
-                          rounded-xl
-                          bg-indigo-50
-                          text-indigo-600
-                          flex items-center justify-center
-                          font-bold
-                        "
-                        >
-                          ₹
-                        </div>
-
-                        {index !== activities.length - 1 && (
-                          <div className="w-px h-6 bg-slate-200 mt-2" />
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-slate-600 leading-relaxed">
-                          Payment received from{" "}
-                          <span className="font-semibold text-slate-900">
-                            {item.tenant?.name || "Unknown"}
-                          </span>{" "}
-                          for{" "}
-                          <span className="font-semibold text-slate-900">
-                            {item.property?.title || "Property"}
-                          </span>
-                        </p>
-
-                        <div className="flex flex-wrap items-center gap-2 mt-2">
-                          <span className="text-xs text-slate-400">
-                            Payment received
-                          </span>
-
-                          {item.amount && (
-                            <>
-                              <span className="w-1 h-1 rounded-full bg-slate-300" />
-
-                              <span className="text-xs font-semibold text-emerald-600">
-                                ₹{Number(item.amount).toLocaleString("en-IN")}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Status */}
-                      <span
-                        className="
-                        hidden sm:inline-flex
-                        flex-shrink-0
-                        items-center gap-1.5
-                        px-2.5 py-1
-                        rounded-full
-                        bg-emerald-50
-                        text-emerald-700
-                        text-xs
-                        font-semibold
-                      "
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        Paid
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                /* Empty state */
-                <div className="py-14 text-center">
-                  <div
-                    className="
-                    w-16 h-16
-                    mx-auto
-                    rounded-2xl
-                    bg-slate-100
-                    flex items-center justify-center
-                    text-2xl
-                  "
-                  >
-                    📊
-                  </div>
-
-                  <h3 className="mt-4 text-lg font-semibold text-slate-900">
-                    No recent activity
-                  </h3>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Payment activity will appear here.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* =================================================
-              QUICK SUMMARY
-          ================================================== */}
-          <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900">Quick Summary</h2>
-
-            <p className="text-sm text-slate-500 mt-1">Platform statistics</p>
-
-            <div className="mt-6 space-y-5">
-              {/* Users */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-600">
-                    Users
-                  </span>
-
-                  <span className="text-sm font-bold text-slate-900">
-                    {stats.totalUsers || 0}
-                  </span>
-                </div>
-
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-indigo-500"
-                    style={{
-                      width: "75%",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Tenants */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-600">
-                    Tenants
-                  </span>
-
-                  <span className="text-sm font-bold text-slate-900">
-                    {stats.totalTenants || 0}
-                  </span>
-                </div>
-
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-blue-500"
-                    style={{
-                      width: "60%",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Landlords */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-600">
-                    Landlords
-                  </span>
-
-                  <span className="text-sm font-bold text-slate-900">
-                    {stats.totalLandlords || 0}
-                  </span>
-                </div>
-
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-violet-500"
-                    style={{
-                      width: "45%",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Properties */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-slate-600">
-                    Properties
-                  </span>
-
-                  <span className="text-sm font-bold text-slate-900">
-                    {stats.totalProperties || 0}
-                  </span>
-                </div>
-
-                <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-cyan-500"
-                    style={{
-                      width: "55%",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Pending payments */}
-            <div className="mt-8 p-4 rounded-2xl bg-amber-50 border border-amber-100">
-              <div className="flex items-center gap-3">
-                <div
-                  className="
-                  w-10 h-10
-                  rounded-xl
-                  bg-amber-100
-                  text-amber-600
-                  flex items-center justify-center
-                  font-bold
-                "
-                >
-                  !
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-amber-900">
-                    Pending Payments
-                  </p>
-
-                  <p className="text-xs text-amber-700 mt-0.5">
-                    {stats.pendingPayments || 0} payment
-                    {stats.pendingPayments !== 1 ? "s" : ""} awaiting
-                  </p>
-                </div>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIncludeGst(false)}
+                className={`px-3 py-1.5 ${
+                  !includeGst
+                    ? "bg-orange-500 text-white"
+                    : "bg-white text-gray-600 hover:bg-orange-50"
+                }`}
+              >
+                Excl. GST
+              </button>
             </div>
           </div>
         </div>
+
+        {loading ? (
+          <div className="flex h-64 items-center justify-center text-gray-500">
+            Loading revenue...
+          </div>
+        ) : revenueTotals.total === 0 ? (
+          <div className="flex h-64 items-center justify-center text-center text-gray-500">
+            No paid bookings in the last 12 months yet.
+          </div>
+        ) : (
+          <RevenueChart data={monthlyRevenue} />
+        )}
       </div>
     </div>
   );
