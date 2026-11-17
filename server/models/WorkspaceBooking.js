@@ -48,8 +48,19 @@ const workspaceBookingSchema = new mongoose.Schema(
       },
     },
 
+    // Number of billable units:
+    // - per-head spaces (Video Conferencing): number of attendees
+    // - all other spaces: number of seats
+    headCount: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+
     // Who each seat is booked for (snapshot, so history survives edits
-    // or deactivation of team members)
+    // or deactivation of team members).
+    // For per-head spaces (Video Conferencing) this holds one entry per
+    // attendee, all with the same room spaceCode.
     seatAssignments: {
       type: [
         {

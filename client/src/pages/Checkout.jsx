@@ -21,6 +21,10 @@ const loadRazorpayScript = () =>
 // Helpers
 // ---------------------------------------------
 
+// Spaces billed per person (one room, many attendees).
+// Must match PER_HEAD_SPACES in bookingController.js and BookSpace.jsx.
+const PER_HEAD_SPACES = ["Video Conferencing"];
+
 // 15-character Indian GSTIN (the server validates it again).
 const GSTIN_REGEX = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
@@ -121,12 +125,39 @@ export default function Checkout() {
 
   const isHourly = plan === "hourly";
 
-  // "A1 (Myself), A2 (Priya)" when assignments exist, otherwise just codes.
+  // Per-head rooms (Video Conferencing): one room, many attendees.
+  const isPerHead = PER_HEAD_SPACES.includes(spaceName);
+
+  const hasAssignments =
+    Array.isArray(seatAssignments) && seatAssignments.length > 0;
+
+  // Billable units: attendees for per-head rooms, seats otherwise.
+  const headCount = isPerHead
+    ? hasAssignments
+      ? seatAssignments.length
+      : Number(bookingData.headCount) || 0
+    : Array.isArray(selectedSpaces)
+      ? selectedSpaces.length
+      : 0;
+
+  // Normal spaces: "A1 (Myself), A2 (Priya)" when assignments exist,
+  // otherwise just the codes.
   const seatsText = (
-    Array.isArray(seatAssignments) && seatAssignments.length
+    hasAssignments
       ? seatAssignments.map((seat) => `${seat.spaceCode} (${seat.label})`)
       : selectedSpaces
   ).join(", ");
+
+  // Per-head rooms: the room code and the attendee names.
+  const roomText = Array.isArray(selectedSpaces)
+    ? selectedSpaces.join(", ")
+    : "";
+
+  const attendeeNames = hasAssignments
+    ? seatAssignments.map((seat) => seat.label)
+    : [];
+
+  const attendeesText = attendeeNames.join(", ");
 
   // Display-only amounts. The server recalculates everything.
   // totalAmount = final payable amount including GST.
@@ -149,6 +180,8 @@ export default function Checkout() {
     bookingData.subtotal ?? taxableAmount + discountAmount,
   );
 
+  const pricePerUnit = Number(bookingData.pricePerUnit || 0);
+
   const hasCoupon = Boolean(couponCode) && discountAmount > 0;
 
   const handlePayment = async () => {
@@ -169,7 +202,19 @@ export default function Checkout() {
       return;
     }
 
-    if (
+    if (isPerHead) {
+      // One room, at least one attendee.
+      if (
+        selectedSpaces.length !== 1 ||
+        !Array.isArray(seatAssignments) ||
+        seatAssignments.length < 1
+      ) {
+        toast.error(
+          "Select the conference room and at least one attendee. Please select your workspace again.",
+        );
+        return;
+      }
+    } else if (
       !Array.isArray(seatAssignments) ||
       seatAssignments.length !== selectedSpaces.length
     ) {
@@ -219,8 +264,8 @@ export default function Checkout() {
       }
 
       // Step 1: Create the order on your backend.
-      // The server validates the coupon and seat assignments again and
-      // calculates the final amount (coupon + 18% GST).
+      // The server validates the coupon and seat/attendee assignments again
+      // and calculates the final amount (coupon + 18% GST).
       const orderResponse = await api.post("/booking/create_razorpay_order", {
         spaceName,
         bookingDate,
@@ -279,7 +324,9 @@ export default function Checkout() {
         amount: Number(order.amount),
         currency: order.currency || "INR",
         name: "Workspace Booking",
-        description: `${spaceName} - ${selectedSpaces.length} space(s)`,
+        description: isPerHead
+          ? `${spaceName} - ${headCount} ${headCount === 1 ? "person" : "people"}`
+          : `${spaceName} - ${selectedSpaces.length} space(s)`,
         order_id: order.orderId,
 
         // Step 3: Send payment details to the backend for verification.
@@ -383,8 +430,24 @@ export default function Checkout() {
             <p className="mt-4 text-sm text-gray-500">Workspace</p>
             <p className="mt-1 font-medium text-gray-900">{spaceName}</p>
 
-            <p className="mt-4 text-sm text-gray-500">Selected seats</p>
-            <p className="mt-1 font-medium text-gray-900">{seatsText}</p>
+            {isPerHead ? (
+              <>
+                <p className="mt-4 text-sm text-gray-500">Room</p>
+                <p className="mt-1 font-medium text-gray-900">{roomText}</p>
+
+                <p className="mt-4 text-sm text-gray-500">
+                  Attendees ({headCount})
+                </p>
+                <p className="mt-1 font-medium text-gray-900">
+                  {attendeesText}
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="mt-4 text-sm text-gray-500">Selected seats</p>
+                <p className="mt-1 font-medium text-gray-900">{seatsText}</p>
+              </>
+            )}
 
             <p className="mt-4 text-sm text-gray-500">Booking date</p>
             <p className="mt-1 font-medium text-gray-900">
@@ -498,16 +561,46 @@ export default function Checkout() {
                 </p>
               </div>
 
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">Selected seats</p>
-                <p className="mt-1 break-words font-semibold text-gray-900">
-                  {seatsText}
-                </p>
-              </div>
+              {isPerHead ? (
+                <>
+                  <div className="rounded-lg bg-gray-50 p-4">
+                    <p className="text-sm text-gray-500">Room</p>
+                    <p className="mt-1 break-words font-semibold text-gray-900">
+                      {roomText}
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-gray-50 p-4 sm:col-span-2">
+                    <p className="text-sm text-gray-500">
+                      Attendees ({headCount})
+                    </p>
+                    <p className="mt-1 break-words font-semibold text-gray-900">
+                      {attendeesText || "-"}
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-lg bg-gray-50 p-4">
+                  <p className="text-sm text-gray-500">Selected seats</p>
+                  <p className="mt-1 break-words font-semibold text-gray-900">
+                    {seatsText}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="border-t pt-5">
               <div className="mb-4 space-y-2">
+                {isPerHead && pricePerUnit > 0 && (
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>
+                      {formatPrice(pricePerUnit)} × {duration}{" "}
+                      {unitLabel(plan, duration)} × {headCount}{" "}
+                      {headCount === 1 ? "person" : "people"}
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium text-gray-900">

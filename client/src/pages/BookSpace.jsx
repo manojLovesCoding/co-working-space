@@ -21,6 +21,11 @@ const SELF = "self";
 // GST rate in percent (the server applies the same rate; this is for display).
 const GST_RATE = 18;
 
+// Spaces billed per person (one room, many attendees).
+// Must match PER_HEAD_SPACES in bookingController.js.
+const PER_HEAD_SPACES = ["Video Conferencing"];
+const MAX_HEADS = 20; // must match MAX_HEADS_PER_ROOM on the server
+
 const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 // ---------------------------------------------
@@ -145,7 +150,7 @@ const getSpaceCapacity = (spaceName = "") => {
 
   if (name.includes("individual")) return "1 Person";
   if (name.includes("team")) return "Team Space";
-  if (name.includes("conference")) return "Meeting Space";
+  if (name.includes("conferenc")) return "Meeting Space";
   if (name.includes("ceo")) return "Private Cabin";
   if (name.includes("executive")) return "Executive Space";
   if (name.includes("manager")) return "Private Cabin";
@@ -245,6 +250,10 @@ export default function BookSpace() {
 
   const space = location.state?.space;
 
+  // Per-head rooms (Video Conferencing): one room, many attendees,
+  // billed per person.
+  const isPerHead = PER_HEAD_SPACES.includes(space?.space);
+
   const pricingOptions = useMemo(() => getPricingOptions(space), [space]);
 
   const availableSpaces = useMemo(() => getSpaces(space), [space]);
@@ -272,6 +281,9 @@ export default function BookSpace() {
   const [teamMembers, setTeamMembers] = useState([]);
   const [teamLoading, setTeamLoading] = useState(true);
   const [assignments, setAssignments] = useState({}); // { [spaceCode]: "self" | teamMemberId }
+
+  // Attendees for per-head rooms: [SELF | teamMemberId, ...]
+  const [attendees, setAttendees] = useState([]);
 
   // Coupon state
   const [couponInput, setCouponInput] = useState("");
@@ -358,12 +370,15 @@ export default function BookSpace() {
       ? getDailyEndDate(selectedDate, duration)
       : "";
 
+  // Billable units: attendees for per-head rooms, seats otherwise.
+  const billableQty = isPerHead ? attendees.length : selectedSpaces.length;
+
   // Subtotal before coupon and GST
   const totalAmount = useMemo(() => {
     if (!selectedPricing) return 0;
 
-    return selectedPricing.price * duration * selectedSpaces.length;
-  }, [selectedPricing, duration, selectedSpaces.length]);
+    return selectedPricing.price * duration * billableQty;
+  }, [selectedPricing, duration, billableQty]);
 
   // Taxable amount = after coupon, before GST (display only; the server recalculates it)
   const taxableAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
@@ -387,10 +402,13 @@ export default function BookSpace() {
     [availableSpaces, unavailableSpaces, seatStatus],
   );
 
-  // Every selected seat must be assigned to the customer or a team member.
-  const assignmentsComplete =
-    selectedSpaces.length > 0 &&
-    selectedSpaces.every((code) => Boolean(assignments[code]));
+  // Normal spaces: every selected seat must be assigned to the customer
+  // or a team member.
+  // Per-head rooms: one room and at least one attendee.
+  const assignmentsComplete = isPerHead
+    ? selectedSpaces.length === 1 && attendees.length > 0
+    : selectedSpaces.length > 0 &&
+      selectedSpaces.every((code) => Boolean(assignments[code]));
 
   // People who already hold a seat (each person can take only one).
   const takenAssignees = new Set(Object.values(assignments));
@@ -400,6 +418,27 @@ export default function BookSpace() {
     if (value === SELF) return "Me";
 
     return teamMembers.find((member) => member._id === value)?.name || "";
+  };
+
+  // Builds the seatAssignments payload sent to the server.
+  // Per-head rooms: one entry per attendee, all with the room's code.
+  const buildSeatAssignments = () => {
+    const toEntry = (code, value) => {
+      const member = teamMembers.find((item) => item._id === value);
+
+      return value === SELF
+        ? { spaceCode: code, assigneeType: "self", label: "Myself" }
+        : {
+            spaceCode: code,
+            assigneeType: "team",
+            teamMemberId: value,
+            label: member?.name || "Team member",
+          };
+    };
+
+    return isPerHead
+      ? attendees.map((value) => toEntry(selectedSpaces[0], value))
+      : selectedSpaces.map((code) => toEntry(code, assignments[code]));
   };
 
   // A coupon depends on the subtotal, space, plan and date, so any
@@ -579,7 +618,9 @@ export default function BookSpace() {
     setSelectedSpaces((previous) =>
       previous.includes(spaceCode)
         ? previous.filter((code) => code !== spaceCode)
-        : [...previous, spaceCode],
+        : isPerHead
+          ? [spaceCode] // only one conference room per booking
+          : [...previous, spaceCode],
     );
   };
 
@@ -594,6 +635,20 @@ export default function BookSpace() {
     });
 
     setAvailabilityError("");
+  };
+
+  // Add or remove an attendee (per-head rooms).
+  const toggleAttendee = (value) => {
+    setAttendees((previous) =>
+      previous.includes(value)
+        ? previous.filter((item) => item !== value)
+        : previous.length >= MAX_HEADS
+          ? previous
+          : [...previous, value],
+    );
+
+    // The price changes with the head count, so the coupon is stale.
+    clearAvailabilityResult();
   };
 
   const handlePlanChange = (planId) => {
@@ -668,6 +723,11 @@ export default function BookSpace() {
       return;
     }
 
+    if (isPerHead && !attendees.length) {
+      setCouponError("Select attendees first.");
+      return;
+    }
+
     if (isClosedDay) {
       setCouponError("Select a valid booking date first.");
       return;
@@ -689,6 +749,8 @@ export default function BookSpace() {
         plan: selectedPlan,
         duration,
         selectedSpaces,
+        // The server needs the attendees to price per-head rooms.
+        ...(isPerHead ? { seatAssignments: buildSeatAssignments() } : {}),
         ...(isHourly ? { startTime: selectedTime } : {}),
       });
 
@@ -757,18 +819,32 @@ export default function BookSpace() {
       return;
     }
 
-    if (!selectedSpaces.every((code) => assignments[code])) {
-      setAvailabilityError(
-        "Please assign every selected seat to yourself or a team member.",
-      );
-      return;
-    }
+    if (isPerHead) {
+      if (selectedSpaces.length !== 1) {
+        setAvailabilityError("Please select the conference room.");
+        return;
+      }
 
-    const assignedValues = selectedSpaces.map((code) => assignments[code]);
+      if (!attendees.length) {
+        setAvailabilityError("Please select at least one attendee.");
+        return;
+      }
+    } else {
+      if (!selectedSpaces.every((code) => assignments[code])) {
+        setAvailabilityError(
+          "Please assign every selected seat to yourself or a team member.",
+        );
+        return;
+      }
 
-    if (new Set(assignedValues).size !== assignedValues.length) {
-      setAvailabilityError("One person cannot be assigned to multiple seats.");
-      return;
+      const assignedValues = selectedSpaces.map((code) => assignments[code]);
+
+      if (new Set(assignedValues).size !== assignedValues.length) {
+        setAvailabilityError(
+          "One person cannot be assigned to multiple seats.",
+        );
+        return;
+      }
     }
 
     if (!selectedPricing) {
@@ -898,19 +974,9 @@ export default function BookSpace() {
         plan: selectedPlan,
         duration: Number(duration),
         selectedSpaces: [...selectedSpaces],
-        seatAssignments: selectedSpaces.map((code) => {
-          const value = assignments[code];
-          const member = teamMembers.find((item) => item._id === value);
-
-          return value === SELF
-            ? { spaceCode: code, assigneeType: "self", label: "Myself" }
-            : {
-                spaceCode: code,
-                assigneeType: "team",
-                teamMemberId: value,
-                label: member?.name || "Team member",
-              };
-        }),
+        // Seats (normal spaces) or attendees (per-head rooms)
+        seatAssignments: buildSeatAssignments(),
+        headCount: billableQty,
         pricePerUnit: selectedPricing.price,
         subtotal: totalAmount,
         discountAmount: appliedCoupon?.discountAmount || 0,
@@ -989,6 +1055,16 @@ export default function BookSpace() {
       </div>
     );
   }
+
+  // People shown in the attendee picker (per-head rooms)
+  const attendeeOptions = [
+    { id: SELF, name: "Myself", designation: "" },
+    ...teamMembers.map((member) => ({
+      id: member._id,
+      name: member.name,
+      designation: member.designation,
+    })),
+  ];
 
   // ---------------------------------------------
   // Main UI
@@ -1084,7 +1160,9 @@ export default function BookSpace() {
                   <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {space.perHour != null && (
                       <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">Hourly</p>
+                        <p className="text-xs text-gray-500">
+                          Hourly{isPerHead ? " (per person)" : ""}
+                        </p>
                         <p className="mt-1 font-bold text-gray-900">
                           {formatPrice(space.perHour)}
                         </p>
@@ -1093,7 +1171,9 @@ export default function BookSpace() {
 
                     {space.perDay != null && (
                       <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">Daily</p>
+                        <p className="text-xs text-gray-500">
+                          Daily{isPerHead ? " (per person)" : ""}
+                        </p>
                         <p className="mt-1 font-bold text-gray-900">
                           {formatPrice(space.perDay)}
                         </p>
@@ -1102,7 +1182,9 @@ export default function BookSpace() {
 
                     {space.perMonth != null && (
                       <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">Monthly</p>
+                        <p className="text-xs text-gray-500">
+                          Monthly{isPerHead ? " (per person)" : ""}
+                        </p>
                         <p className="mt-1 font-bold text-gray-900">
                           {formatPrice(space.perMonth)}
                         </p>
@@ -1168,7 +1250,8 @@ export default function BookSpace() {
                         </p>
 
                         <p className="text-xs text-gray-500">
-                          per {option.shortLabel.toLowerCase()}
+                          per {isPerHead ? "person per " : ""}
+                          {option.shortLabel.toLowerCase()}
                         </p>
                       </button>
                     );
@@ -1348,7 +1431,9 @@ export default function BookSpace() {
                     3. Select Your Space
                   </h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    Choose the space you want to book.
+                    {isPerHead
+                      ? "Choose the room, then pick who is attending."
+                      : "Choose the space you want to book."}
                   </p>
                 </div>
 
@@ -1473,8 +1558,8 @@ export default function BookSpace() {
                 </div>
               )}
 
-              {/* Assign each selected seat to the customer or a team member */}
-              {selectedSpaces.length > 0 && (
+              {/* Normal spaces: assign each selected seat to the customer or a team member */}
+              {!isPerHead && selectedSpaces.length > 0 && (
                 <div className="mt-5 rounded-xl border border-gray-200 p-4">
                   <p className="text-sm font-semibold text-gray-900">
                     Who is each seat for?{" "}
@@ -1549,6 +1634,73 @@ export default function BookSpace() {
                       );
                     })}
                   </div>
+                </div>
+              )}
+
+              {/* Per-head rooms: pick the attendees from the customer's team */}
+              {isPerHead && selectedSpaces.length > 0 && (
+                <div className="mt-5 rounded-xl border border-gray-200 p-4">
+                  <p className="text-sm font-semibold text-gray-900">
+                    Who is attending? <span className="text-red-500">*</span>
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {formatPrice(selectedPricing?.price)} per person per{" "}
+                    {selectedPricing?.shortLabel?.toLowerCase() || "unit"}.
+                    Maximum {MAX_HEADS} people.
+                  </p>
+
+                  {!teamLoading && teamMembers.length === 0 && (
+                    <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      No team members are linked to your account, so you can
+                      only book for yourself.
+                    </p>
+                  )}
+
+                  <div className="mt-3 space-y-2">
+                    {attendeeOptions.map((person) => {
+                      const checked = attendees.includes(person.id);
+                      const limitReached =
+                        !checked && attendees.length >= MAX_HEADS;
+
+                      return (
+                        <label
+                          key={person.id}
+                          className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
+                            checked
+                              ? "bg-blue-50 ring-1 ring-blue-300"
+                              : "bg-gray-50"
+                          } ${limitReached ? "cursor-not-allowed opacity-50" : ""}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleAttendee(person.id)}
+                            disabled={
+                              checkingAvailability ||
+                              teamLoading ||
+                              limitReached
+                            }
+                            className="h-4 w-4 accent-blue-600"
+                          />
+
+                          <span className="font-medium text-gray-800">
+                            {person.name}
+                          </span>
+
+                          {person.designation && (
+                            <span className="text-xs text-gray-500">
+                              ({person.designation})
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  <p className="mt-3 text-xs font-semibold text-blue-600">
+                    {attendees.length}{" "}
+                    {attendees.length === 1 ? "person" : "people"} attending
+                  </p>
                 </div>
               )}
 
@@ -1636,13 +1788,32 @@ export default function BookSpace() {
 
                 <div className="border-b border-gray-100 py-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-500">Spaces</p>
+                    <p className="text-xs text-gray-500">
+                      {isPerHead ? "Attendees" : "Spaces"}
+                    </p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {selectedSpaces.length}
+                      {isPerHead ? attendees.length : selectedSpaces.length}
                     </p>
                   </div>
 
-                  {selectedSpaces.length > 0 ? (
+                  {isPerHead ? (
+                    attendees.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {attendees.map((value) => (
+                          <span
+                            key={value}
+                            className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700"
+                          >
+                            {getAssigneeName(value) || "Team member"}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-gray-400">
+                        No attendees selected
+                      </p>
+                    )
+                  ) : selectedSpaces.length > 0 ? (
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {selectedSpaces.map((spaceCode) => {
                         const assigneeName = getAssigneeName(
@@ -1665,13 +1836,19 @@ export default function BookSpace() {
                       No space selected
                     </p>
                   )}
+
+                  {isPerHead && selectedSpaces.length > 0 && (
+                    <p className="mt-3 text-xs text-gray-500">
+                      Room: {selectedSpaces[0]}
+                    </p>
+                  )}
                 </div>
 
                 {/* Price breakdown, coupon, GST and total */}
                 <div className="py-5">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-500">
-                      Price /{" "}
+                      Price {isPerHead ? "/ person" : ""} /{" "}
                       {selectedPricing?.shortLabel?.toLowerCase() || "unit"}
                     </span>
                     <span className="font-medium text-gray-900">
@@ -1687,9 +1864,11 @@ export default function BookSpace() {
                   </div>
 
                   <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Spaces</span>
+                    <span className="text-gray-500">
+                      {isPerHead ? "People" : "Spaces"}
+                    </span>
                     <span className="font-medium text-gray-900">
-                      × {selectedSpaces.length}
+                      × {billableQty}
                     </span>
                   </div>
 
@@ -1840,7 +2019,9 @@ export default function BookSpace() {
                 ) : (
                   !assignmentsComplete && (
                     <p className="mt-3 text-center text-xs text-gray-400">
-                      Assign each seat to a person to continue.
+                      {isPerHead
+                        ? "Select at least one attendee to continue."
+                        : "Assign each seat to a person to continue."}
                     </p>
                   )
                 )}

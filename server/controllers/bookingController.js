@@ -39,6 +39,17 @@ const MAX_DURATION = {
 };
 
 // ==========================================
+// PER-HEAD SPACES
+// Video Conferencing is one room booked for many attendees.
+// Price = rate x duration x number of attendees (not seats).
+// ==========================================
+
+const PER_HEAD_SPACES = ["Video Conferencing"];
+const MAX_HEADS_PER_ROOM = 20; // adjust to the real room capacity
+
+const isPerHeadSpace = (spaceName) => PER_HEAD_SPACES.includes(spaceName);
+
+// ==========================================
 // GST
 // GST is charged on the amount AFTER the coupon discount.
 // totalAmount (what the customer pays) = taxableAmount + gstAmount.
@@ -378,6 +389,101 @@ const resolveSeatAssignments = async (
   });
 };
 
+/**
+ * Per-head spaces (Video Conferencing): ONE room, MANY attendees.
+ * Each attendee is the logged-in customer ("self") or one of their
+ * active team members ("team"). A person can be added only once.
+ *
+ * Entries look like { assigneeType: "self" | "team", teamMemberId? }.
+ * Returns a snapshot of each attendee, all pointing at the room's code.
+ */
+const resolveAttendees = async (userId, selectedSpaces, attendees) => {
+  if (selectedSpaces.length !== 1) {
+    throw new Error("Select one conference room");
+  }
+
+  if (
+    !Array.isArray(attendees) ||
+    attendees.length < 1 ||
+    attendees.length > MAX_HEADS_PER_ROOM
+  ) {
+    throw new Error(`Select between 1 and ${MAX_HEADS_PER_ROOM} attendees`);
+  }
+
+  let selfCount = 0;
+  const memberIds = [];
+
+  for (const item of attendees) {
+    if (item?.assigneeType === "self") {
+      selfCount += 1;
+    } else if (
+      item?.assigneeType === "team" &&
+      mongoose.Types.ObjectId.isValid(item.teamMemberId)
+    ) {
+      memberIds.push(String(item.teamMemberId));
+    } else {
+      throw new Error("Invalid attendee");
+    }
+  }
+
+  if (selfCount > 1 || new Set(memberIds).size !== memberIds.length) {
+    throw new Error("An attendee cannot be added twice");
+  }
+
+  const [customer, members] = await Promise.all([
+    User.findOne({ _id: userId, role: "customer", isActive: true }),
+    TeamMember.find({
+      _id: { $in: memberIds },
+      customer: userId,
+      isActive: true,
+    }),
+  ]);
+
+  if (!customer) {
+    throw new Error("Customer account not found");
+  }
+
+  if (members.length !== memberIds.length) {
+    throw new Error("One or more team members are invalid or inactive");
+  }
+
+  const memberMap = new Map(members.map((m) => [String(m._id), m]));
+
+  return attendees.map((item) => {
+    if (item.assigneeType === "self") {
+      return {
+        spaceCode: selectedSpaces[0],
+        assigneeType: "self",
+        teamMember: null,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+      };
+    }
+
+    const member = memberMap.get(String(item.teamMemberId));
+
+    return {
+      spaceCode: selectedSpaces[0],
+      assigneeType: "team",
+      teamMember: member._id,
+      name: member.name,
+      email: member.email,
+      phone: member.phone,
+    };
+  });
+};
+
+// Picks the right resolver: attendees for per-head rooms, seats otherwise.
+const resolveParticipants = (userId, spaceName, selectedSpaces, list) =>
+  isPerHeadSpace(spaceName)
+    ? resolveAttendees(userId, selectedSpaces, list)
+    : resolveSeatAssignments(userId, selectedSpaces, list);
+
+// Billable units: attendees for per-head rooms, seats otherwise.
+const getBillableQuantity = (spaceName, selectedSpaces, participants) =>
+  isPerHeadSpace(spaceName) ? participants.length : selectedSpaces.length;
+
 const getActiveSpaces = async (spaceName, selectedSpaces) => {
   const spaces = await Space.find({
     space: spaceName,
@@ -558,6 +664,7 @@ export const validateCoupon = async (req, res) => {
       duration,
       selectedSpaces,
       startTime,
+      seatAssignments,
     } = req.body;
 
     validateBookingInput({
@@ -575,7 +682,21 @@ export const validateCoupon = async (req, res) => {
     const spaces = await getActiveSpaces(spaceName.trim(), selectedSpaces);
 
     const pricePerUnit = getServerPricing(spaces, plan);
-    const subtotal = pricePerUnit * Number(duration) * selectedSpaces.length;
+
+    // Seats for normal spaces, attendees for per-head rooms.
+    let quantity = selectedSpaces.length;
+
+    if (isPerHeadSpace(spaceName.trim())) {
+      const attendees = await resolveAttendees(
+        req.user.id,
+        selectedSpaces,
+        seatAssignments,
+      );
+
+      quantity = attendees.length;
+    }
+
+    const subtotal = pricePerUnit * Number(duration) * quantity;
 
     const { coupon, discountAmount, finalAmount } = await applyCoupon({
       couponCode,
@@ -644,11 +765,20 @@ export const createRazorpayOrder = async (req, res) => {
       startTime,
     });
 
-    // Every seat must belong to the customer or one of their team members.
-    const resolvedAssignments = await resolveSeatAssignments(
+    // Seats (normal spaces) or attendees (per-head rooms) must belong to
+    // the customer or one of their team members.
+    const resolvedAssignments = await resolveParticipants(
       req.user.id,
+      spaceName.trim(),
       selectedSpaces,
       seatAssignments,
+    );
+
+    // Billable units: attendees for per-head rooms, seats otherwise.
+    const quantity = getBillableQuantity(
+      spaceName.trim(),
+      selectedSpaces,
+      resolvedAssignments,
     );
 
     // One invoice type per booking: customer OR business, never both.
@@ -679,7 +809,7 @@ export const createRazorpayOrder = async (req, res) => {
 
     // Never trust the total amount supplied by React.
     const pricePerUnit = getServerPricing(spaces, plan);
-    const subtotal = pricePerUnit * numericDuration * selectedSpaces.length;
+    const subtotal = pricePerUnit * numericDuration * quantity;
 
     // Apply the coupon on the server (if one was sent).
     let taxable = subtotal;
@@ -728,6 +858,7 @@ export const createRazorpayOrder = async (req, res) => {
       plan,
       duration: numericDuration,
       selectedSpaces,
+      headCount: quantity,
       seatAssignments: resolvedAssignments,
       invoiceType: invoiceInfo.invoiceType,
       billingDetails: invoiceInfo.billingDetails,
@@ -788,6 +919,7 @@ export const createRazorpayOrder = async (req, res) => {
       amount: order.amount,
       currency: order.currency,
       keyId: process.env.RAZORPAY_KEY_ID,
+      headCount: quantity,
       subtotal,
       discountAmount,
       couponCode: appliedCouponCode,
@@ -1008,7 +1140,7 @@ export const getMyReservations = async (req, res) => {
       user: userId,
     })
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode taxableAmount gstRate gstAmount totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
+        "bookingId user spaceName bookingDate plan duration selectedSpaces headCount seatAssignments pricePerUnit subtotal discountAmount couponCode taxableAmount gstRate gstAmount totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
       )
       .sort({ createdAt: -1 })
       .lean();
@@ -1038,7 +1170,7 @@ export const getAllReservations = async (req, res) => {
     const reservations = await WorkspaceBooking.find()
       .populate("user", "name email phone")
       .select(
-        "bookingId user spaceName bookingDate plan duration selectedSpaces seatAssignments pricePerUnit subtotal discountAmount couponCode taxableAmount gstRate gstAmount totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
+        "bookingId user spaceName bookingDate plan duration selectedSpaces headCount seatAssignments pricePerUnit subtotal discountAmount couponCode taxableAmount gstRate gstAmount totalAmount startTime endTime startAt endAt paymentStatus status razorpayOrderId razorpayPaymentId createdAt",
       )
       .sort({ createdAt: -1 })
       .lean();
