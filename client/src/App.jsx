@@ -58,6 +58,7 @@ import CouponList from "./pages/admin/CouponList";
 import InvoicePage from "./pages/admin/InvoicePage";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminOccupancyDashboard from "./pages/admin/AdminOccupancyDashboard";
+import VirtualOfficePrice from "./pages/admin/VirtualOfficePrice";
 
 const App = () => {
   return (
@@ -162,6 +163,10 @@ const App = () => {
             <Route path="team-management" element={<TeamManagement />} />
             <Route path="invoices/:id" element={<InvoicePage mode="admin" />} />
             <Route path="invoices" element={<AdminInvoices />} />
+            <Route
+              path="virtual-office-prices"
+              element={<VirtualOfficePrice />}
+            />
 
             {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>

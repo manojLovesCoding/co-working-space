@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -70,6 +69,30 @@ const AdminSidebar = () => {
       icon: "♧",
       description: "Manage visitors",
     },
+    {
+      label: "Occupancy",
+      path: "occupancy",
+      icon: "◫",
+      description: "Monitor workspace occupancy",
+    },
+    {
+      label: "Coupons",
+      path: "coupons",
+      icon: "％",
+      description: "Create and manage coupons",
+    },
+    {
+      label: "Coupon List",
+      path: "coupon-list",
+      icon: "▤",
+      description: "View all coupons",
+    },
+    {
+      label: "Virtual Office Prices",
+      path: "virtual-office-prices",
+      icon: "₹",
+      description: "Manage virtual office pricing",
+    },
   ];
 
   const handleLogout = () => {
@@ -79,7 +102,7 @@ const AdminSidebar = () => {
 
   return (
     <>
-      {/* ================= MOBILE TOP BAR ================= */}
+      {/* MOBILE TOP BAR */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200 z-40 flex items-center px-4">
         <button
           onClick={() => setOpen(true)}
@@ -101,7 +124,7 @@ const AdminSidebar = () => {
         </div>
       </header>
 
-      {/* ================= OVERLAY ================= */}
+      {/* OVERLAY */}
       {open && (
         <div
           onClick={() => setOpen(false)}
@@ -109,7 +132,7 @@ const AdminSidebar = () => {
         />
       )}
 
-      {/* ================= SIDEBAR ================= */}
+      {/* SIDEBAR */}
       <aside
         className={`
           fixed top-0 left-0
@@ -122,7 +145,7 @@ const AdminSidebar = () => {
           ${open ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
         `}
       >
-        {/* ================= BRAND ================= */}
+        {/* BRAND */}
         <div className="h-20 px-5 border-b border-slate-100 flex items-center">
           <div className="flex items-center gap-3 w-full">
             <div className="relative">
@@ -137,12 +160,10 @@ const AdminSidebar = () => {
               <h1 className="text-base font-bold text-slate-900 truncate">
                 Admin Panel
               </h1>
-              <p className="text-xs text-slate-500 truncate">
-                Rent Management
-              </p>
+              <p className="text-xs text-slate-500 truncate">Rent Management</p>
             </div>
 
-            {/* Close button mobile */}
+            {/* CLOSE BUTTON */}
             <button
               onClick={() => setOpen(false)}
               className="md:hidden w-8 h-8 rounded-lg hover:bg-slate-100 text-slate-500"
@@ -153,7 +174,7 @@ const AdminSidebar = () => {
           </div>
         </div>
 
-        {/* ================= ADMIN PROFILE ================= */}
+        {/* ADMIN PROFILE */}
         <div className="px-4 pt-5">
           <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4">
             <div className="flex items-center gap-3">
@@ -175,7 +196,7 @@ const AdminSidebar = () => {
           </div>
         </div>
 
-        {/* ================= NAVIGATION ================= */}
+        {/* NAVIGATION */}
         <nav className="flex-1 px-3 py-6 overflow-y-auto">
           <p className="px-3 mb-3 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
             Management
@@ -204,7 +225,7 @@ const AdminSidebar = () => {
               >
                 {({ isActive }) => (
                   <>
-                    {/* Active indicator */}
+                    {/* ACTIVE INDICATOR */}
                     {isActive && (
                       <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full bg-indigo-600" />
                     )}
@@ -259,7 +280,7 @@ const AdminSidebar = () => {
             ))}
           </div>
 
-          {/* ================= SYSTEM ================= */}
+          {/* SYSTEM */}
           <p className="px-3 mt-8 mb-3 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400">
             System
           </p>
@@ -301,14 +322,12 @@ const AdminSidebar = () => {
           </button>
         </nav>
 
-        {/* ================= FOOTER ================= */}
+        {/* FOOTER */}
         <div className="p-4 border-t border-slate-100">
           <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-slate-600">
-                  Vayuhu
-                </p>
+                <p className="text-xs font-semibold text-slate-600">Vayuhu</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   Admin Console
                 </p>
