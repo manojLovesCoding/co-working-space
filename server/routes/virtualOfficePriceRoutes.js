@@ -9,6 +9,7 @@ import {
   createVirtualOfficeOrder,
   verifyVirtualOfficePayment,
   getMyVirtualOfficePurchases,
+  getAllVirtualOfficePurchases,
 } from "../controllers/virtualOfficePriceController.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -73,6 +74,13 @@ virtualOfficePriceRouter.patch(
   verifyToken,
   authorizeRoles("admin"),
   toggleVirtualOfficePriceStatus,
+);
+
+virtualOfficePriceRouter.get(
+  "/admin/all-purchases",
+  verifyToken,
+  authorizeRoles("admin"),
+  getAllVirtualOfficePurchases,
 );
 
 export default virtualOfficePriceRouter;
