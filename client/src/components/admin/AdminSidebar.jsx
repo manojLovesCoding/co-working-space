@@ -93,6 +93,12 @@ const AdminSidebar = () => {
       icon: "₹",
       description: "Manage virtual office pricing",
     },
+    {
+      label: "Virtual Office Purchases",
+      path: "virtual-office-purchases",
+      icon: "🛒",
+      description: "Manage customer plan purchases",
+    },
   ];
 
   const handleLogout = () => {

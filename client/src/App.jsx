@@ -61,6 +61,7 @@ import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminOccupancyDashboard from "./pages/admin/AdminOccupancyDashboard";
 import VirtualOfficePrice from "./pages/admin/VirtualOfficePrice";
 import MyVirtualOfficePurchases from "./pages/landloard/MyVirtualOfficePurchases";
+import VirtualOfficePurchases from "./pages/admin/VirtualOfficePurchases";
 
 const App = () => {
   return (
@@ -183,6 +184,11 @@ const App = () => {
             <Route
               path="virtual-office-prices"
               element={<VirtualOfficePrice />}
+            />
+
+            <Route
+              path="virtual-office-purchases"
+              element={<VirtualOfficePurchases />}
             />
           </Route>
         </Route>
