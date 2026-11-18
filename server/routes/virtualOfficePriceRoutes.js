@@ -6,6 +6,8 @@ import {
   updateVirtualOfficePrice,
   toggleVirtualOfficePriceStatus,
   getPublicVirtualOfficePrices,
+  createVirtualOfficeOrder,
+  verifyVirtualOfficePayment,
 } from "../controllers/virtualOfficePriceController.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -13,17 +15,27 @@ import { authorizeRoles } from "../middleware/role.js";
 
 const virtualOfficePriceRouter = Router();
 
-/*
- * PUBLIC
- * Customer/Homepage
- *
- * GET /api/virtual-office-price/public
- */
+/* PUBLIC - CUSTOMER HOMEPAGE */
+
 virtualOfficePriceRouter.get("/public", getPublicVirtualOfficePrices);
 
-/*
- * ADMIN
- */
+/* CUSTOMER - VIRTUAL OFFICE PURCHASE */
+
+virtualOfficePriceRouter.post(
+  "/create-order",
+  verifyToken,
+  authorizeRoles("customer"),
+  createVirtualOfficeOrder,
+);
+
+virtualOfficePriceRouter.post(
+  "/verify-payment",
+  verifyToken,
+  authorizeRoles("customer"),
+  verifyVirtualOfficePayment,
+);
+
+/* ADMIN - PRICE MANAGEMENT */
 
 virtualOfficePriceRouter.get(
   "/",
