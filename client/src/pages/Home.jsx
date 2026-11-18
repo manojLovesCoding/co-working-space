@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight, Building2, CheckCircle2 } from "lucide-react";
+
 import api from "../api/axios.js";
 import PublicSpaces from "../components/public/PublicSpaces.jsx";
 
@@ -27,8 +29,8 @@ const Home = () => {
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden bg-slate-950">
         {/* Background gradients */}
-        <div className="absolute -top-40 -left-40 h-96 w-96 rounded-full bg-blue-600/30 blur-3xl" />
-        <div className="absolute top-20 right-0 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
+        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/30 blur-3xl" />
+        <div className="absolute right-0 top-20 h-96 w-96 rounded-full bg-violet-600/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
           <div className="max-w-3xl">
@@ -55,7 +57,7 @@ const Home = () => {
             <div className="mt-10 flex flex-col gap-4 sm:flex-row">
               <Link
                 to="/register"
-                className="group inline-flex items-center justify-center rounded-xl bg-blue-600 px-7 py-3.5 font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500 hover:-translate-y-0.5"
+                className="group inline-flex items-center justify-center rounded-xl bg-blue-600 px-7 py-3.5 font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:-translate-y-0.5 hover:bg-blue-500"
               >
                 Get Started
                 <span className="ml-2 transition-transform group-hover:translate-x-1">
@@ -118,7 +120,7 @@ const Home = () => {
           </Link>
         </div>
 
-        {/* ================= LOADING ================= */}
+        {/* Loading */}
         {loading ? (
           <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((item) => (
@@ -138,7 +140,7 @@ const Home = () => {
             ))}
           </div>
         ) : properties.length === 0 ? (
-          /* ================= EMPTY STATE ================= */
+          /* Empty State */
           <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-3xl">
               🏠
@@ -153,7 +155,7 @@ const Home = () => {
             </p>
           </div>
         ) : (
-          /* ================= PROPERTY CARDS ================= */
+          /* Property Cards */
           <div className="grid grid-cols-1 gap-7 md:grid-cols-2 lg:grid-cols-3">
             {properties.map((property) => (
               <div
@@ -259,14 +261,99 @@ const Home = () => {
         </div>
       </section>
 
-        <PublicSpaces />
+      {/* ================= PUBLIC SPACES ================= */}
+      <PublicSpaces />
+
+      {/* ================= VIRTUAL OFFICE SECTION ================= */}
+      <section className="relative overflow-hidden bg-slate-950 px-6 py-20 lg:px-8">
+        <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+          <div>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-blue-300">
+              <Building2 size={17} />
+              Virtual Office Solutions
+            </div>
+
+            <h2 className="text-3xl font-bold leading-tight text-white sm:text-5xl">
+              Build Your Business Presence Without a Physical Office
+            </h2>
+
+            <p className="mt-6 max-w-xl text-base leading-8 text-slate-400">
+              Explore our virtual office plans designed to support your business
+              needs. Compare available plans and view transparent pricing with
+              GST details.
+            </p>
+
+            <Link
+              to="/virtual-office-prices"
+              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-500"
+            >
+              View Virtual Office Plans
+              <ArrowRight size={18} />
+            </Link>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-7 backdrop-blur sm:p-10">
+            <div className="mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600/20 text-blue-300">
+              <Building2 size={34} />
+            </div>
+
+            <h3 className="text-2xl font-bold text-white">
+              Find the Right Plan for Your Business
+            </h3>
+
+            <p className="mt-3 leading-7 text-slate-400">
+              Check our available virtual office packages and compare their
+              pricing before choosing a plan.
+            </p>
+
+            <div className="mt-8 space-y-4">
+              <div className="flex items-center gap-3 text-sm text-slate-300">
+                <CheckCircle2 size={19} className="shrink-0 text-emerald-400" />
+                Multiple pricing plans
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-slate-300">
+                <CheckCircle2 size={19} className="shrink-0 text-emerald-400" />
+                Clear GST breakdown
+              </div>
+
+              <div className="flex items-center gap-3 text-sm text-slate-300">
+                <CheckCircle2 size={19} className="shrink-0 text-emerald-400" />
+                Transparent total pricing
+              </div>
+            </div>
+
+            <Link
+              to="/virtual-office-prices"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-5 py-3 font-semibold text-white transition hover:bg-white/15"
+            >
+              Explore Pricing
+              <ArrowRight size={17} />
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ================= FOOTER ================= */}
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-slate-500 sm:flex-row lg:px-8">
           <p>© 2026 Vayuhu - Rental Management System</p>
 
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
+            <Link to="/" className="transition hover:text-blue-600">
+              Home
+            </Link>
+
+            <Link
+              to="/virtual-office-prices"
+              className="transition hover:text-blue-600"
+            >
+              Virtual Office Plans
+            </Link>
+
             <Link to="/login" className="transition hover:text-blue-600">
               Login
             </Link>

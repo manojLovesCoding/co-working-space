@@ -10,6 +10,7 @@ import AdminLayout from "./layouts/AdminLayout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
+import VirtualOfficePrices from "./pages/VirtualOfficePrices";
 
 /* Tenant pages */
 import TenantDashboard from "./pages/tenant/TenantDashboard";
@@ -67,14 +68,22 @@ const App = () => {
 
       <Routes>
         {/* ================= PUBLIC ROUTES ================= */}
+
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* Public Virtual Office Pricing */}
+        <Route
+          path="/virtual-office-prices"
+          element={<VirtualOfficePrices />}
+        />
 
         {/* Workspace selection */}
         <Route path="/book-space/:id" element={<BookSpace />} />
 
         {/* ================= TENANT ROUTES ================= */}
+
         <Route element={<ProtectedRoute allowedRoles={["tenant"]} />}>
           <Route path="/tenant" element={<TenantLayout />}>
             <Route index element={<TenantDashboard />} />
@@ -83,19 +92,17 @@ const App = () => {
             <Route path="rent" element={<RentStatus />} />
             <Route path="history" element={<PaymentHistory />} />
             <Route path="receipt" element={<PaymentReceipt />} />
-
-            {/* <Route path="pay" element={<PaymentPage />} /> */}
           </Route>
         </Route>
 
         {/* ================= CUSTOMER ROUTES ================= */}
+
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
           {/* Checkout */}
           <Route path="/checkout" element={<Checkout />} />
 
           {/* Customer layout */}
           <Route path="/customer" element={<LandlordLayout />}>
-            {/* Default page */}
             <Route index element={<Navigate to="reservations" replace />} />
 
             <Route path="properties" element={<PropertyList />} />
@@ -141,6 +148,7 @@ const App = () => {
         </Route>
 
         {/* ================= ADMIN ROUTES ================= */}
+
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
@@ -161,14 +169,15 @@ const App = () => {
 
             {/* Team Management */}
             <Route path="team-management" element={<TeamManagement />} />
+
             <Route path="invoices/:id" element={<InvoicePage mode="admin" />} />
             <Route path="invoices" element={<AdminInvoices />} />
+
+            {/* Admin Virtual Office Pricing */}
             <Route
               path="virtual-office-prices"
               element={<VirtualOfficePrice />}
             />
-
-            {/* <Route path="reports" element={<AdminReports />} /> */}
           </Route>
         </Route>
       </Routes>

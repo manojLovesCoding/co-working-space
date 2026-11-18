@@ -199,3 +199,25 @@ export const toggleVirtualOfficePriceStatus = async (req, res) => {
     });
   }
 };
+
+// GET ACTIVE VIRTUAL OFFICE PRICES - PUBLIC
+export const getPublicVirtualOfficePrices = async (req, res) => {
+  try {
+    const prices = await VirtualOfficePrice.find({ isActive: true })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      count: prices.length,
+      prices: prices.map(formatPrice),
+    });
+  } catch (error) {
+    console.error("Get public virtual office prices error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch virtual office prices.",
+    });
+  }
+};
