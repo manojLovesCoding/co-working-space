@@ -505,3 +505,79 @@ export const verifyVirtualOfficePayment = async (req, res) => {
     });
   }
 };
+
+
+ 
+// GET LOGGED-IN CUSTOMER'S VIRTUAL OFFICE PURCHASES - CUSTOMER ONLY
+export const getMyVirtualOfficePurchases = async (req, res) => {
+  try {
+    const customerId = req.user.id;
+
+    // Automatically mark active purchases as expired
+    // when their expiry date has passed.
+    await VirtualOfficePurchase.updateMany(
+      {
+        customer: customerId,
+        purchaseStatus: "Active",
+        expiryDate: { $lte: new Date() },
+      },
+      {
+        $set: {
+          purchaseStatus: "Expired",
+        },
+      },
+    );
+
+    // Fetch only purchases belonging to the logged-in customer.
+    const purchases = await VirtualOfficePurchase.find({
+      customer: customerId,
+    })
+      .select("-razorpaySignature -__v")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Format response using the saved plan snapshot.
+    const formattedPurchases = purchases.map((purchase) => ({
+      _id: purchase._id,
+
+      plan: {
+        planName: purchase.planSnapshot?.planName || "",
+        description: purchase.planSnapshot?.description || "",
+      },
+
+      basePrice: purchase.basePrice,
+      gstRate: purchase.gstRate,
+      gstAmount: purchase.gstAmount,
+      totalAmount: purchase.totalAmount,
+      currency: purchase.currency,
+
+      paymentStatus: purchase.paymentStatus,
+      purchaseStatus: purchase.purchaseStatus,
+
+      razorpayOrderId: purchase.razorpayOrderId || null,
+      razorpayPaymentId: purchase.razorpayPaymentId || null,
+
+      startDate: purchase.startDate,
+      expiryDate: purchase.expiryDate,
+
+      validityMonths: VIRTUAL_OFFICE_VALIDITY_MONTHS,
+
+      purchaseDate: purchase.createdAt,
+      updatedAt: purchase.updatedAt,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      message: "Virtual Office purchases fetched successfully.",
+      count: formattedPurchases.length,
+      purchases: formattedPurchases,
+    });
+  } catch (error) {
+    console.error("Get customer Virtual Office purchases error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch Virtual Office purchases.",
+    });
+  }
+};

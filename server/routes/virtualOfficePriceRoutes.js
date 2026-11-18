@@ -8,6 +8,7 @@ import {
   getPublicVirtualOfficePrices,
   createVirtualOfficeOrder,
   verifyVirtualOfficePayment,
+  getMyVirtualOfficePurchases,
 } from "../controllers/virtualOfficePriceController.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -33,6 +34,15 @@ virtualOfficePriceRouter.post(
   verifyToken,
   authorizeRoles("customer"),
   verifyVirtualOfficePayment,
+);
+
+/* CUSTOMER - PURCHASE HISTORY */
+
+virtualOfficePriceRouter.get(
+  "/my-purchases",
+  verifyToken,
+  authorizeRoles("customer"),
+  getMyVirtualOfficePurchases,
 );
 
 /* ADMIN - PRICE MANAGEMENT */
