@@ -20,6 +20,11 @@ const LandlordSidebar = () => {
       icon: "▤",
     },
     {
+      label: "Virtual Office Purchases",
+      path: "virtual-office-purchases",
+      icon: "🏢",
+    },
+    {
       label: "My Team",
       path: "my-team",
       icon: "👥",

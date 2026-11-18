@@ -60,6 +60,7 @@ import InvoicePage from "./pages/admin/InvoicePage";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminOccupancyDashboard from "./pages/admin/AdminOccupancyDashboard";
 import VirtualOfficePrice from "./pages/admin/VirtualOfficePrice";
+import MyVirtualOfficePurchases from "./pages/landloard/MyVirtualOfficePurchases";
 
 const App = () => {
   return (
@@ -143,6 +144,11 @@ const App = () => {
             <Route
               path="/customer/invoice/:bookingId"
               element={<InvoicePage mode="customer" />}
+            />
+
+            <Route
+              path="virtual-office-purchases"
+              element={<MyVirtualOfficePurchases />}
             />
           </Route>
         </Route>
