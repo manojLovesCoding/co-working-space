@@ -108,8 +108,8 @@ const AdminSidebar = () => {
 
   return (
     <>
-      {/* MOBILE TOP BAR */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200 z-40 flex items-center px-4">
+      {/* MOBILE TOP BAR - HIDDEN WHEN PRINTING */}
+      <header className="print:hidden md:hidden fixed top-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-xl border-b border-slate-200 z-40 flex items-center px-4">
         <button
           onClick={() => setOpen(true)}
           className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition"
@@ -125,22 +125,23 @@ const AdminSidebar = () => {
 
           <div>
             <p className="text-sm font-bold text-slate-900">Admin Panel</p>
-            <p className="text-[11px] text-slate-500">Rent Management</p>
+            <p className="text-[11px] text-slate-500">Oorza Management</p>
           </div>
         </div>
       </header>
 
-      {/* OVERLAY */}
+      {/* OVERLAY - HIDDEN WHEN PRINTING */}
       {open && (
         <div
           onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-40"
+          className="print:hidden md:hidden fixed inset-0 bg-slate-950/50 backdrop-blur-sm z-40"
         />
       )}
 
-      {/* SIDEBAR */}
+      {/* SIDEBAR - HIDDEN WHEN PRINTING */}
       <aside
         className={`
+          print:hidden
           fixed top-0 left-0
           h-screen w-64
           bg-white
@@ -166,7 +167,9 @@ const AdminSidebar = () => {
               <h1 className="text-base font-bold text-slate-900 truncate">
                 Admin Panel
               </h1>
-              <p className="text-xs text-slate-500 truncate">Rent Management</p>
+              <p className="text-xs text-slate-500 truncate">
+                Oorza Management
+              </p>
             </div>
 
             {/* CLOSE BUTTON */}
@@ -231,7 +234,6 @@ const AdminSidebar = () => {
               >
                 {({ isActive }) => (
                   <>
-                    {/* ACTIVE INDICATOR */}
                     {isActive && (
                       <span className="absolute left-0 top-2.5 bottom-2.5 w-1 rounded-r-full bg-indigo-600" />
                     )}
@@ -333,7 +335,7 @@ const AdminSidebar = () => {
           <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-slate-600">Vayuhu</p>
+                <p className="text-xs font-semibold text-slate-600">Oorza</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   Admin Console
                 </p>
@@ -346,7 +348,7 @@ const AdminSidebar = () => {
           </div>
 
           <p className="text-[10px] text-center text-slate-400 mt-3">
-            © {new Date().getFullYear()} Vayuhu
+            © {new Date().getFullYear()} Oorza
           </p>
         </div>
       </aside>

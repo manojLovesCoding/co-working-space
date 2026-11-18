@@ -1,7 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import {
+  Activity,
+  Armchair,
+  Building2,
+  CalendarDays,
+  CalendarCheck,
+  CheckCircle2,
+  Clock3,
+  Coffee,
+  CreditCard,
+  LayoutGrid,
+  Mail,
+  MapPin,
+  Phone,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+  Users,
+  UserRound,
+  X,
+  Hash,
+  ChevronRight,
+  CircleDot,
+  DoorOpen,
+  AlertCircle,
+} from "lucide-react";
 
 import api from "../../api/axios.js";
 
@@ -55,7 +80,11 @@ const FLOOR_ZONE_LAYOUT = {
     span: "lg:col-span-4",
     tone: "amber",
   },
-  "CEO Cabin": { title: "CEO Suite", span: "lg:col-span-4", tone: "rose" },
+  "CEO Cabin": {
+    title: "CEO Suite",
+    span: "lg:col-span-4",
+    tone: "rose",
+  },
   "Video Conferencing": {
     title: "Video Conference Room",
     span: "lg:col-span-4",
@@ -89,37 +118,37 @@ const STATES = {
   available: {
     label: "Available",
     tile: "border-emerald-200 bg-white text-emerald-800 hover:border-emerald-400 hover:bg-emerald-50",
-    badge: "bg-green-100 text-green-700",
-    dot: "bg-green-500",
-    bar: "bg-green-400",
+    badge: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
+    dot: "bg-emerald-500",
+    bar: "bg-emerald-400",
   },
   occupied: {
     label: "Occupied",
     tile: "border-rose-400 bg-rose-500 text-white hover:bg-rose-600",
-    badge: "bg-red-100 text-red-700",
-    dot: "bg-red-500",
-    bar: "bg-red-500",
+    badge: "bg-rose-50 text-rose-700 ring-rose-600/20",
+    dot: "bg-rose-500",
+    bar: "bg-rose-500",
   },
   reserved: {
     label: "Reserved later today",
     tile: "border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-400 hover:bg-sky-100",
-    badge: "bg-blue-100 text-blue-700",
-    dot: "bg-blue-500",
-    bar: "bg-blue-400",
+    badge: "bg-sky-50 text-sky-700 ring-sky-600/20",
+    dot: "bg-sky-500",
+    bar: "bg-sky-400",
   },
   held: {
     label: "Payment in progress",
     tile: "border-amber-200 bg-amber-50 text-amber-800 hover:border-amber-400 hover:bg-amber-100",
-    badge: "bg-amber-100 text-amber-700",
+    badge: "bg-amber-50 text-amber-700 ring-amber-600/20",
     dot: "bg-amber-500",
     bar: "bg-amber-400",
   },
   inactive: {
     label: "Out of service",
     tile: "border-slate-200 bg-slate-100 text-slate-500 hover:bg-slate-200",
-    badge: "bg-gray-200 text-gray-600",
-    dot: "bg-gray-400",
-    bar: "bg-gray-300",
+    badge: "bg-slate-100 text-slate-600 ring-slate-500/20",
+    dot: "bg-slate-400",
+    bar: "bg-slate-300",
   },
 };
 
@@ -279,16 +308,56 @@ const LiveClock = () => {
   );
 };
 
-const StatCard = ({ title, value, hint, tone }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <p className="text-sm text-gray-500">{title}</p>
-    <p className={`mt-2 text-3xl font-semibold ${tone}`}>{value}</p>
-    {hint && <p className="mt-1 text-xs text-gray-400">{hint}</p>}
+const StatCard = ({ title, value, hint, tone, icon: Icon }) => (
+  <div className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_3px_15px_rgba(30,64,175,0.04)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(30,64,175,0.08)]">
+    <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-blue-50/80 transition-transform duration-300 group-hover:scale-125" />
+
+    <div className="relative flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-500">{title}</p>
+        <p className={`mt-3 text-3xl font-extrabold tracking-tight ${tone}`}>
+          {value}
+        </p>
+        {hint && (
+          <p className="mt-2 text-xs font-medium text-slate-400">{hint}</p>
+        )}
+      </div>
+
+      {Icon && (
+        <div className="rounded-2xl bg-blue-50 p-3.5 text-blue-700">
+          <Icon size={22} />
+        </div>
+      )}
+    </div>
+  </div>
+);
+
+const SectionHeading = ({ icon: Icon, title, subtitle }) => (
+  <div className="mb-5 flex items-center gap-3">
+    <div className="rounded-xl bg-blue-100 p-2.5 text-blue-700">
+      <Icon size={19} />
+    </div>
+    <div>
+      <h2 className="text-base font-bold text-slate-900">{title}</h2>
+      {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+    </div>
+  </div>
+);
+
+const DetailItem = ({ label, value, icon: Icon }) => (
+  <div className="min-w-0 rounded-xl border border-blue-100 bg-white p-3.5">
+    <div className="flex items-center gap-2 text-slate-400">
+      {Icon && <Icon size={14} />}
+      <p className="text-[10px] font-bold uppercase tracking-wider">{label}</p>
+    </div>
+    <p className="mt-2 break-all text-sm font-semibold text-slate-800">
+      {value || "—"}
+    </p>
   </div>
 );
 
 const selectClass =
-  "rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+  "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50";
 
 /* ---------- component ---------- */
 
@@ -591,455 +660,687 @@ const AdminOccupancyDashboard = () => {
   /* ---------- render ---------- */
 
   return (
-    <div className="min-h-screen bg-[#f7f8fc] p-4 text-slate-800 sm:p-6">
-      {/* HEADER */}
+    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-[1550px] space-y-6">
+        {/* HEADER */}
 
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Live Occupancy
-            </h1>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 p-6 shadow-lg shadow-blue-900/10 sm:p-8">
+          <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full border-[35px] border-white/5" />
+          <div className="absolute -bottom-28 right-44 h-64 w-64 rounded-full bg-white/5" />
 
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-                officeOpen
-                  ? "bg-green-100 text-green-700"
-                  : "bg-gray-200 text-gray-600"
-              }`}
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  officeOpen ? "bg-green-500" : "bg-gray-500"
-                }`}
-              />
-              Office {officeOpen ? "open" : "closed"}
-            </span>
-          </div>
-
-          <p className="text-sm text-gray-500 mt-1">
-            Which seats are free, occupied or reserved right now
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="text-right">
-            <p className="text-lg font-semibold leading-tight text-gray-800">
-              <LiveClock />
-            </p>
-            <p className="text-xs text-gray-400">
-              {lastUpdated
-                ? `Updated ${formatClock(lastUpdated)} IST`
-                : "Loading..."}
-            </p>
-          </div>
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={(event) => setAutoRefresh(event.target.checked)}
-              className="h-4 w-4 accent-orange-500"
-            />
-            Auto refresh (30s)
-          </label>
-
-          <button
-            type="button"
-            onClick={() => fetchData(false)}
-            disabled={loading || refreshing}
-            className="rounded-xl bg-indigo-600 px-4 py-2 font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {loading || refreshing ? "Refreshing..." : "Refresh"}
-          </button>
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* SUMMARY */}
-
-      <div className="mb-6 grid grid-cols-2 gap-4 xl:grid-cols-5">
-        <StatCard
-          title="Utilization"
-          value={loading ? "—" : `${totals.utilization}%`}
-          hint={
-            loading
-              ? ""
-              : `${totals.occupied} of ${totals.inService} seats in use`
-          }
-          tone="text-orange-600"
-        />
-
-        <StatCard
-          title="Available now"
-          value={loading ? "—" : totals.available}
-          hint="Free to book"
-          tone="text-green-600"
-        />
-
-        <StatCard
-          title="Occupied now"
-          value={loading ? "—" : totals.occupied}
-          hint="Booking in progress"
-          tone="text-red-600"
-        />
-
-        <StatCard
-          title="Reserved later today"
-          value={loading ? "—" : totals.reserved + totals.held}
-          hint={
-            loading || !totals.held
-              ? "Booked for later"
-              : `Includes ${totals.held} being paid for`
-          }
-          tone="text-blue-600"
-        />
-
-        <StatCard
-          title="Out of service"
-          value={loading ? "—" : totals.inactive}
-          hint="Switched off by admin"
-          tone="text-gray-600"
-        />
-      </div>
-
-      {/* UTILIZATION BY SPACE TYPE */}
-
-      {!loading && groups.length > 0 && (
-        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">
-            Utilization by space type
-          </h2>
-
-          <div className="space-y-4">
-            {groups.map((group) => {
-              const inService = group.total - group.counts.inactive;
-              const percent = inService
-                ? Math.round((group.counts.occupied / inService) * 100)
-                : 0;
-
-              return (
-                <div key={group.type}>
-                  <div className="flex items-center justify-between text-sm mb-1.5">
-                    <span className="font-medium text-gray-800">
-                      {group.type}
-                    </span>
-                    <span className="text-gray-500">
-                      {group.counts.occupied}/{inService} in use ·{" "}
-                      <span className="font-semibold text-gray-700">
-                        {percent}%
-                      </span>
-                    </span>
-                  </div>
-
-                  <div className="flex h-3 w-full overflow-hidden rounded-full bg-gray-100">
-                    {["occupied", "held", "reserved"].map((state) =>
-                      group.counts[state] > 0 ? (
-                        <div
-                          key={state}
-                          className={STATES[state].bar}
-                          style={{
-                            width: `${(group.counts[state] / group.total) * 100}%`,
-                          }}
-                          title={`${STATES[state].label}: ${group.counts[state]}`}
-                        />
-                      ) : null,
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* FILTERS + LEGEND */}
-
-      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search seat code, person, customer or booking ID..."
-            className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-          />
-
-          <select
-            value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value)}
-            className={selectClass}
-            aria-label="Filter by space type"
-          >
-            <option value="All">All space types</option>
-            {typeOptions.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-slate-600 transition hover:bg-slate-50"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setStateFilter("All")}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition ${
-              stateFilter === "All"
-                ? "bg-indigo-600 text-white ring-indigo-600"
-                : "bg-white text-gray-600 ring-gray-200 hover:bg-gray-50"
-            }`}
-          >
-            All ({totals.total})
-          </button>
-
-          {STATE_ORDER.map((state) => (
-            <button
-              key={state}
-              type="button"
-              onClick={() =>
-                setStateFilter(stateFilter === state ? "All" : state)
-              }
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ring-1 transition ${
-                stateFilter === state
-                  ? "bg-indigo-600 text-white ring-indigo-600"
-                  : "bg-white text-gray-600 ring-gray-200 hover:bg-gray-50"
-              }`}
-            >
-              <span className={`h-2 w-2 rounded-full ${STATES[state].dot}`} />
-              {STATES[state].label} ({totals[state]})
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* FLOOR PLAN */}
-
-      {loading ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500 shadow-sm">
-          Loading office floor...
-        </div>
-      ) : seats.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500 shadow-sm">
-          No seats have been created yet. Add spaces first to see occupancy.
-        </div>
-      ) : filteredSeats.length === 0 ? (
-        <div className="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500 shadow-sm">
-          No seats match your search or filters.
-        </div>
-      ) : (
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-[#f1f3f8] p-3 shadow-inner sm:p-5">
-          <div className="mb-4 flex flex-col gap-2 border-b border-slate-200 px-1 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">
-                Workspace map
-              </p>
-              <h2 className="mt-1 text-lg font-bold text-slate-800">
-                Office floor plan
-              </h2>
-              <p className="text-xs text-slate-500">
-                Select any seat or room to view its live booking details
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-[11px] font-medium">
-              {STATE_ORDER.map((state) => (
+              <div className="mb-4 flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-50">
+                <Building2 size={14} />
+                Oorza Administration
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                  Live Occupancy
+                </h1>
+
                 <span
-                  key={state}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white bg-white/90 px-2.5 py-1 text-slate-600 shadow-sm"
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${
+                    officeOpen
+                      ? "border-emerald-300/30 bg-emerald-400/15 text-emerald-100"
+                      : "border-white/20 bg-white/10 text-blue-100"
+                  }`}
                 >
                   <span
-                    className={`h-2 w-2 rounded-full ${STATES[state].dot}`}
+                    className={`h-2 w-2 rounded-full ${
+                      officeOpen
+                        ? "animate-pulse bg-emerald-400"
+                        : "bg-slate-300"
+                    }`}
                   />
-                  {STATES[state].label}
+                  Office {officeOpen ? "Open" : "Closed"}
                 </span>
-              ))}
+              </div>
+
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100">
+                Monitor real-time workspace availability, track reservations and
+                view the occupancy of every office space.
+              </p>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-medium text-blue-100">
+                <span className="flex items-center gap-1.5">
+                  <Activity size={15} />
+                  Live monitoring
+                </span>
+                <span className="h-1 w-1 rounded-full bg-blue-300" />
+                <span className="flex items-center gap-1.5">
+                  <LayoutGrid size={15} />
+                  Floor overview
+                </span>
+                <span className="h-1 w-1 rounded-full bg-blue-300" />
+                <span className="flex items-center gap-1.5">
+                  <ShieldCheck size={15} />
+                  Booking status
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm sm:min-w-[300px]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-200">
+                    Current India time
+                  </p>
+                  <p className="mt-1 text-2xl font-extrabold tabular-nums text-white">
+                    <LiveClock />
+                  </p>
+                  <p className="mt-1 text-xs text-blue-200">
+                    {formatDay(now)} · IST
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-white/10 p-3 text-white">
+                  <Clock3 size={25} />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 border-t border-white/15 pt-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-200">
+                    Last synchronized
+                  </p>
+                  <p className="mt-1 text-xs font-bold text-white">
+                    {lastUpdated
+                      ? `${formatClock(lastUpdated)} IST`
+                      : "Waiting for data..."}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => fetchData(false)}
+                  disabled={loading || refreshing}
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCw
+                    size={15}
+                    className={loading || refreshing ? "animate-spin" : ""}
+                  />
+                  Refresh
+                </button>
+              </div>
             </div>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-12">
-            {groups
-              .filter((group) => group.visible.length > 0)
-              .map((group) => {
-                const layout = FLOOR_ZONE_LAYOUT[group.type] || {
-                  title: group.type,
-                  span: "lg:col-span-6",
-                  tone: "blue",
-                };
-                const tone = layout.tone;
+        {/* SUMMARY */}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <StatCard
+            title="Utilization"
+            value={loading ? "—" : `${totals.utilization}%`}
+            hint={
+              loading
+                ? ""
+                : `${totals.occupied} of ${totals.inService} seats in use`
+            }
+            tone="text-blue-700"
+            icon={Activity}
+          />
+
+          <StatCard
+            title="Available Now"
+            value={loading ? "—" : totals.available}
+            hint="Free to book"
+            tone="text-emerald-600"
+            icon={CheckCircle2}
+          />
+
+          <StatCard
+            title="Occupied Now"
+            value={loading ? "—" : totals.occupied}
+            hint="Booking in progress"
+            tone="text-rose-600"
+            icon={Users}
+          />
+
+          <StatCard
+            title="Reserved Later Today"
+            value={loading ? "—" : totals.reserved + totals.held}
+            hint={
+              loading || !totals.held
+                ? "Booked for later"
+                : `Includes ${totals.held} being paid for`
+            }
+            tone="text-sky-600"
+            icon={CalendarCheck}
+          />
+
+          <StatCard
+            title="Out of Service"
+            value={loading ? "—" : totals.inactive}
+            hint="Switched off by admin"
+            tone="text-slate-600"
+            icon={DoorOpen}
+          />
+        </div>
+
+        {/* UTILIZATION BY SPACE TYPE */}
+
+        {!loading && groups.length > 0 && (
+          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_3px_15px_rgba(30,64,175,0.04)] sm:p-6">
+            <SectionHeading
+              icon={Activity}
+              title="Utilization by Space Type"
+              subtitle="Live occupancy breakdown across your workspace"
+            />
+
+            <div className="grid grid-cols-1 gap-x-8 gap-y-5 lg:grid-cols-2">
+              {groups.map((group) => {
                 const inService = group.total - group.counts.inactive;
-                const occupiedPercent = inService
+                const percent = inService
                   ? Math.round((group.counts.occupied / inService) * 100)
                   : 0;
 
                 return (
-                  <section
-                    key={group.type}
-                    className={`${layout.span} min-w-0 rounded-2xl border-2 p-3 shadow-sm sm:p-4 ${ZONE_TONES[tone] || ZONE_TONES.blue}`}
-                  >
-                    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                      <div>
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${ZONE_PILLS[tone] || ZONE_PILLS.blue}`}
-                        >
-                          {layout.title}
-                        </span>
-                        <p className="mt-1.5 text-xs text-slate-500">
-                          {group.total} {group.total === 1 ? "space" : "spaces"}{" "}
-                          · {occupiedPercent}% occupied
+                  <div key={group.type}>
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-slate-800">
+                          {group.type}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-slate-400">
+                          {inService} active spaces
                         </p>
                       </div>
-                      <div className="flex flex-wrap justify-end gap-1.5">
-                        {STATE_ORDER.filter(
-                          (state) => group.counts[state] > 0,
-                        ).map((state) => (
-                          <span
+
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-extrabold text-slate-800">
+                          {percent}%
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {group.counts.occupied}/{inService} occupied
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                      {["occupied", "held", "reserved"].map((state) =>
+                        group.counts[state] > 0 ? (
+                          <div
                             key={state}
-                            className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-semibold text-slate-600"
-                          >
-                            {group.counts[state]}{" "}
-                            {state === "available" ? "free" : state}
-                          </span>
-                        ))}
-                      </div>
+                            className={STATES[state].bar}
+                            style={{
+                              width: `${(group.counts[state] / group.total) * 100}%`,
+                            }}
+                            title={`${STATES[state].label}: ${group.counts[state]}`}
+                          />
+                        ) : null,
+                      )}
                     </div>
-
-                    <div
-                      className={
-                        group.type === "Workspace" ? "overflow-x-auto pb-2" : ""
-                      }
-                    >
-                      <div
-                        className={`grid gap-2 ${
-                          group.type === "Workspace"
-                            ? "min-w-[680px]"
-                            : "grid-cols-2 sm:grid-cols-3"
-                        }`}
-                        style={
-                          group.type === "Workspace"
-                            ? {
-                                gridTemplateColumns:
-                                  "repeat(7, minmax(90px, 1fr))",
-                                gridTemplateRows:
-                                  "repeat(7, minmax(66px, auto))",
-                              }
-                            : undefined
-                        }
-                      >
-                        {group.visible.map((seat, index) => {
-                          // Column 1 has WS01-WS03; columns 2-7 have seven seats each.
-                          const workspacePosition =
-                            group.type === "Workspace"
-                              ? index < 3
-                                ? { gridColumn: 1, gridRow: index + 1 }
-                                : {
-                                    gridColumn: 2 + Math.floor((index - 3) / 7),
-                                    gridRow: ((index - 3) % 7) + 1,
-                                  }
-                              : undefined;
-
-                          return (
-                            <button
-                              key={seat.code}
-                              type="button"
-                              onClick={() => setSelectedCode(seat.code)}
-                              title={`${seat.code} · ${STATES[seat.state].label}`}
-                              style={workspacePosition}
-                              className={`group relative flex min-h-[66px] min-w-0 flex-col items-center justify-center rounded-xl border px-2 py-2 text-center shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:ring-offset-1 ${STATES[seat.state].tile}`}
-                            >
-                              <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-                              <span className="max-w-full truncate text-xs font-extrabold tracking-wide">
-                                {seat.code}
-                              </span>
-                              <span className="mt-1 max-w-full truncate text-[10px] font-medium opacity-80">
-                                {getTileLabel(seat)}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </section>
+                  </div>
                 );
               })}
+            </div>
+          </div>
+        )}
 
-            {/* Decorative shared area from the reference plan; it is not a bookable seat. */}
-            <aside className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border-2 border-orange-200 bg-orange-50/80 p-4 text-center shadow-sm md:flex lg:col-span-4 lg:col-start-9 lg:row-start-2">
-              <span className="mb-2 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-2xl shadow-sm">
-                ☕
-              </span>
-              <p className="text-xs font-bold uppercase tracking-wider text-orange-700">
-                Breakout lounge & café
-              </p>
-              <p className="mt-1 text-[11px] text-orange-600/80">
-                Shared space · not bookable
-              </p>
-            </aside>
+        {/* FILTERS + LEGEND */}
+
+        <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_3px_15px_rgba(30,64,175,0.04)] sm:p-6">
+          <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-blue-100 p-2.5 text-blue-700">
+                <Search size={19} />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-900">Find a Workspace</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Search seats and filter by space type or availability
+                </p>
+              </div>
+            </div>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 transition hover:text-indigo-800"
+              >
+                <X size={14} />
+                Clear all filters
+              </button>
+            )}
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 px-1 pt-3 text-[11px] text-slate-500">
-            <span>Live status is synced with the booking system</span>
-            <span>
-              {totals.total} total spaces · {totals.inService} in service
-            </span>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-[1fr_240px]">
+            <div className="relative">
+              <Search
+                size={17}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search seat code, person, customer or booking ID..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
+              />
+            </div>
+
+            <select
+              value={typeFilter}
+              onChange={(event) => setTypeFilter(event.target.value)}
+              className={selectClass}
+              aria-label="Filter by space type"
+            >
+              <option value="All">All Space Types</option>
+              {typeOptions.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Filter by availability
+              </p>
+              <p className="text-xs font-medium text-slate-400">
+                {filteredSeats.length} of {totals.total} spaces
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setStateFilter("All")}
+                className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 transition ${
+                  stateFilter === "All"
+                    ? "bg-blue-700 text-white ring-blue-700"
+                    : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50"
+                }`}
+              >
+                All Spaces ({totals.total})
+              </button>
+
+              {STATE_ORDER.map((state) => (
+                <button
+                  key={state}
+                  type="button"
+                  onClick={() =>
+                    setStateFilter(stateFilter === state ? "All" : state)
+                  }
+                  className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 transition ${
+                    stateFilter === state
+                      ? "bg-blue-700 text-white ring-blue-700"
+                      : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50"
+                  }`}
+                >
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      stateFilter === state ? "bg-white" : STATES[state].dot
+                    }`}
+                  />
+                  {STATES[state].label} ({totals[state]})
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      )}
+
+        {/* FLOOR PLAN */}
+
+        <div className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-[0_3px_15px_rgba(30,64,175,0.04)]">
+          <div className="flex flex-col justify-between gap-4 border-b border-blue-100 p-5 sm:flex-row sm:items-center sm:p-6">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-indigo-100 p-2.5 text-indigo-700">
+                <LayoutGrid size={21} />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-slate-900">
+                  Office Floor Plan
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Select any seat or room to view its live booking details
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+                <Armchair size={14} />
+                {totals.total} Total Spaces
+              </span>
+              <span className="flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700">
+                <CheckCircle2 size={14} />
+                {totals.available} Available
+              </span>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="flex min-h-80 flex-col items-center justify-center gap-4 bg-[#F5F9FF]">
+              <div className="rounded-2xl bg-blue-100 p-4">
+                <RefreshCw size={30} className="animate-spin text-blue-600" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-bold text-slate-700">
+                  Loading office floor
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Retrieving spaces and reservations...
+                </p>
+              </div>
+            </div>
+          ) : seats.length === 0 ? (
+            <div className="flex min-h-80 flex-col items-center justify-center bg-[#F5F9FF] px-4 text-center">
+              <div className="rounded-2xl bg-blue-100 p-5 text-blue-600">
+                <Armchair size={32} />
+              </div>
+              <h3 className="mt-4 font-bold text-slate-800">
+                No spaces available
+              </h3>
+              <p className="mt-1 max-w-sm text-sm text-slate-500">
+                No seats have been created yet. Add spaces first to see
+                occupancy.
+              </p>
+            </div>
+          ) : filteredSeats.length === 0 ? (
+            <div className="flex min-h-80 flex-col items-center justify-center bg-[#F5F9FF] px-4 text-center">
+              <div className="rounded-2xl bg-blue-100 p-5 text-blue-600">
+                <Search size={32} />
+              </div>
+              <h3 className="mt-4 font-bold text-slate-800">
+                No matching spaces
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Try changing your search or availability filters.
+              </p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-4 rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-800"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            <div className="bg-[#F5F8FE] p-3 sm:p-5">
+              <div className="mb-5 flex flex-col gap-2 border-b border-blue-100 px-1 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-600">
+                    Workspace Layout
+                  </p>
+                  <h3 className="mt-1 text-lg font-extrabold text-slate-900">
+                    Live Space Map
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Each tile represents a bookable space
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {STATE_ORDER.map((state) => (
+                    <span
+                      key={state}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 shadow-sm"
+                    >
+                      <span
+                        className={`h-2 w-2 rounded-full ${STATES[state].dot}`}
+                      />
+                      {STATES[state].label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-12">
+                {groups
+                  .filter((group) => group.visible.length > 0)
+                  .map((group) => {
+                    const layout = FLOOR_ZONE_LAYOUT[group.type] || {
+                      title: group.type,
+                      span: "lg:col-span-6",
+                      tone: "blue",
+                    };
+                    const tone = layout.tone;
+                    const inService = group.total - group.counts.inactive;
+                    const occupiedPercent = inService
+                      ? Math.round((group.counts.occupied / inService) * 100)
+                      : 0;
+
+                    return (
+                      <section
+                        key={group.type}
+                        className={`${layout.span} min-w-0 rounded-2xl border-2 p-3 shadow-sm transition hover:shadow-md sm:p-4 ${
+                          ZONE_TONES[tone] || ZONE_TONES.blue
+                        }`}
+                      >
+                        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+                          <div>
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                                ZONE_PILLS[tone] || ZONE_PILLS.blue
+                              }`}
+                            >
+                              {layout.title}
+                            </span>
+                            <p className="mt-2 text-xs font-medium text-slate-500">
+                              {group.total}{" "}
+                              {group.total === 1 ? "space" : "spaces"} ·{" "}
+                              {occupiedPercent}% occupied
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap justify-end gap-1.5">
+                            {STATE_ORDER.filter(
+                              (state) => group.counts[state] > 0,
+                            ).map((state) => (
+                              <span
+                                key={state}
+                                className="rounded-lg border border-white/80 bg-white/80 px-2 py-1 text-[10px] font-bold text-slate-600"
+                              >
+                                {group.counts[state]}{" "}
+                                {state === "available" ? "free" : state}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div
+                          className={
+                            group.type === "Workspace"
+                              ? "overflow-x-auto rounded-xl pb-2"
+                              : ""
+                          }
+                        >
+                          <div
+                            className={`grid gap-2 ${
+                              group.type === "Workspace"
+                                ? "min-w-[680px]"
+                                : "grid-cols-2 sm:grid-cols-3"
+                            }`}
+                            style={
+                              group.type === "Workspace"
+                                ? {
+                                    gridTemplateColumns:
+                                      "repeat(7, minmax(90px, 1fr))",
+                                    gridTemplateRows:
+                                      "repeat(7, minmax(72px, auto))",
+                                  }
+                                : undefined
+                            }
+                          >
+                            {group.visible.map((seat, index) => {
+                              // Column 1 has WS01-WS03; columns 2-7 have seven seats each.
+                              const workspacePosition =
+                                group.type === "Workspace"
+                                  ? index < 3
+                                    ? {
+                                        gridColumn: 1,
+                                        gridRow: index + 1,
+                                      }
+                                    : {
+                                        gridColumn:
+                                          2 + Math.floor((index - 3) / 7),
+                                        gridRow: ((index - 3) % 7) + 1,
+                                      }
+                                  : undefined;
+
+                              return (
+                                <button
+                                  key={seat.code}
+                                  type="button"
+                                  onClick={() => setSelectedCode(seat.code)}
+                                  title={`${seat.code} · ${STATES[seat.state].label}`}
+                                  style={workspacePosition}
+                                  className={`group relative flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-xl border px-2 py-3 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+                                    STATES[seat.state].tile
+                                  }`}
+                                >
+                                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+
+                                  <span className="max-w-full truncate text-xs font-extrabold tracking-wide">
+                                    {seat.code}
+                                  </span>
+
+                                  <span className="mt-1.5 max-w-full truncate text-[10px] font-semibold opacity-80">
+                                    {getTileLabel(seat)}
+                                  </span>
+
+                                  <span className="mt-1 text-[9px] font-bold uppercase tracking-wider opacity-60">
+                                    {STATES[seat.state].label}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </section>
+                    );
+                  })}
+
+                {/* Decorative shared area from the reference plan; it is not a bookable seat. */}
+                <aside className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border-2 border-sky-200 bg-sky-50 p-4 text-center shadow-sm md:flex lg:col-span-4 lg:col-start-9 lg:row-start-2">
+                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-700 shadow-sm">
+                    <Coffee size={25} />
+                  </span>
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-sky-800">
+                    Breakout Lounge & Café
+                  </p>
+                  <p className="mt-1 text-[11px] text-sky-600">
+                    Shared space · Not bookable
+                  </p>
+                </aside>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-blue-100 px-1 pt-4 text-[11px] font-medium text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <CircleDot size={13} className="text-emerald-500" />
+                  Live status synced with booking system
+                </span>
+                <span>
+                  {totals.total} total spaces · {totals.inService} in service
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* AUTO REFRESH FOOTER */}
+
+        <div className="flex flex-col justify-between gap-2 rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center">
+          <div className="flex items-center gap-2.5">
+            <div className="rounded-lg bg-blue-50 p-2 text-blue-700">
+              <RefreshCw
+                size={15}
+                className={autoRefresh ? "animate-spin" : ""}
+              />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-800">
+                Automatic occupancy synchronization
+              </p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                {autoRefresh
+                  ? "Dashboard refreshes every 30 seconds when the tab is visible."
+                  : "Automatic refresh is currently paused."}
+              </p>
+            </div>
+          </div>
+
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(event) => setAutoRefresh(event.target.checked)}
+              className="h-4 w-4 accent-blue-600"
+            />
+            Auto Refresh
+          </label>
+        </div>
+      </div>
 
       {/* SEAT DETAILS MODAL */}
 
       {selectedSeat && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
           onClick={() => setSelectedCode(null)}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            className="max-h-[94vh] w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex justify-between items-start p-5 border-b">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  Seat {selectedSeat.code}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  {selectedSeat.type}
-                </p>
-              </div>
+            {/* Modal Header */}
+            <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 px-5 py-6 sm:px-7">
+              <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full border-[25px] border-white/5" />
 
-              <div className="flex items-center gap-3">
-                <span
-                  className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${STATES[selectedSeat.state].badge}`}
-                >
-                  {STATES[selectedSeat.state].label}
-                </span>
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <div className="mb-3 flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-100">
+                    <Building2 size={12} />
+                    Workspace Details
+                  </div>
+
+                  <h2 className="text-xl font-extrabold text-white sm:text-2xl">
+                    {selectedSeat.code}
+                  </h2>
+
+                  <p className="mt-1 text-sm text-blue-100">
+                    {selectedSeat.type}
+                  </p>
+                </div>
 
                 <button
                   type="button"
                   onClick={() => setSelectedCode(null)}
                   aria-label="Close"
-                  className="text-gray-500 hover:text-gray-800 text-2xl leading-none"
+                  className="rounded-xl border border-white/20 bg-white/10 p-2.5 text-white transition hover:bg-white/20"
                 >
-                  ×
+                  <X size={20} />
                 </button>
+              </div>
+
+              <div className="relative mt-5 flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset ${
+                    STATES[selectedSeat.state].badge
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${STATES[selectedSeat.state].dot}`}
+                  />
+                  {STATES[selectedSeat.state].label}
+                </span>
+
+                <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white">
+                  {selectedSeat.upcoming.length} Upcoming Bookings
+                </span>
               </div>
             </div>
 
-            <div className="p-5 space-y-5">
+            {/* Modal Body */}
+            <div className="max-h-[calc(94vh-190px)] space-y-6 overflow-y-auto bg-[#F5F9FF] p-5 sm:p-7">
               {/* Current / held booking */}
               {(selectedSeat.current || selectedSeat.held) &&
                 (() => {
@@ -1048,84 +1349,111 @@ const AdminOccupancyDashboard = () => {
                   const holders = getHolders(booking, selectedSeat.code);
 
                   return (
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                        {selectedSeat.current
-                          ? "In use right now"
-                          : "Payment in progress"}
-                      </h3>
+                    <section>
+                      <SectionHeading
+                        icon={Activity}
+                        title={
+                          selectedSeat.current
+                            ? "Currently Occupied"
+                            : "Payment in Progress"
+                        }
+                        subtitle="Active booking and customer information"
+                      />
 
-                      <div className="rounded-lg bg-gray-50 p-4 text-sm space-y-2">
-                        <p>
-                          <span className="font-medium">Booking:</span>{" "}
-                          <span className="break-all text-orange-600">
-                            {booking.bookingId}
+                      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                            Booking Reference
                           </span>
-                        </p>
-                        <p className="capitalize">
-                          <span className="font-medium">Plan:</span>{" "}
-                          {booking.plan} · {booking.duration}
-                        </p>
-                        <p>
-                          <span className="font-medium">When:</span>{" "}
-                          {getSchedule(booking)}
-                        </p>
-                        <p>
-                          <span className="font-medium">Booked by:</span>{" "}
-                          {customer.name}
-                          {customer.phone && (
-                            <span className="text-gray-500">
-                              {" "}
-                              · {customer.phone}
-                            </span>
-                          )}
-                        </p>
+                          <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-700">
+                            {booking.bookingId || "—"}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <DetailItem
+                            label="Plan"
+                            value={`${booking.plan || "—"} · ${booking.duration || "—"}`}
+                            icon={CalendarDays}
+                          />
+                          <DetailItem
+                            label="Schedule"
+                            value={getSchedule(booking)}
+                            icon={Clock3}
+                          />
+                          <DetailItem
+                            label="Booked By"
+                            value={customer.name}
+                            icon={UserRound}
+                          />
+                          <DetailItem
+                            label="Contact Number"
+                            value={customer.phone}
+                            icon={Phone}
+                          />
+                        </div>
+
                         {selectedSeat.current && (
-                          <p className="text-gray-500">
-                            Ends {formatDateTime(booking.end)}
-                          </p>
+                          <div className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+                            <Clock3 size={15} />
+                            Booking ends {formatDateTime(booking.end)}
+                          </div>
                         )}
                       </div>
 
-                      <h3 className="text-sm font-semibold text-gray-700 mt-4 mb-2">
-                        {PER_HEAD_SPACES.includes(selectedSeat.type)
-                          ? `Attendees (${holders.length})`
-                          : "Seat holder"}
-                      </h3>
+                      <div className="mb-3 mt-5 flex items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-900">
+                            {PER_HEAD_SPACES.includes(selectedSeat.type)
+                              ? `Attendees (${holders.length})`
+                              : "Seat Holder"}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            Assigned people for this space
+                          </p>
+                        </div>
+                        <span className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
+                          {holders.length}{" "}
+                          {holders.length === 1 ? "Person" : "People"}
+                        </span>
+                      </div>
 
-                      <div className="overflow-x-auto border rounded-lg">
-                        <table className="w-full border-collapse text-sm">
+                      <div className="overflow-x-auto rounded-2xl border border-blue-100 bg-white">
+                        <table className="w-full min-w-[520px] border-collapse text-sm">
                           <thead>
-                            <tr className="bg-gray-50 border-b">
-                              <th className="text-left p-2 font-semibold">
+                            <tr className="border-b border-blue-100 bg-[#F3F7FF]">
+                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
                                 Person
                               </th>
-                              <th className="text-left p-2 font-semibold">
+                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
                                 Email
                               </th>
-                              <th className="text-left p-2 font-semibold">
+                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
                                 Phone
                               </th>
                             </tr>
                           </thead>
-                          <tbody>
+
+                          <tbody className="divide-y divide-blue-50">
                             {holders.map((holder, index) => (
                               <tr
                                 key={`${holder.name}-${index}`}
-                                className="border-b last:border-b-0"
+                                className="transition hover:bg-blue-50/50"
                               >
-                                <td className="p-2">
-                                  {holder.name}
+                                <td className="p-3">
+                                  <p className="font-bold text-slate-800">
+                                    {holder.name}
+                                  </p>
                                   {holder.isSelf && (
-                                    <span className="ml-2 rounded-full bg-orange-50 px-2 py-0.5 text-xs text-orange-600">
+                                    <span className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                                       Customer
                                     </span>
                                   )}
                                 </td>
-                                <td className="p-2 text-gray-600 break-all">
+                                <td className="break-all p-3 text-xs text-slate-600">
                                   {holder.email || "—"}
                                 </td>
-                                <td className="p-2 text-gray-600">
+                                <td className="p-3 text-xs text-slate-600">
                                   {holder.phone || "—"}
                                 </td>
                               </tr>
@@ -1133,54 +1461,137 @@ const AdminOccupancyDashboard = () => {
                           </tbody>
                         </table>
                       </div>
-                    </div>
+                    </section>
                   );
                 })()}
 
               {/* Upcoming bookings */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Upcoming bookings
-                </h3>
+              <section>
+                <SectionHeading
+                  icon={CalendarCheck}
+                  title="Upcoming Bookings"
+                  subtitle="Next confirmed reservations for this space"
+                />
 
                 {selectedSeat.upcoming.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedSeat.upcoming.map((booking) => {
+                  <div className="space-y-3">
+                    {selectedSeat.upcoming.map((booking, index) => {
                       const holders = getHolders(booking, selectedSeat.code);
 
                       return (
                         <div
                           key={booking._id || booking.bookingId}
-                          className="rounded-lg border p-3 text-sm"
+                          className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition hover:shadow-md"
                         >
-                          <p className="font-medium">{getSchedule(booking)}</p>
-                          <p className="text-gray-500 mt-1">
-                            {holders.map((holder) => holder.name).join(", ")}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1 break-all">
-                            {booking.bookingId}
-                          </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div className="rounded-xl bg-blue-100 p-2.5 text-blue-700">
+                                <CalendarDays size={18} />
+                              </div>
+
+                              <div className="min-w-0">
+                                <p className="text-sm font-bold text-slate-800">
+                                  {getSchedule(booking)}
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {holders
+                                    .map((holder) => holder.name)
+                                    .join(", ")}
+                                </p>
+                              </div>
+                            </div>
+
+                            <span className="shrink-0 rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700">
+                              #{index + 1}
+                            </span>
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-blue-50 pt-3">
+                            <span className="text-[10px] font-semibold text-slate-400">
+                              Booking ID
+                            </span>
+                            <span className="break-all text-xs font-semibold text-slate-600">
+                              {booking.bookingId || "—"}
+                            </span>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-gray-500">
-                    {selectedSeat.state === "inactive"
-                      ? "This seat is out of service."
-                      : "No upcoming bookings for this seat."}
-                  </p>
+                  <div className="rounded-2xl border border-dashed border-blue-200 bg-white p-6 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                      <CalendarDays size={22} />
+                    </div>
+                    <p className="mt-3 text-sm font-bold text-slate-800">
+                      No upcoming bookings
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {selectedSeat.state === "inactive"
+                        ? "This seat is currently out of service."
+                        : "There are no upcoming reservations for this space."}
+                    </p>
+                  </div>
                 )}
-              </div>
+              </section>
+
+              {/* Available / inactive state */}
+              {!selectedSeat.current && !selectedSeat.held && (
+                <div
+                  className={`rounded-2xl border p-4 ${
+                    selectedSeat.state === "inactive"
+                      ? "border-slate-200 bg-slate-100"
+                      : "border-emerald-200 bg-emerald-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {selectedSeat.state === "inactive" ? (
+                      <AlertCircle size={21} className="text-slate-500" />
+                    ) : (
+                      <CheckCircle2 size={21} className="text-emerald-600" />
+                    )}
+                    <div>
+                      <p
+                        className={`text-sm font-bold ${
+                          selectedSeat.state === "inactive"
+                            ? "text-slate-700"
+                            : "text-emerald-800"
+                        }`}
+                      >
+                        {selectedSeat.state === "inactive"
+                          ? "Space is out of service"
+                          : selectedSeat.state === "reserved"
+                            ? "Space is reserved later today"
+                            : "Space is currently available"}
+                      </p>
+                      <p
+                        className={`mt-1 text-xs ${
+                          selectedSeat.state === "inactive"
+                            ? "text-slate-500"
+                            : "text-emerald-700"
+                        }`}
+                      >
+                        {selectedSeat.state === "inactive"
+                          ? "This space is currently not available for booking."
+                          : selectedSeat.state === "reserved"
+                            ? `Next reservation starts at ${formatClock(selectedSeat.next.start)}.`
+                            : "No active booking is using this space right now."}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="flex justify-end p-5 border-t bg-gray-50">
+            {/* Modal Footer */}
+            <div className="border-t border-blue-100 bg-white p-4 sm:px-7 sm:py-5">
               <button
                 type="button"
                 onClick={() => setSelectedCode(null)}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-white"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 px-5 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-900/10 transition hover:from-blue-800 hover:to-indigo-800"
               >
-                Close
+                <X size={17} />
+                Close Details
               </button>
             </div>
           </div>

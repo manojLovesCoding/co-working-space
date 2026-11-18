@@ -1,10 +1,38 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import {
+  Users,
+  UserCheck,
+  Clock3,
+  IndianRupee,
+  Search,
+  RefreshCw,
+  X,
+  Eye,
+  CalendarDays,
+  Building2,
+  CreditCard,
+  ChevronLeft,
+  ChevronRight,
+  Mail,
+  Phone,
+  MapPin,
+  Hash,
+  CheckCircle2,
+  AlertCircle,
+  XCircle,
+  CalendarClock,
+  Receipt,
+  ShieldCheck,
+  LoaderCircle,
+  UserRound,
+  Ticket,
+  Wallet,
+} from "lucide-react";
+
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import api from "../../api/axios.js";
-
-
 
 const ITEMS_PER_PAGE = 10;
 
@@ -90,10 +118,7 @@ const formatBookingWindow = (start, end) => {
   const startDate = new Date(start);
   const endDate = new Date(end);
 
-  if (
-    Number.isNaN(startDate.getTime()) ||
-    Number.isNaN(endDate.getTime())
-  ) {
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
     return "—";
   }
 
@@ -101,7 +126,7 @@ const formatBookingWindow = (start, end) => {
 
   if (!legacy && endDate.getTime() - startDate.getTime() < DAY_MS) {
     return `${formatDate(startDate)}, ${formatClock(
-      startDate
+      startDate,
     )} - ${formatClock(endDate)}`;
   }
 
@@ -144,39 +169,115 @@ const getCustomer = (visitor) => {
   return { name: "Deleted user", email: "", phone: "" };
 };
 
-/* ---------- styles ---------- */
+/* ---------- status styles ---------- */
 
 const getStatusStyle = (status) => {
   switch (status?.toLowerCase()) {
     case "confirmed":
-      return "bg-green-100 text-green-700";
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
     case "pending":
-      return "bg-yellow-100 text-yellow-700";
+      return "bg-amber-50 text-amber-700 border-amber-100";
     case "cancelled":
-      return "bg-red-100 text-red-700";
+      return "bg-rose-50 text-rose-700 border-rose-100";
     case "expired":
-      return "bg-orange-100 text-orange-700";
+      return "bg-orange-50 text-orange-700 border-orange-100";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-slate-100 text-slate-600 border-slate-200";
   }
 };
 
 const getPaymentStyle = (status) => {
   switch (status?.toLowerCase()) {
     case "paid":
-      return "bg-green-100 text-green-700";
+      return "bg-emerald-50 text-emerald-700 border-emerald-100";
     case "failed":
-      return "bg-red-100 text-red-700";
+      return "bg-rose-50 text-rose-700 border-rose-100";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-slate-100 text-slate-600 border-slate-200";
   }
 };
 
 const STATUS_FILTERS = ["All", "Confirmed", "Pending", "Expired", "Cancelled"];
+
 const PAYMENT_FILTERS = ["All", "Paid", "Pending", "Failed"];
 
 const selectClass =
-  "border border-orange-400 rounded px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-orange-200";
+  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100";
+
+const labelClass =
+  "mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500";
+
+/* ---------- reusable components ---------- */
+
+const StatusBadge = ({ status, payment = false }) => (
+  <span
+    className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${
+      payment ? getPaymentStyle(status) : getStatusStyle(status)
+    }`}
+  >
+    <span
+      className={`h-1.5 w-1.5 rounded-full ${
+        status?.toLowerCase() === "confirmed" ||
+        status?.toLowerCase() === "paid"
+          ? "bg-emerald-500"
+          : status?.toLowerCase() === "pending"
+            ? "bg-amber-500"
+            : status?.toLowerCase() === "expired" ||
+                status?.toLowerCase() === "failed"
+              ? "bg-orange-500"
+              : status?.toLowerCase() === "cancelled"
+                ? "bg-rose-500"
+                : "bg-slate-400"
+      }`}
+    />
+    {status || "Unknown"}
+  </span>
+);
+
+const SummaryCard = ({
+  title,
+  value,
+  description,
+  icon: Icon,
+  iconClass,
+  valueClass,
+}) => (
+  <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <p className="text-sm font-medium text-slate-500">{title}</p>
+        <h3
+          className={`mt-2 text-2xl font-bold ${valueClass || "text-slate-800"}`}
+        >
+          {value}
+        </h3>
+      </div>
+
+      <div
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${iconClass}`}
+      >
+        <Icon size={23} />
+      </div>
+    </div>
+
+    <p className="mt-3 text-xs text-slate-400">{description}</p>
+  </div>
+);
+
+const DetailItem = ({ icon: Icon, label, children }) => (
+  <div className="flex gap-3">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+      <Icon size={17} />
+    </div>
+
+    <div className="min-w-0 flex-1">
+      <p className={labelClass}>{label}</p>
+      <div className="break-words text-sm font-medium text-slate-700">
+        {children || "—"}
+      </div>
+    </div>
+  </div>
+);
 
 /* ---------- component ---------- */
 
@@ -208,9 +309,7 @@ const AdminVisitors = () => {
     } catch (error) {
       console.error("Fetch visitors error:", error);
 
-      toast.error(
-        error.response?.data?.message || "Failed to load visitors"
-      );
+      toast.error(error.response?.data?.message || "Failed to load visitors");
     } finally {
       setLoading(false);
     }
@@ -220,31 +319,28 @@ const AdminVisitors = () => {
     fetchVisitors();
   }, [fetchVisitors]);
 
-  // Attach the display status once so filters, counts and rows agree.
+  // Attach display status once so filters, counts and rows agree.
   const rows = useMemo(
     () =>
       visitors.map((visitor) => ({
         ...visitor,
         displayStatus: getDisplayStatus(visitor),
       })),
-    [visitors]
+    [visitors],
   );
 
   /*
    * Summary numbers.
    */
   const summary = useMemo(() => {
-    const confirmed = rows.filter(
-      (item) => item.displayStatus === "Confirmed"
-    );
+    const confirmed = rows.filter((item) => item.displayStatus === "Confirmed");
 
     return {
       confirmed: confirmed.length,
-      pending: rows.filter((item) => item.displayStatus === "Pending")
-        .length,
+      pending: rows.filter((item) => item.displayStatus === "Pending").length,
       attendees: confirmed.reduce(
         (sum, item) => sum + (Number(item.attendees) || 0),
-        0
+        0,
       ),
       revenue: rows
         .filter((item) => item.paymentStatus === "Paid")
@@ -282,17 +378,18 @@ const AdminVisitors = () => {
         customer.name,
         customer.email,
         customer.phone,
-      ].some((field) => field?.toLowerCase().includes(value));
+      ].some((field) =>
+        String(field || "")
+          .toLowerCase()
+          .includes(value),
+      );
     });
   }, [rows, search, statusFilter, paymentFilter]);
 
   /*
    * Pagination.
    */
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filtered.length / ITEMS_PER_PAGE)
-  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -309,19 +406,18 @@ const AdminVisitors = () => {
   const goToPage = useCallback(
     (page) => {
       if (page < 1 || page > totalPages) return;
-
       setCurrentPage(page);
     },
-    [totalPages]
+    [totalPages],
   );
 
   const pageNumbers = useMemo(
     () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages]
+    [totalPages],
   );
 
   /*
-   * Filter handlers (reset to page 1).
+   * Filter handlers.
    */
   const handleSearch = useCallback((event) => {
     setSearch(event.target.value);
@@ -333,7 +429,7 @@ const AdminVisitors = () => {
       setter(event.target.value);
       setCurrentPage(1);
     },
-    []
+    [],
   );
 
   const hasActiveFilters =
@@ -354,274 +450,437 @@ const AdminVisitors = () => {
   const selectedCustomer = selected ? getCustomer(selected) : null;
 
   return (
-    <div className="p-6">
-      {/* HEADER */}
+    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
+      {/* PAGE HEADER */}
 
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Visitors</h1>
+      <div className="relative mb-7 overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 p-6 text-white shadow-lg shadow-blue-200 sm:p-8">
+        <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-white/10" />
+        <div className="absolute -bottom-24 right-40 h-48 w-48 rounded-full bg-white/10" />
 
-          <p className="text-sm text-gray-500 mt-1">
-            All visitor passes invited by customers
-          </p>
-        </div>
+        <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-medium text-blue-100">
+              <Users size={17} />
+              <span>Oorza Administration</span>
+            </div>
 
-        <div className="text-sm text-gray-600">
-          Total Visitors:{" "}
-          <span className="font-semibold">{visitors.length}</span>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Visitor Management
+            </h1>
+
+            <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
+              Monitor visitor passes, customer invitations, booking information
+              and payments from one central dashboard.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 backdrop-blur-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
+              <Ticket size={25} />
+            </div>
+
+            <div>
+              <p className="text-sm text-blue-100">Total visitor passes</p>
+              <p className="text-2xl font-bold tabular-nums">
+                {loading ? "..." : visitors.length}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* SUMMARY */}
+      {/* SUMMARY CARDS */}
 
       {!loading && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white shadow-sm rounded-lg p-4">
-            <p className="text-sm text-gray-500">Confirmed Passes</p>
-            <p className="mt-1 text-2xl font-semibold text-green-600">
-              {summary.confirmed}
-            </p>
-          </div>
+        <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <SummaryCard
+            title="Confirmed Passes"
+            value={summary.confirmed}
+            description="Successfully confirmed visitor passes"
+            icon={UserCheck}
+            iconClass="bg-emerald-50 text-emerald-600"
+            valueClass="text-emerald-600"
+          />
 
-          <div className="bg-white shadow-sm rounded-lg p-4">
-            <p className="text-sm text-gray-500">Pending Passes</p>
-            <p className="mt-1 text-2xl font-semibold text-yellow-600">
-              {summary.pending}
-            </p>
-          </div>
+          <SummaryCard
+            title="Pending Passes"
+            value={summary.pending}
+            description="Awaiting payment or confirmation"
+            icon={Clock3}
+            iconClass="bg-amber-50 text-amber-600"
+            valueClass="text-amber-600"
+          />
 
-          <div className="bg-white shadow-sm rounded-lg p-4">
-            <p className="text-sm text-gray-500">Confirmed Attendees</p>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">
-              {summary.attendees}
-            </p>
-          </div>
+          <SummaryCard
+            title="Confirmed Attendees"
+            value={summary.attendees}
+            description="Total attendees across confirmed passes"
+            icon={Users}
+            iconClass="bg-blue-50 text-blue-600"
+          />
 
-          <div className="bg-white shadow-sm rounded-lg p-4">
-            <p className="text-sm text-gray-500">Revenue (Paid)</p>
-            <p className="mt-1 text-2xl font-semibold text-orange-600">
-              {formatCurrency(summary.revenue)}
-            </p>
-          </div>
+          <SummaryCard
+            title="Paid Revenue"
+            value={formatCurrency(summary.revenue)}
+            description="Total amount received from paid passes"
+            icon={Wallet}
+            iconClass="bg-indigo-50 text-indigo-600"
+            valueClass="text-indigo-600"
+          />
         </div>
       )}
 
-      {/* SEARCH + FILTERS */}
+      {/* FILTERS */}
 
-      <div className="bg-white shadow-sm rounded-lg p-4 mb-6">
-        <div className="flex flex-col lg:flex-row gap-3">
-          <input
-            type="text"
-            value={search}
-            onChange={handleSearch}
-            placeholder="Search by visitor, contact, company, customer, visit ID or booking ID..."
-            className="flex-1 border border-orange-400 rounded px-3 py-2 outline-none focus:ring-2 focus:ring-orange-200"
-          />
+      <div className="mb-6 overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Search size={19} />
+            </div>
 
-          <select
-            value={statusFilter}
-            onChange={handleFilter(setStatusFilter)}
-            className={selectClass}
-            aria-label="Filter by status"
-          >
-            {STATUS_FILTERS.map((option) => (
-              <option key={option} value={option}>
-                {option === "All" ? "All statuses" : option}
-              </option>
-            ))}
-          </select>
+            <div>
+              <h2 className="text-base font-bold text-slate-800">
+                Search & Filters
+              </h2>
+              <p className="text-xs text-slate-400">
+                Find visitors using their details or booking status
+              </p>
+            </div>
+          </div>
+        </div>
 
-          <select
-            value={paymentFilter}
-            onChange={handleFilter(setPaymentFilter)}
-            className={selectClass}
-            aria-label="Filter by payment"
-          >
-            {PAYMENT_FILTERS.map((option) => (
-              <option key={option} value={option}>
-                {option === "All" ? "All payments" : `Payment: ${option}`}
-              </option>
-            ))}
-          </select>
+        <div className="p-5 sm:p-6">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
+            <div className="relative lg:col-span-6">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                type="text"
+                value={search}
+                onChange={handleSearch}
+                placeholder="Search visitor, contact, company, customer, visit ID..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+              />
+            </div>
+
+            <div className="lg:col-span-2">
+              <select
+                value={statusFilter}
+                onChange={handleFilter(setStatusFilter)}
+                className={selectClass}
+                aria-label="Filter by status"
+              >
+                {STATUS_FILTERS.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "All" ? "All statuses" : option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="lg:col-span-2">
+              <select
+                value={paymentFilter}
+                onChange={handleFilter(setPaymentFilter)}
+                className={selectClass}
+                aria-label="Filter by payment"
+              >
+                {PAYMENT_FILTERS.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "All" ? "All payments" : option}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-2 lg:col-span-2">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                >
+                  <X size={15} />
+                  Clear
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={fetchVisitors}
+                disabled={loading}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RefreshCw
+                  size={16}
+                  className={loading ? "animate-spin" : ""}
+                />
+                Refresh
+              </button>
+            </div>
+          </div>
 
           {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
-            >
-              Clear
-            </button>
-          )}
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-slate-400">
+                Active filters:
+              </span>
 
-          <button
-            type="button"
-            onClick={fetchVisitors}
-            disabled={loading}
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-60"
-          >
-            {loading ? "Loading..." : "Refresh"}
-          </button>
+              {search && (
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                  Search: {search}
+                </span>
+              )}
+
+              {statusFilter !== "All" && (
+                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                  Status: {statusFilter}
+                </span>
+              )}
+
+              {paymentFilter !== "All" && (
+                <span className="rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+                  Payment: {paymentFilter}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* TABLE */}
+      {/* VISITOR TABLE */}
 
-      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+        {/* TABLE HEADER */}
+
+        <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-800">
+              Visitor Records
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Review visitor passes and invitation details.
+            </p>
+          </div>
+
+          {!loading && (
+            <span className="w-fit rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
+              {filtered.length} Records Found
+            </span>
+          )}
+        </div>
+
+        {/* LOADING */}
+
         {loading ? (
-          <div className="p-10 text-center text-gray-500">
-            Loading visitors...
+          <div className="flex flex-col items-center justify-center py-20">
+            <LoaderCircle size={35} className="animate-spin text-blue-600" />
+            <p className="mt-4 text-sm font-medium text-slate-500">
+              Loading visitor records...
+            </p>
           </div>
         ) : paginated.length === 0 ? (
-          <div className="p-10 text-center text-gray-500">
-            {hasActiveFilters
-              ? "No visitors match your search or filters."
-              : "No visitors yet. Passes will appear here once customers invite visitors."}
+          <div className="flex flex-col items-center justify-center px-5 py-20 text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500">
+              <Users size={30} />
+            </div>
+
+            <h3 className="mt-4 text-lg font-semibold text-slate-800">
+              {hasActiveFilters ? "No matching visitors" : "No visitors yet"}
+            </h3>
+
+            <p className="mt-1 max-w-sm text-sm text-slate-500">
+              {hasActiveFilters
+                ? "Try changing your search or filters to find visitor records."
+                : "Visitor passes will appear here when customers invite visitors."}
+            </p>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-4 rounded-xl bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full min-w-[1200px] border-collapse">
               <thead>
-                <tr className="bg-orange-50 border-b">
-                  <th className="text-left p-3 text-sm font-semibold">#</th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Visit ID
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Visitor
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Invited By
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Booking
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Attendees
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Amount
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Status
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Payment
-                  </th>
-                  <th className="text-left p-3 text-sm font-semibold">
-                    Action
-                  </th>
+                <tr className="bg-[#F4F8FF] text-left">
+                  {[
+                    "#",
+                    "Visitor Details",
+                    "Invited By",
+                    "Booking Details",
+                    "Attendees",
+                    "Amount",
+                    "Visit Status",
+                    "Payment",
+                    "Action",
+                  ].map((heading) => (
+                    <th
+                      key={heading}
+                      className="whitespace-nowrap px-4 py-4 text-xs font-bold uppercase tracking-wider text-slate-500"
+                    >
+                      {heading}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 {paginated.map((item, index) => {
                   const customer = getCustomer(item);
 
                   return (
                     <tr
                       key={item._id || item.visitId}
-                      className="border-b hover:bg-gray-50 align-top"
+                      className="align-top transition hover:bg-blue-50/40"
                     >
-                      <td className="p-3 text-sm text-gray-600">
+                      {/* NUMBER */}
+
+                      <td className="px-4 py-4 text-sm text-slate-400">
                         {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                       </td>
 
-                      <td className="p-3">
-                        <span className="font-semibold text-orange-600 text-sm break-all">
-                          {item.visitId || "—"}
-                        </span>
+                      {/* VISITOR */}
 
-                        <div className="text-xs text-gray-400 mt-1">
-                          {formatDateTime(item.createdAt)}
-                        </div>
-                      </td>
-
-                      <td className="p-3">
-                        <div className="font-medium text-sm">
-                          {item.name || "—"}
-                        </div>
-
-                        <div className="text-xs text-gray-400 mt-1">
-                          {item.contact || "—"}
-                        </div>
-
-                        {item.companyName && (
-                          <div className="text-xs text-gray-400">
-                            {item.companyName}
+                      <td className="px-4 py-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                            <UserRound size={19} />
                           </div>
-                        )}
-                      </td>
 
-                      <td className="p-3">
-                        <div className="font-medium text-sm">
-                          {customer.name}
-                        </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-800">
+                              {item.name || "—"}
+                            </p>
 
-                        {customer.email && (
-                          <div className="text-xs text-gray-400 mt-1">
-                            {customer.email}
+                            <p className="mt-1 text-xs text-slate-500">
+                              {item.contact || "—"}
+                            </p>
+
+                            {item.companyName && (
+                              <p className="mt-1 text-xs text-slate-400">
+                                {item.companyName}
+                              </p>
+                            )}
+
+                            <p className="mt-2 break-all text-xs font-semibold text-blue-600">
+                              {item.visitId || "—"}
+                            </p>
+
+                            <p className="mt-1 text-[11px] text-slate-400">
+                              {formatDateTime(item.createdAt)}
+                            </p>
                           </div>
-                        )}
+                        </div>
                       </td>
 
-                      <td className="p-3 text-sm min-w-48">
-                        <div className="font-medium">
+                      {/* CUSTOMER */}
+
+                      <td className="px-4 py-4">
+                        <div className="flex items-start gap-2">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                            <Users size={15} />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-700">
+                              {customer.name}
+                            </p>
+
+                            {customer.email && (
+                              <p className="mt-1 max-w-[180px] break-all text-xs text-slate-400">
+                                {customer.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* BOOKING */}
+
+                      <td className="min-w-[200px] px-4 py-4">
+                        <p className="text-sm font-semibold text-slate-700">
                           {item.spaceName || "—"}
-                        </div>
+                        </p>
 
-                        <div className="text-xs text-gray-400 mt-1">
+                        <p className="mt-1 text-xs text-slate-500">
                           {Array.isArray(item.selectedSpaces) &&
                           item.selectedSpaces.length > 0
                             ? item.selectedSpaces.join(", ")
-                            : "—"}
+                            : "No seats listed"}
+                        </p>
+
+                        <div className="mt-2 flex items-start gap-1.5 text-xs text-slate-400">
+                          <CalendarDays size={13} className="mt-0.5 shrink-0" />
+                          <span>
+                            {formatBookingWindow(
+                              item.bookingStartAt,
+                              item.bookingEndAt,
+                            )}
+                          </span>
                         </div>
 
-                        <div className="text-xs text-gray-400">
-                          {formatBookingWindow(
-                            item.bookingStartAt,
-                            item.bookingEndAt
-                          )}
-                        </div>
+                        {item.bookingId && (
+                          <p className="mt-2 break-all text-[11px] text-slate-400">
+                            Booking: {item.bookingId}
+                          </p>
+                        )}
                       </td>
 
-                      <td className="p-3 text-sm">{item.attendees ?? "—"}</td>
+                      {/* ATTENDEES */}
 
-                      <td className="p-3 text-sm font-semibold whitespace-nowrap">
-                        {formatCurrency(item.totalAmount)}
-
-                        <div className="text-xs font-normal text-gray-400">
-                          incl. GST
-                        </div>
-                      </td>
-
-                      <td className="p-3">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                            item.displayStatus
-                          )}`}
-                        >
-                          {item.displayStatus}
+                      <td className="px-4 py-4">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2.5 py-1.5 text-sm font-semibold text-blue-700">
+                          <Users size={14} />
+                          {item.attendees ?? "—"}
                         </span>
                       </td>
 
-                      <td className="p-3">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getPaymentStyle(
-                            item.paymentStatus
-                          )}`}
-                        >
-                          {item.paymentStatus || "Unknown"}
-                        </span>
+                      {/* AMOUNT */}
+
+                      <td className="px-4 py-4">
+                        <p className="whitespace-nowrap text-sm font-bold text-slate-800">
+                          {formatCurrency(item.totalAmount)}
+                        </p>
+
+                        <p className="mt-1 text-xs text-slate-400">Incl. GST</p>
                       </td>
 
-                      <td className="p-3">
+                      {/* VISIT STATUS */}
+
+                      <td className="px-4 py-4">
+                        <StatusBadge status={item.displayStatus} />
+                      </td>
+
+                      {/* PAYMENT */}
+
+                      <td className="px-4 py-4">
+                        <StatusBadge
+                          status={item.paymentStatus || "Unknown"}
+                          payment
+                        />
+                      </td>
+
+                      {/* ACTION */}
+
+                      <td className="px-4 py-4">
                         <button
                           type="button"
                           onClick={() => setSelected(item)}
-                          className="px-3 py-1.5 border border-orange-400 text-orange-500 rounded hover:bg-orange-50"
+                          className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-blue-700 transition hover:border-blue-600 hover:bg-blue-600 hover:text-white"
                         >
-                          View
+                          <Eye size={15} />
+                          View Details
                         </button>
                       </td>
                     </tr>
@@ -635,27 +894,31 @@ const AdminVisitors = () => {
         {/* PAGINATION */}
 
         {!loading && filtered.length > 0 && (
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 border-t">
-            <div className="text-sm text-gray-500">
+          <div className="flex flex-col gap-4 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-slate-500">
               Showing{" "}
-              <span className="font-medium">
+              <span className="font-semibold text-slate-700">
                 {(currentPage - 1) * ITEMS_PER_PAGE + 1}
               </span>{" "}
               to{" "}
-              <span className="font-medium">
+              <span className="font-semibold text-slate-700">
                 {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
               </span>{" "}
-              of <span className="font-medium">{filtered.length}</span>{" "}
+              of{" "}
+              <span className="font-semibold text-slate-700">
+                {filtered.length}
+              </span>{" "}
               visitors
-            </div>
+            </p>
 
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => goToPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-1.5 border rounded hover:bg-gray-50 disabled:opacity-40"
+                className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
+                <ChevronLeft size={15} />
                 Previous
               </button>
 
@@ -664,10 +927,10 @@ const AdminVisitors = () => {
                   key={page}
                   type="button"
                   onClick={() => goToPage(page)}
-                  className={`min-w-9 px-3 py-1.5 border rounded ${
+                  className={`h-9 min-w-9 rounded-lg px-3 text-xs font-semibold transition ${
                     currentPage === page
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : "hover:bg-orange-50"
+                      ? "bg-blue-600 text-white shadow-sm shadow-blue-200"
+                      : "border border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50"
                   }`}
                 >
                   {page}
@@ -678,225 +941,357 @@ const AdminVisitors = () => {
                 type="button"
                 onClick={() => goToPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-1.5 border rounded hover:bg-gray-50 disabled:opacity-40"
+                className="flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
+                <ChevronRight size={15} />
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* DETAILS MODAL */}
+      {/* VISITOR DETAILS MODAL */}
 
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
           onClick={closeDetails}
         >
           <div
-            className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+            className="flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="flex justify-between items-start p-5 border-b">
-              <div>
-                <h2 className="text-xl font-semibold">Visitor Details</h2>
+            {/* MODAL HEADER */}
 
-                <p className="text-sm text-gray-500 mt-1 break-all">
-                  <span className="font-medium text-orange-500">
-                    {selected.visitId}
-                  </span>
-                </p>
+            <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 to-indigo-600 px-5 py-5 text-white sm:px-7">
+              <div className="absolute -right-8 -top-20 h-52 w-52 rounded-full bg-white/10" />
+
+              <div className="relative z-10 flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/15">
+                    <Users size={23} />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-bold sm:text-xl">
+                      Visitor Details
+                    </h2>
+
+                    <p className="mt-1 break-all text-xs text-blue-100">
+                      Visit ID: {selected.visitId || "—"}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closeDetails}
+                  aria-label="Close"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10 transition hover:bg-white/20"
+                >
+                  <X size={19} />
+                </button>
               </div>
+            </div>
+
+            {/* MODAL CONTENT */}
+
+            <div className="flex-1 space-y-5 overflow-y-auto bg-[#F7FAFF] p-4 sm:p-6">
+              {/* STATUS OVERVIEW */}
+
+              <div className="flex flex-col gap-3 rounded-2xl border border-blue-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Visitor Pass Status
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <StatusBadge status={selected.displayStatus} />
+                    <StatusBadge
+                      status={selected.paymentStatus || "Unknown"}
+                      payment
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:text-right">
+                  <p className="text-xs font-medium text-slate-400">
+                    Total Amount
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-blue-700">
+                    {formatCurrency(selected.totalAmount)}
+                  </p>
+                </div>
+              </div>
+
+              {/* DETAILS GRID */}
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* VISITOR INFORMATION */}
+
+                <section className="rounded-2xl border border-blue-100 bg-white p-5">
+                  <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                      <UserRound size={19} />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        Visitor Information
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Personal and contact details
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5">
+                    <DetailItem icon={UserRound} label="Visitor Name">
+                      {selected.name || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={Phone} label="Contact Number">
+                      {selected.contact || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={Mail} label="Email Address">
+                      {selected.email || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={Building2} label="Company">
+                      {selected.companyName || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={Users} label="Attendees">
+                      {selected.attendees ?? "—"}
+                    </DetailItem>
+                  </div>
+                </section>
+
+                {/* INVITATION INFORMATION */}
+
+                <section className="rounded-2xl border border-blue-100 bg-white p-5">
+                  <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                      <UserCheck size={19} />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        Invitation Details
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Customer who invited this visitor
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5">
+                    <DetailItem icon={UserRound} label="Invited By">
+                      {selectedCustomer.name}
+                    </DetailItem>
+
+                    <DetailItem icon={Mail} label="Customer Email">
+                      {selectedCustomer.email || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={Phone} label="Customer Phone">
+                      {selectedCustomer.phone || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={CalendarClock} label="Invitation Date">
+                      {formatDateTime(selected.createdAt)}
+                    </DetailItem>
+                  </div>
+                </section>
+
+                {/* BOOKING INFORMATION */}
+
+                <section className="rounded-2xl border border-blue-100 bg-white p-5">
+                  <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
+                      <CalendarDays size={19} />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        Workspace Booking
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Space and booking information
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5">
+                    <DetailItem icon={Building2} label="Workspace">
+                      {selected.spaceName || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={MapPin} label="Selected Seats">
+                      {Array.isArray(selected.selectedSpaces) &&
+                      selected.selectedSpaces.length > 0
+                        ? selected.selectedSpaces.join(", ")
+                        : "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={CalendarClock} label="Booking Period">
+                      {formatBookingWindow(
+                        selected.bookingStartAt,
+                        selected.bookingEndAt,
+                      )}
+                    </DetailItem>
+
+                    <DetailItem icon={Hash} label="Booking ID">
+                      {selected.bookingId || "—"}
+                    </DetailItem>
+                  </div>
+                </section>
+
+                {/* VISITOR FEE */}
+
+                <section className="rounded-2xl border border-blue-100 bg-white p-5">
+                  <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                      <Receipt size={19} />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        Visitor Fee Breakdown
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Payment and tax details
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-slate-500">Hourly Rate</span>
+                      <span className="font-semibold text-slate-700">
+                        {formatCurrency(selected.hourlyRate)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-slate-500">Visit Hours</span>
+                      <span className="font-semibold text-slate-700">
+                        {selected.visitHours ?? "—"}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-slate-500">Attendees</span>
+                      <span className="font-semibold text-slate-700">
+                        {selected.attendees ?? "—"}
+                      </span>
+                    </div>
+
+                    <div className="my-3 border-t border-dashed border-slate-200" />
+
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-slate-500">Subtotal</span>
+                      <span className="font-semibold text-slate-700">
+                        {formatCurrency(selected.subtotal)}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between gap-3 text-sm">
+                      <span className="text-slate-500">GST (18%)</span>
+                      <span className="font-semibold text-slate-700">
+                        {formatCurrency(selected.gstAmount)}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between rounded-xl bg-blue-50 p-3">
+                      <span className="text-sm font-bold text-blue-800">
+                        Total Amount
+                      </span>
+                      <span className="text-lg font-bold text-blue-700">
+                        {formatCurrency(selected.totalAmount)}
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                {/* RAZORPAY */}
+
+                <section className="rounded-2xl border border-blue-100 bg-white p-5">
+                  <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                      <CreditCard size={19} />
+                    </div>
+
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        Payment Gateway
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        Razorpay transaction references
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-5">
+                    <DetailItem icon={Hash} label="Razorpay Order ID">
+                      {selected.razorpayOrderId || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={CreditCard} label="Razorpay Payment ID">
+                      {selected.razorpayPaymentId || "—"}
+                    </DetailItem>
+
+                    <DetailItem icon={ShieldCheck} label="Payment Status">
+                      <StatusBadge
+                        status={selected.paymentStatus || "Unknown"}
+                        payment
+                      />
+                    </DetailItem>
+                  </div>
+                </section>
+
+                {/* REASON */}
+
+                {selected.reason && (
+                  <section className="rounded-2xl border border-blue-100 bg-white p-5">
+                    <div className="mb-4 flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                        <AlertCircle size={19} />
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-slate-800">
+                          Reason for Visit
+                        </h3>
+                        <p className="text-xs text-slate-400">
+                          Visitor's stated purpose
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="whitespace-pre-line rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                      {selected.reason}
+                    </p>
+                  </section>
+                )}
+              </div>
+            </div>
+
+            {/* MODAL FOOTER */}
+
+            <div className="flex items-center justify-between gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:px-7">
+              <p className="hidden text-xs text-slate-400 sm:block">
+                Visitor information · Displayed in IST
+              </p>
 
               <button
                 type="button"
                 onClick={closeDetails}
-                aria-label="Close"
-                className="text-gray-500 hover:text-gray-800 text-2xl leading-none"
+                className="ml-auto rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700"
               >
-                ×
-              </button>
-            </div>
-
-            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* VISITOR */}
-
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Visitor
-                </h3>
-
-                <p className="font-medium">{selected.name || "—"}</p>
-
-                <p className="text-sm text-gray-500 mt-1">
-                  {selected.attendees}{" "}
-                  {selected.attendees === 1 ? "attendee" : "attendees"}
-                </p>
-
-                <p className="text-sm text-gray-700 mt-2">
-                  {selected.contact || "—"}
-                </p>
-
-                {selected.email && (
-                  <p className="text-sm text-gray-700 mt-1 break-all">
-                    {selected.email}
-                  </p>
-                )}
-
-                {selected.companyName && (
-                  <p className="text-sm text-gray-700 mt-1">
-                    {selected.companyName}
-                  </p>
-                )}
-              </div>
-
-              {/* INVITED BY */}
-
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Invited By
-                </h3>
-
-                <p className="font-medium">{selectedCustomer.name}</p>
-
-                {selectedCustomer.email && (
-                  <p className="text-sm text-gray-500 mt-1 break-all">
-                    {selectedCustomer.email}
-                  </p>
-                )}
-
-                {selectedCustomer.phone && (
-                  <p className="text-sm text-gray-500 mt-1">
-                    {selectedCustomer.phone}
-                  </p>
-                )}
-
-                <p className="text-sm text-gray-500 mt-3">
-                  Invited: {formatDateTime(selected.createdAt)}
-                </p>
-              </div>
-
-              {/* BOOKING */}
-
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Workspace Booking
-                </h3>
-
-                <p className="font-medium">{selected.spaceName || "—"}</p>
-
-                <p className="text-sm text-gray-500 mt-1">
-                  Seats:{" "}
-                  {Array.isArray(selected.selectedSpaces) &&
-                  selected.selectedSpaces.length > 0
-                    ? selected.selectedSpaces.join(", ")
-                    : "—"}
-                </p>
-
-                <p className="text-sm text-gray-700 mt-2">
-                  {formatBookingWindow(
-                    selected.bookingStartAt,
-                    selected.bookingEndAt
-                  )}
-                </p>
-
-                <p className="text-xs text-gray-400 mt-1 break-all">
-                  {selected.bookingId}
-                </p>
-              </div>
-
-              {/* STATUS */}
-
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Status
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(
-                      selected.displayStatus
-                    )}`}
-                  >
-                    {selected.displayStatus}
-                  </span>
-
-                  <span
-                    className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getPaymentStyle(
-                      selected.paymentStatus
-                    )}`}
-                  >
-                    Payment: {selected.paymentStatus || "Unknown"}
-                  </span>
-                </div>
-              </div>
-
-              {/* FEE */}
-
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Visitor Fee
-                </h3>
-
-                <p className="text-sm text-gray-600">
-                  {formatCurrency(selected.hourlyRate)} / hr ×{" "}
-                  {selected.visitHours} hr × {selected.attendees}
-                </p>
-
-                <p className="text-sm text-gray-600 mt-1">
-                  Subtotal: {formatCurrency(selected.subtotal)}
-                </p>
-
-                <p className="text-sm text-gray-600 mt-1">
-                  GST (18%): {formatCurrency(selected.gstAmount)}
-                </p>
-
-                <p className="text-lg font-semibold text-orange-600 mt-2">
-                  {formatCurrency(selected.totalAmount)}
-                </p>
-              </div>
-
-              {/* RAZORPAY */}
-
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                  Razorpay
-                </h3>
-
-                <p className="text-sm break-all">
-                  <span className="font-medium">Order:</span>{" "}
-                  {selected.razorpayOrderId || "—"}
-                </p>
-
-                <p className="text-sm mt-1 break-all">
-                  <span className="font-medium">Payment:</span>{" "}
-                  {selected.razorpayPaymentId || "—"}
-                </p>
-              </div>
-
-              {/* REASON */}
-
-              {selected.reason && (
-                <div className="md:col-span-2">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">
-                    Reason for Visit
-                  </h3>
-
-                  <p className="text-sm text-gray-700 whitespace-pre-line">
-                    {selected.reason}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex justify-end p-5 border-t bg-gray-50">
-              <button
-                type="button"
-                onClick={closeDetails}
-                className="px-4 py-2 border border-gray-300 rounded hover:bg-white"
-              >
-                Close
+                Close Details
               </button>
             </div>
           </div>

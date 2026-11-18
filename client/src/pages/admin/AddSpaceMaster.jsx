@@ -1,4 +1,28 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Building2,
+  BriefcaseBusiness,
+  Video,
+  Crown,
+  Users,
+  UserRound,
+  Camera,
+  ImagePlus,
+  Upload,
+  IndianRupee,
+  Clock,
+  CalendarDays,
+  CalendarRange,
+  CheckCircle2,
+  Sparkles,
+  X,
+  Loader2,
+  Info,
+  Armchair,
+  Layers3,
+  ShieldCheck,
+} from "lucide-react";
+
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -135,63 +159,37 @@ const DEFAULT_PRICES = {
   },
 };
 
+const SPACE_ICONS = {
+  Workspace: Users,
+  "Team Leads Cubicle": UserRound,
+  "Senior Leads Cubicle": BriefcaseBusiness,
+  "Manager Cubicle": Building2,
+  "Video Conferencing": Video,
+  "Executive Cabin": Crown,
+  "CEO Cabin": Sparkles,
+};
+
 const AddSpaceMaster = () => {
   const [form, setForm] = useState(DEFAULT_FORM);
 
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  const [spaces, setSpaces] = useState([]);
-
   const [loading, setLoading] = useState(false);
-  const [fetchingSpaces, setFetchingSpaces] = useState(false);
 
-  /*
-   * Fetch spaces from backend.
-   */
-  const fetchSpaces = useCallback(async () => {
-    try {
-      setFetchingSpaces(true);
+  const inputClass =
+    "w-full rounded-xl border border-blue-100 bg-[#F8FBFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60";
 
-      const response = await api.get("/space");
-
-      if (response.data?.success) {
-        setSpaces(response.data.spaces || []);
-      } else {
-        toast.error(
-          response.data?.message || "Failed to fetch spaces"
-        );
-      }
-    } catch (error) {
-      console.error("Fetch spaces error:", error);
-
-      toast.error(
-        error.response?.data?.message ||
-          "Failed to load spaces"
-      );
-    } finally {
-      setFetchingSpaces(false);
-    }
-  }, []);
-
-  /*
-   * Load spaces when component mounts.
-   */
-  useEffect(() => {
-    fetchSpaces();
-  }, [fetchSpaces]);
+  const selectedSpaceInfo = form.space ? SPACE_GROUPS[form.space] : null;
 
   /*
    * Handle form inputs.
+   * Existing manually entered values are preserved
+   * when switching space types.
    */
   const handleInput = useCallback((event) => {
     const { name, value } = event.target;
 
-    /*
-     * When space type changes, load default prices.
-     *
-     * Existing manually entered values are preserved.
-     */
     if (name === "space") {
       const defaults = DEFAULT_PRICES[value] || {};
 
@@ -202,10 +200,7 @@ const AddSpaceMaster = () => {
         };
 
         Object.keys(defaults).forEach((key) => {
-          if (
-            !updated[key] &&
-            defaults[key] !== ""
-          ) {
+          if (!updated[key] && defaults[key] !== "") {
             updated[key] = defaults[key];
           }
         });
@@ -224,50 +219,47 @@ const AddSpaceMaster = () => {
 
   /*
    * Handle image selection.
-   *
-   * The selected file is stored in state and
-   * displayed immediately using a local preview.
-   *
-   * The actual upload happens when the form is submitted.
    */
-  const handleImageChange = useCallback(
-    (event) => {
-      const file = event.target.files?.[0];
+  const handleImageChange = useCallback((event) => {
+    const file = event.target.files?.[0];
 
-      if (!file) {
-        return;
-      }
+    if (!file) return;
 
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload a valid image");
-        event.target.value = "";
-        return;
-      }
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image");
+      event.target.value = "";
+      return;
+    }
 
-      /*
-       * Optional 5 MB frontend validation.
-       *
-       * Backend should still validate upload size.
-       */
-      const maxSize = 5 * 1024 * 1024;
+    const maxSize = 5 * 1024 * 1024;
 
-      if (file.size > maxSize) {
-        toast.error("Image size must be less than 5 MB");
-        event.target.value = "";
-        return;
-      }
+    if (file.size > maxSize) {
+      toast.error("Image size must be less than 5 MB");
+      event.target.value = "";
+      return;
+    }
 
-      if (preview) {
-        URL.revokeObjectURL(preview);
-      }
+    setImage(file);
+    setPreview(URL.createObjectURL(file));
+  }, []);
 
-      const objectUrl = URL.createObjectURL(file);
+  /*
+   * Remove selected image.
+   */
+  const removeImage = () => {
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
 
-      setImage(file);
-      setPreview(objectUrl);
-    },
-    [preview]
-  );
+    setImage(null);
+    setPreview(null);
+
+    const fileInput = document.getElementById("space-image");
+
+    if (fileInput) {
+      fileInput.value = "";
+    }
+  };
 
   /*
    * Cleanup preview URL.
@@ -284,11 +276,7 @@ const AddSpaceMaster = () => {
    * Validate numeric values.
    */
   const isPositiveNumber = (value) => {
-    return (
-      value !== "" &&
-      !Number.isNaN(Number(value)) &&
-      Number(value) >= 0
-    );
+    return value !== "" && !Number.isNaN(Number(value)) && Number(value) >= 0;
   };
 
   /*
@@ -300,21 +288,11 @@ const AddSpaceMaster = () => {
       return false;
     }
 
-    /*
-     * At least one primary rate is required.
-     */
-    if (
-      !form.per_hour &&
-      !form.per_day &&
-      !form.per_month
-    ) {
+    if (!form.per_hour && !form.per_day && !form.per_month) {
       toast.error("Provide at least one rate");
       return false;
     }
 
-    /*
-     * Validate numeric fields.
-     */
     const numericFields = [
       "per_hour",
       "per_day",
@@ -327,22 +305,17 @@ const AddSpaceMaster = () => {
     ];
 
     const invalidField = numericFields.find(
-      (field) =>
-        form[field] !== "" &&
-        !isPositiveNumber(form[field])
+      (field) => form[field] !== "" && !isPositiveNumber(form[field]),
     );
 
     if (invalidField) {
       toast.error(
-        `${FIELD_LABELS[invalidField]} must be a valid non-negative number`
+        `${FIELD_LABELS[invalidField]} must be a valid non-negative number`,
       );
 
       return false;
     }
 
-    /*
-     * Image is required for a new space.
-     */
     if (!image) {
       toast.error("Please upload a space image");
       return false;
@@ -353,45 +326,20 @@ const AddSpaceMaster = () => {
 
   /*
    * Add space to backend.
-   *
-   * IMPORTANT:
-   *
-   * Because an image is being uploaded, we use FormData.
-   *
-   * The backend route should be:
-   *
-   * router.post("/", upload.single("image"), createSpace);
-   *
-   * The field name MUST be "image".
    */
   const handleSubmit = useCallback(
     async (event) => {
       event.preventDefault();
 
-      if (!validate()) {
-        return;
-      }
+      if (!validate()) return;
 
       setLoading(true);
 
       try {
         const formData = new FormData();
 
-        /*
-         * Space information.
-         */
-        formData.append(
-          "space",
-          form.space
-        );
+        formData.append("space", form.space);
 
-        /*
-         * Numeric values.
-         *
-         * Only append fields that contain values.
-         * This allows the backend/model to use null/default
-         * values for fields that were left empty.
-         */
         const numericFields = {
           perHour: form.per_hour,
           perDay: form.per_day,
@@ -403,88 +351,32 @@ const AddSpaceMaster = () => {
           maxDuration: form.max_duration,
         };
 
-        Object.entries(numericFields).forEach(
-          ([key, value]) => {
-            if (value !== "") {
-              formData.append(
-                key,
-                Number(value)
-              );
-            }
+        Object.entries(numericFields).forEach(([key, value]) => {
+          if (value !== "") {
+            formData.append(key, Number(value));
           }
-        );
+        });
 
-        /*
-         * Text fields.
-         */
-        formData.append(
-          "minDurationDesc",
-          form.min_duration_desc
-        );
-
-        formData.append(
-          "maxDurationDesc",
-          form.max_duration_desc
-        );
-
-        formData.append(
-          "status",
-          form.status
-        );
-
-        /*
-         * Actual image file.
-         *
-         * This is what multer receives as req.file.
-         */
+        formData.append("minDurationDesc", form.min_duration_desc);
+        formData.append("maxDurationDesc", form.max_duration_desc);
+        formData.append("status", form.status);
         formData.append("image", image);
 
-        /*
-         * DO NOT manually set Content-Type.
-         *
-         * Axios/browser will automatically set:
-         *
-         * multipart/form-data;
-         * boundary=...
-         */
-        const response = await api.post(
-          "/space",
-          formData
-        );
+        const response = await api.post("/space", formData);
 
         if (!response.data?.success) {
-          toast.error(
-            response.data?.message ||
-              "Failed to add space"
-          );
-
+          toast.error(response.data?.message || "Failed to add space");
           return;
         }
 
-        const createdSpace =
-          response.data.space;
+        const createdSpace = response.data.space;
 
         toast.success(
-          `Space ${
-            createdSpace?.spaceCode || ""
-          } added successfully!`
+          `Space ${createdSpace?.spaceCode || ""} added successfully!`,
         );
 
-        /*
-         * Refresh list.
-         */
-        await fetchSpaces();
+        setForm({ ...DEFAULT_FORM });
 
-        /*
-         * Reset form.
-         */
-        setForm({
-          ...DEFAULT_FORM,
-        });
-
-        /*
-         * Remove selected image.
-         */
         if (preview) {
           URL.revokeObjectURL(preview);
         }
@@ -492,531 +384,722 @@ const AddSpaceMaster = () => {
         setImage(null);
         setPreview(null);
 
-        /*
-         * Reset file input.
-         *
-         * React does not directly control the file input,
-         * so resetting the form through state is not enough.
-         */
         event.target.reset();
       } catch (error) {
-        console.error(
-          "Add space error:",
-          error
-        );
+        console.error("Add space error:", error);
 
-        toast.error(
-          error.response?.data?.message ||
-            "Failed to add space"
-        );
+        toast.error(error.response?.data?.message || "Failed to add space");
       } finally {
         setLoading(false);
       }
     },
-    [
-      form,
-      image,
-      preview,
-      validate,
-      fetchSpaces,
-    ]
+    [form, image, preview, validate],
   );
 
-  /*
-   * Calculate group status using backend data.
-   */
-  const groupStatus = useMemo(() => {
-    const status = {};
+  const selectedIcon = form.space ? SPACE_ICONS[form.space] : Building2;
 
-    Object.entries(SPACE_GROUPS).forEach(
-      ([name, { prefix, max }]) => {
-        const existing = spaces.filter(
-          (space) =>
-            space.spaceCode?.startsWith(prefix)
-        ).length;
-
-        status[name] = {
-          existing,
-          max,
-        };
-      }
-    );
-
-    return status;
-  }, [spaces]);
-
-  /*
-   * Generate buttons.
-   *
-   * Bulk generation remains disabled because
-   * there is no bulk endpoint.
-   */
-  const GenerateButtons = useMemo(() => {
-    return (
-      <div className="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {Object.keys(SPACE_GROUPS).map(
-          (name) => {
-            const {
-              existing,
-              max,
-            } = groupStatus[name] || {
-              existing: 0,
-              max: SPACE_GROUPS[name].max,
-            };
-
-            const fullyCreated =
-              existing >= max;
-
-            return (
-              <div key={name}>
-                <button
-                  type="button"
-                  disabled
-                  className={`w-full px-3 py-2 border rounded
-                    bg-orange-50 text-orange-600
-                    disabled:opacity-60
-                    ${
-                      fullyCreated
-                        ? "line-through text-gray-400"
-                        : ""
-                    }`}
-                >
-                  {fullyCreated
-                    ? `All ${name} created`
-                    : `Generate ${name} (${existing}/${max})`}
-                </button>
-              </div>
-            );
-          }
-        )}
-      </div>
-    );
-  }, [groupStatus]);
-
-  /*
-   * Loading overlay.
-   */
-  const LoadingOverlay = () => {
-    if (!loading) {
-      return null;
-    }
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-        <div className="bg-white p-4 rounded shadow">
-          <div className="font-medium">
-            Saving space...
-          </div>
-
-          <div className="text-sm text-gray-500 mt-1">
-            Uploading image to Cloudinary
-          </div>
-        </div>
-      </div>
-    );
-  };
+  const SelectedIcon = selectedIcon;
 
   return (
-    <div className="p-6 relative">
-      <LoadingOverlay />
+    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {/* HEADER */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 p-6 text-white shadow-xl shadow-blue-200/60 sm:p-8">
+          <div className="absolute -right-16 -top-28 h-80 w-80 rounded-full border-[40px] border-white/10" />
+          <div className="absolute -bottom-28 right-1/3 h-64 w-64 rounded-full bg-white/5" />
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-semibold">
-            Add New Space
-          </h1>
-
-          <p className="text-sm text-gray-500 mt-1">
-            Create a new space and upload its image
-          </p>
-        </div>
-      </div>
-
-      {/* GROUP STATUS */}
-      {GenerateButtons}
-
-      {/* ADD SPACE FORM */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white shadow-sm rounded-lg p-6"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* LEFT SIDE */}
-          <div className="lg:col-span-2 space-y-4">
-
-            {/* SPACE TYPE */}
+          <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Space Name{" "}
-                <span className="text-red-500">
-                  *
-                </span>
-              </label>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-blue-50">
+                <Sparkles size={14} />
+                OORZA SPACE MANAGEMENT
+              </div>
 
-              <select
-                name="space"
-                value={form.space}
-                onChange={handleInput}
-                disabled={loading}
-                className="w-full border border-orange-400 rounded px-3 py-2"
-              >
-                <option value="">
-                  Select Space Type
-                </option>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                Add New Space
+              </h1>
 
-                {Object.keys(
-                  SPACE_GROUPS
-                ).map((space) => (
-                  <option
-                    key={space}
-                    value={space}
-                  >
-                    {space}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* SPACE CODE */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Space Code
-              </label>
-
-              <input
-                value={
-                  form.space
-                    ? "Generated by backend"
-                    : ""
-                }
-                readOnly
-                className="w-full border border-orange-400 rounded px-3 py-2 bg-gray-100"
-                placeholder="Generated when space is added"
-              />
-            </div>
-
-            {/* HOURLY / DAILY / MONTHLY */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                "per_hour",
-                "per_day",
-                "per_month",
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm text-gray-700 mb-1">
-                    {FIELD_LABELS[field]}
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    name={field}
-                    value={form[field]}
-                    onChange={handleInput}
-                    inputMode="decimal"
-                    disabled={loading}
-                    className="w-full border border-orange-400 rounded px-3 py-2"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* WEEKLY PRICING */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                "one_week",
-                "two_weeks",
-                "three_weeks",
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm text-gray-700 mb-1">
-                    {FIELD_LABELS[field]}
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    name={field}
-                    value={form[field]}
-                    onChange={handleInput}
-                    inputMode="decimal"
-                    disabled={loading}
-                    className="w-full border border-orange-400 rounded px-3 py-2"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* DURATION */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                "min_duration",
-                "min_duration_desc",
-                "max_duration",
-              ].map((field) => (
-                <div key={field}>
-                  <label className="block text-sm text-gray-700 mb-1">
-                    {FIELD_LABELS[field]}
-                  </label>
-
-                  <input
-                    type={
-                      field.includes("duration") &&
-                      !field.includes("desc")
-                        ? "number"
-                        : "text"
-                    }
-                    min={
-                      field.includes("duration") &&
-                      !field.includes("desc")
-                        ? "0"
-                        : undefined
-                    }
-                    step={
-                      field.includes("duration") &&
-                      !field.includes("desc")
-                        ? "any"
-                        : undefined
-                    }
-                    name={field}
-                    value={form[field]}
-                    onChange={handleInput}
-                    disabled={loading}
-                    className="w-full border border-orange-400 rounded px-3 py-2"
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* MAX DURATION DESCRIPTION */}
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">
-                Max Duration Description
-              </label>
-
-              <input
-                type="text"
-                name="max_duration_desc"
-                value={
-                  form.max_duration_desc
-                }
-                onChange={handleInput}
-                disabled={loading}
-                className="w-full border border-orange-400 rounded px-3 py-2"
-              />
-            </div>
-
-            {/* IMAGE UPLOAD */}
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">
-                Space Image{" "}
-                <span className="text-red-500">
-                  *
-                </span>
-              </label>
-
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                onChange={handleImageChange}
-                disabled={loading}
-                className="w-full border border-orange-400 rounded px-3 py-2 bg-white"
-              />
-
-              <p className="text-xs text-gray-500 mt-1">
-                Maximum file size: 5 MB.
-                The image will be uploaded to
-                Cloudinary when you save the space.
+              <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
+                Configure your workspace, set booking prices, and upload images
+                to make your space available for booking.
               </p>
+            </div>
 
-              {image && (
-                <p className="text-xs text-green-600 mt-1">
-                  Selected: {image.name}
+            <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
+                <Layers3 size={25} />
+              </div>
+              <div>
+                <p className="text-xl font-bold">
+                  {Object.keys(SPACE_GROUPS).length}
                 </p>
-              )}
+                <p className="text-xs font-medium text-blue-100">
+                  Space Categories
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SPACE CATEGORY OVERVIEW */}
+        <section className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <Building2 size={20} />
+            </div>
+            <div>
+              <h2 className="font-bold text-slate-800">Space Categories</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                Available category types and their maximum configured capacity
+              </p>
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="space-y-6 flex flex-col items-center">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(SPACE_GROUPS).map(([name, details]) => {
+              const Icon = SPACE_ICONS[name];
+              const isSelected = form.space === name;
 
-            {/* IMAGE PREVIEW */}
-            <div className="w-full flex justify-center mt-2">
-              <div className="p-2 border border-orange-300 rounded-lg bg-orange-50 shadow-sm">
-
-                {preview ? (
-                  <img
-                    src={preview}
-                    alt="Space Preview"
-                    className="w-64 h-64 object-cover rounded-md shadow-md"
-                  />
-                ) : (
-                  <div className="w-64 h-64 flex items-center justify-center text-gray-400 text-sm">
-                    No image selected
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() =>
+                    handleInput({
+                      target: {
+                        name: "space",
+                        value: name,
+                      },
+                    })
+                  }
+                  disabled={loading}
+                  className={`group flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                    isSelected
+                      ? "border-blue-400 bg-blue-50 ring-2 ring-blue-500/10"
+                      : "border-blue-100 bg-[#F8FBFF] hover:border-blue-300 hover:bg-blue-50/70"
+                  }`}
+                >
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
+                      isSelected
+                        ? "bg-blue-600 text-white"
+                        : "bg-white text-blue-600 shadow-sm"
+                    }`}
+                  >
+                    <Icon size={20} />
                   </div>
-                )}
 
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-slate-800">
+                      {name}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Prefix: {details.prefix} · Max: {details.max}
+                    </p>
+                  </div>
+
+                  {isSelected && (
+                    <CheckCircle2
+                      size={18}
+                      className="shrink-0 text-blue-600"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-blue-100 bg-blue-50/70 p-3">
+            <Info size={16} className="mt-0.5 shrink-0 text-blue-600" />
+            <p className="text-xs leading-5 text-slate-600">
+              Select a category above or use the space type field below.
+              Capacity values are configured limits, not live counts of existing
+              spaces.
+            </p>
+          </div>
+        </section>
+
+        {/* MAIN FORM */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* SPACE INFORMATION */}
+          <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+            <div className="flex items-center gap-3 border-b border-blue-50 px-5 py-5 sm:px-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <Armchair size={22} />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-800">Space Information</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Choose the space category and configure its details
+                </p>
               </div>
             </div>
 
-            {/* STATUS */}
-            <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
+            <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-3">
+              <div className="space-y-5 lg:col-span-2">
+                {/* SPACE TYPE */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Space Type <span className="text-red-500">*</span>
+                  </label>
 
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleInput}
-                disabled={loading}
-                className="w-full border border-orange-400 rounded px-3 py-2"
-              >
-                <option value="Active">
-                  Active
-                </option>
+                  <div className="relative">
+                    <SelectedIcon
+                      size={18}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"
+                    />
+                    <select
+                      name="space"
+                      value={form.space}
+                      onChange={handleInput}
+                      disabled={loading}
+                      required
+                      className={`${inputClass} appearance-none pl-11 pr-10`}
+                    >
+                      <option value="">Select Space Type</option>
+                      {Object.keys(SPACE_GROUPS).map((space) => (
+                        <option key={space} value={space}>
+                          {space}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
+                      ▼
+                    </span>
+                  </div>
 
-                <option value="Inactive">
-                  Inactive
-                </option>
-              </select>
+                  {selectedSpaceInfo && (
+                    <div className="mt-3 flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-3">
+                      <CheckCircle2 size={16} className="text-blue-600" />
+                      <p className="text-xs font-medium text-blue-700">
+                        Selected: {form.space} · Code prefix:{" "}
+                        {selectedSpaceInfo.prefix} · Configured maximum:{" "}
+                        {selectedSpaceInfo.max}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* SPACE CODE */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Space Code
+                  </label>
+                  <input
+                    value={
+                      form.space ? "Generated automatically by backend" : ""
+                    }
+                    readOnly
+                    className={`${inputClass} cursor-not-allowed bg-slate-100 text-slate-500`}
+                    placeholder="Select a space type first"
+                  />
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    The unique space code will be assigned when the space is
+                    created.
+                  </p>
+                </div>
+
+                {/* STATUS */}
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Space Status
+                  </label>
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={handleInput}
+                    disabled={loading}
+                    className={inputClass}
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* SELECTED SPACE CARD */}
+              <div className="flex flex-col justify-center rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-5">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                  <SelectedIcon size={30} />
+                </div>
+
+                <p className="mt-4 text-center text-[10px] font-bold uppercase tracking-widest text-blue-600">
+                  Selected Category
+                </p>
+
+                <h3 className="mt-2 text-center text-lg font-bold text-slate-800">
+                  {form.space || "No Space Selected"}
+                </h3>
+
+                <p className="mt-2 text-center text-xs leading-5 text-slate-500">
+                  {form.space
+                    ? `This space belongs to the ${form.space} category.`
+                    : "Choose a category to configure your new space."}
+                </p>
+
+                {selectedSpaceInfo && (
+                  <div className="mt-5 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-white p-3 text-center">
+                      <p className="text-[10px] font-semibold uppercase text-slate-400">
+                        Prefix
+                      </p>
+                      <p className="mt-1 font-bold text-blue-700">
+                        {selectedSpaceInfo.prefix}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-white p-3 text-center">
+                      <p className="text-[10px] font-semibold uppercase text-slate-400">
+                        Max Units
+                      </p>
+                      <p className="mt-1 font-bold text-blue-700">
+                        {selectedSpaceInfo.max}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* PRICING */}
+          <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+            <div className="flex items-center gap-3 border-b border-blue-50 px-5 py-5 sm:px-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <IndianRupee size={21} />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-800">
+                  Pricing Configuration
+                </h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Set rental prices for different booking durations
+                </p>
+              </div>
             </div>
 
-            {/* SUBMIT */}
-            <div className="pt-4 w-full">
+            <div className="space-y-6 p-5 sm:p-6">
+              {/* HOURLY / DAILY / MONTHLY */}
+              <div>
+                <div className="mb-4 flex items-center gap-2">
+                  <Clock size={17} className="text-blue-600" />
+                  <h3 className="text-sm font-bold text-slate-800">
+                    Standard Rates
+                  </h3>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    {
+                      name: "per_hour",
+                      label: "Per Hour",
+                      hint: "Hourly booking rate",
+                      icon: Clock,
+                    },
+                    {
+                      name: "per_day",
+                      label: "Per Day",
+                      hint: "Daily booking rate",
+                      icon: CalendarDays,
+                    },
+                    {
+                      name: "per_month",
+                      label: "Per Month",
+                      hint: "Monthly booking rate",
+                      icon: CalendarRange,
+                    },
+                  ].map((field) => {
+                    const Icon = field.icon;
+
+                    return (
+                      <div
+                        key={field.name}
+                        className="rounded-2xl border border-blue-100 bg-[#F8FBFF] p-4"
+                      >
+                        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+                          <Icon size={16} className="text-blue-500" />
+                          {field.label}
+                        </label>
+
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                            ₹
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="any"
+                            name={field.name}
+                            value={form[field.name]}
+                            onChange={handleInput}
+                            inputMode="decimal"
+                            disabled={loading}
+                            placeholder="0.00"
+                            className={`${inputClass} bg-white pl-8`}
+                          />
+                        </div>
+
+                        <p className="mt-2 text-[11px] text-slate-400">
+                          {field.hint}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* WEEKLY RATES */}
+              <div className="border-t border-blue-50 pt-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <CalendarRange size={17} className="text-indigo-600" />
+                  <h3 className="text-sm font-bold text-slate-800">
+                    Weekly Packages
+                  </h3>
+                  <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-[10px] font-semibold text-indigo-600">
+                    Optional
+                  </span>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[
+                    { name: "one_week", label: "1 Week", days: "7 days" },
+                    { name: "two_weeks", label: "2 Weeks", days: "14 days" },
+                    { name: "three_weeks", label: "3 Weeks", days: "21 days" },
+                  ].map((field) => (
+                    <div key={field.name}>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">
+                        {field.label}
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">
+                          ₹
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          name={field.name}
+                          value={form[field.name]}
+                          onChange={handleInput}
+                          inputMode="decimal"
+                          disabled={loading}
+                          placeholder="0.00"
+                          className={`${inputClass} pl-8`}
+                        />
+                      </div>
+                      <p className="mt-1.5 text-xs text-slate-400">
+                        {field.days} package
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* DURATION */}
+          <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+            <div className="flex items-center gap-3 border-b border-blue-50 px-5 py-5 sm:px-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                <CalendarRange size={21} />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-800">Booking Duration</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Define minimum and maximum booking periods
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-2">
+              {/* MINIMUM */}
+              <div className="rounded-2xl border border-blue-100 bg-[#F8FBFF] p-4 sm:p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                    <Clock size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Minimum Duration
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Shortest allowed booking
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-xs font-semibold text-slate-600">
+                      Duration Value
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      name="min_duration"
+                      value={form.min_duration}
+                      onChange={handleInput}
+                      disabled={loading}
+                      placeholder="e.g. 1"
+                      className={`${inputClass} bg-white`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-semibold text-slate-600">
+                      Duration Description
+                    </label>
+                    <input
+                      type="text"
+                      name="min_duration_desc"
+                      value={form.min_duration_desc}
+                      onChange={handleInput}
+                      disabled={loading}
+                      placeholder="e.g. 1 Hour"
+                      className={`${inputClass} bg-white`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* MAXIMUM */}
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/40 p-4 sm:p-5">
+                <div className="mb-4 flex items-center gap-2">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                    <CalendarDays size={18} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      Maximum Duration
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Longest allowed booking
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-xs font-semibold text-slate-600">
+                      Duration Value
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      name="max_duration"
+                      value={form.max_duration}
+                      onChange={handleInput}
+                      disabled={loading}
+                      placeholder="e.g. 30"
+                      className={`${inputClass} bg-white`}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-semibold text-slate-600">
+                      Duration Description
+                    </label>
+                    <input
+                      type="text"
+                      name="max_duration_desc"
+                      value={form.max_duration_desc}
+                      onChange={handleInput}
+                      disabled={loading}
+                      placeholder="e.g. 30 Days"
+                      className={`${inputClass} bg-white`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* IMAGE UPLOAD AND STATUS */}
+          <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+            <div className="flex items-center gap-3 border-b border-blue-50 px-5 py-5 sm:px-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-50 text-cyan-600">
+                <Camera size={21} />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-800">Space Image</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Upload a photo to showcase your workspace
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 p-5 sm:p-6 lg:grid-cols-2">
+              {/* UPLOAD AREA */}
+              <div>
+                <label className="mb-3 block text-sm font-semibold text-slate-700">
+                  Upload Image <span className="text-red-500">*</span>
+                </label>
+
+                <label
+                  htmlFor="space-image"
+                  className={`flex min-h-[240px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-6 text-center transition ${
+                    preview
+                      ? "border-blue-200 bg-blue-50/40"
+                      : "border-blue-200 bg-[#F8FBFF] hover:border-blue-400 hover:bg-blue-50"
+                  }`}
+                >
+                  {preview ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-100 text-green-600">
+                        <CheckCircle2 size={28} />
+                      </div>
+                      <p className="mt-3 text-sm font-bold text-slate-800">
+                        Image Selected
+                      </p>
+                      <p className="mt-1 max-w-full break-all text-xs text-slate-500">
+                        {image?.name}
+                      </p>
+                      <p className="mt-3 text-xs font-semibold text-blue-600">
+                        Click to replace image
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+                        <ImagePlus size={27} />
+                      </div>
+                      <p className="mt-4 text-sm font-bold text-slate-800">
+                        Choose an image
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Click to browse your files
+                      </p>
+                      <span className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-semibold text-white">
+                        <Upload size={14} />
+                        Browse Files
+                      </span>
+                    </>
+                  )}
+
+                  <input
+                    id="space-image"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    onChange={handleImageChange}
+                    disabled={loading}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-400">
+                  <Info size={14} className="mt-0.5 shrink-0" />
+                  JPG, PNG, WEBP or GIF. Maximum file size 5 MB.
+                </div>
+              </div>
+
+              {/* PREVIEW */}
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <label className="text-sm font-semibold text-slate-700">
+                    Image Preview
+                  </label>
+
+                  {preview && (
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      disabled={loading}
+                      className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-500 transition hover:bg-red-50"
+                    >
+                      <X size={14} />
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex min-h-[240px] items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-[#F3F8FF] p-3">
+                  {preview ? (
+                    <img
+                      src={preview}
+                      alt="Space Preview"
+                      className="max-h-[260px] w-full rounded-xl object-contain"
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-300 shadow-sm">
+                        <ImagePlus size={27} />
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-slate-500">
+                        Preview will appear here
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Select an image to see how it looks
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SUBMIT */}
+          <section className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                  <ShieldCheck size={21} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-800">
+                    Ready to create your space?
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    Review the details and upload an image before saving.
+                    Required fields are marked with an asterisk.
+                  </p>
+                </div>
+              </div>
+
               <button
                 type="submit"
-                disabled={
-                  loading ||
-                  fetchingSpaces
-                }
-                className="w-full bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600 transition disabled:opacity-60"
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
               >
-                {loading
-                  ? "Uploading & Saving..."
-                  : "Add Space"}
+                {loading ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Uploading & Saving...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={18} />
+                    Add Space
+                  </>
+                )}
               </button>
             </div>
-          </div>
-        </div>
-      </form>
+          </section>
+        </form>
 
-      {/* BACKEND SPACE LIST */}
-      <div className="mt-8 bg-white shadow-sm rounded-lg p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">
-            Spaces
-          </h2>
-
-          {fetchingSpaces && (
-            <span className="text-sm text-gray-500">
-              Loading...
-            </span>
-          )}
-        </div>
-
-        {spaces.length === 0 &&
-        !fetchingSpaces ? (
-          <div className="text-center py-8 text-gray-500">
-            No spaces found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b bg-gray-50">
-                  <th className="text-left p-2">
-                    Code
-                  </th>
-
-                  <th className="text-left p-2">
-                    Space
-                  </th>
-
-                  <th className="text-left p-2">
-                    Image
-                  </th>
-
-                  <th className="text-left p-2">
-                    Per Hour
-                  </th>
-
-                  <th className="text-left p-2">
-                    Per Day
-                  </th>
-
-                  <th className="text-left p-2">
-                    Per Month
-                  </th>
-
-                  <th className="text-left p-2">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {spaces.map((space) => (
-                  <tr
-                    key={space._id}
-                    className="border-b hover:bg-gray-50"
-                  >
-                    <td className="p-2 font-medium">
-                      {space.spaceCode}
-                    </td>
-
-                    <td className="p-2">
-                      {space.space}
-                    </td>
-
-                    <td className="p-2">
-                      {space.image ? (
-                        <img
-                          src={space.image}
-                          alt={space.spaceCode}
-                          className="w-12 h-12 object-cover rounded border"
-                        />
-                      ) : (
-                        <span className="text-gray-400 text-xs">
-                          No image
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="p-2">
-                      {space.perHour ?? "-"}
-                    </td>
-
-                    <td className="p-2">
-                      {space.perDay ?? "-"}
-                    </td>
-
-                    <td className="p-2">
-                      {space.perMonth ?? "-"}
-                    </td>
-
-                    <td className="p-2">
-                      <span
-                        className={
-                          space.status ===
-                          "Active"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }
-                      >
-                        {space.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* LOADING OVERLAY */}
+        {loading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-3xl bg-white p-7 text-center shadow-2xl">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                <Loader2 size={32} className="animate-spin" />
+              </div>
+              <h3 className="mt-5 text-lg font-bold text-slate-800">
+                Creating Your Space
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Uploading the image and saving your space details. Please
+                wait...
+              </p>
+            </div>
           </div>
         )}
+
+        {/* FOOTER */}
+        <div className="flex items-center justify-center gap-2 py-2 text-xs text-slate-400">
+          <ShieldCheck size={14} />
+          Oorza Space Administration
+        </div>
       </div>
     </div>
   );

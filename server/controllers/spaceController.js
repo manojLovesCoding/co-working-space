@@ -19,7 +19,7 @@ const SPACE_GROUPS = {
 
   "Manager Cubicle": {
     prefix: "MC",
-    max: 2,
+    max: 3,
   },
 
   "Video Conferencing": {

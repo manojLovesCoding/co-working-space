@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -9,7 +8,6 @@ import {
   LoaderCircle,
   RefreshCw,
   Receipt,
-  ArrowLeft,
   ArrowRight,
   ShieldCheck,
   CalendarDays,
@@ -20,6 +18,8 @@ import {
 
 import api from "../api/axios.js";
 import { useAuth } from "../context/AuthContext.jsx";
+import Navbar from "../components/public/Navbar.jsx";
+import Footer from "../components/public/Footer.jsx";
 
 const RAZORPAY_SCRIPT_URL =
   "https://checkout.razorpay.com/v1/checkout.js";
@@ -80,7 +80,12 @@ const loadRazorpayScript = () => {
 const VirtualOfficePrices = () => {
   const navigate = useNavigate();
 
-  const { user, isAuthenticated, role, loading: authLoading } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    role,
+    loading: authLoading,
+  } = useAuth();
 
   const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,21 +184,15 @@ const VirtualOfficePrices = () => {
         amount: orderData.amount,
         currency: orderData.currency,
 
-        name: "Vayuhu",
+        name: "Oorza",
         description: `${plan.planName} - Virtual Office (11 Months)`,
 
         order_id: orderData.orderId,
 
         prefill: {
-          name:
-            user?.name ||
-            user?.fullName ||
-            "",
+          name: user?.name || user?.fullName || "",
           email: user?.email || "",
-          contact:
-            user?.phone ||
-            user?.mobile ||
-            "",
+          contact: user?.phone || user?.mobile || "",
         },
 
         notes: {
@@ -224,8 +223,7 @@ const VirtualOfficePrices = () => {
 
             if (!verificationData.success) {
               throw new Error(
-                verificationData.message ||
-                  "Payment verification failed.",
+                verificationData.message || "Payment verification failed.",
               );
             }
 
@@ -233,9 +231,7 @@ const VirtualOfficePrices = () => {
 
             setPaymentSuccess({
               purchaseId: purchase._id,
-              planName:
-                purchase.plan?.planName ||
-                plan.planName,
+              planName: purchase.plan?.planName || plan.planName,
               totalAmount: purchase.totalAmount,
               startDate: purchase.startDate,
               expiryDate: purchase.expiryDate,
@@ -282,14 +278,10 @@ const VirtualOfficePrices = () => {
 
       // Payment failure event.
       razorpayInstance.on("payment.failed", function (response) {
-        console.error(
-          "Razorpay payment failed:",
-          response.error,
-        );
+        console.error("Razorpay payment failed:", response.error);
 
         toast.error(
-          response.error?.description ||
-            "Payment failed. Please try again.",
+          response.error?.description || "Payment failed. Please try again.",
         );
 
         setProcessingPlanId(null);
@@ -314,82 +306,15 @@ const VirtualOfficePrices = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-
-      {/* ================= HEADER ================= */}
-
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
-
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <Building2 size={23} />
-            </div>
-
-            <span className="text-xl font-bold tracking-tight text-slate-900">
-              Vayuhu
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-
-            <Link
-              to="/"
-              className="hidden items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-blue-600 sm:flex"
-            >
-              <ArrowLeft size={16} />
-              Home
-            </Link>
-
-            {!authLoading && (
-              <>
-                {isAuthenticated ? (
-                  <Link
-                    to={
-                      role === "customer"
-                        ? "/customer"
-                        : role === "admin"
-                          ? "/admin"
-                          : "/"
-                    }
-                    className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                  >
-                    My Account
-                  </Link>
-                ) : (
-                  <>
-                    <Link
-                      to="/login"
-                      className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-blue-600 hover:text-blue-600"
-                    >
-                      Sign In
-                    </Link>
-
-                    <Link
-                      to="/register"
-                      className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                    >
-                      Register
-                    </Link>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* ================= PAYMENT SUCCESS ================= */}
-
       {paymentSuccess && (
         <section className="mx-auto max-w-4xl px-5 pt-8 sm:px-8">
           <div className="overflow-hidden rounded-2xl border border-green-200 bg-white shadow-sm">
-
             <div className="bg-green-50 px-6 py-8 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle2
-                  size={36}
-                  className="text-green-600"
-                />
+                <CheckCircle2 size={36} className="text-green-600" />
               </div>
 
               <h2 className="mt-4 text-2xl font-bold text-green-800">
@@ -402,7 +327,6 @@ const VirtualOfficePrices = () => {
             </div>
 
             <div className="grid gap-5 p-6 sm:grid-cols-2">
-
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
                   Purchased Plan
@@ -478,15 +402,12 @@ const VirtualOfficePrices = () => {
       )}
 
       {/* ================= HERO ================= */}
-
       <section className="relative overflow-hidden bg-slate-950 px-5 py-20 text-center text-white sm:py-28">
-
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
 
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-4xl">
-
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
             <Building2 size={34} />
           </div>
@@ -515,14 +436,11 @@ const VirtualOfficePrices = () => {
       </section>
 
       {/* ================= PRICING ================= */}
-
       <section
         id="pricing"
         className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-20"
       >
-
         <div className="mb-12 text-center">
-
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
             Our Pricing
           </p>
@@ -543,7 +461,6 @@ const VirtualOfficePrices = () => {
         </div>
 
         {/* Loading */}
-
         {loading && (
           <div className="flex flex-col items-center justify-center py-24">
             <LoaderCircle
@@ -558,15 +475,12 @@ const VirtualOfficePrices = () => {
         )}
 
         {/* Error */}
-
         {!loading && error && (
           <div className="mx-auto max-w-lg rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-
-            <p className="font-medium text-red-700">
-              {error}
-            </p>
+            <p className="font-medium text-red-700">{error}</p>
 
             <button
+              type="button"
               onClick={fetchPrices}
               className="mt-5 inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
             >
@@ -577,14 +491,9 @@ const VirtualOfficePrices = () => {
         )}
 
         {/* Empty State */}
-
         {!loading && !error && prices.length === 0 && (
           <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
-
-            <Building2
-              size={44}
-              className="mx-auto text-slate-400"
-            />
+            <Building2 size={44} className="mx-auto text-slate-400" />
 
             <h3 className="mt-5 text-xl font-bold text-slate-800">
               No Plans Available
@@ -597,10 +506,8 @@ const VirtualOfficePrices = () => {
         )}
 
         {/* Pricing Cards */}
-
         {!loading && !error && prices.length > 0 && (
           <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
-
             {prices.map((plan) => {
               const isProcessing = processingPlanId === plan._id;
 
@@ -609,11 +516,8 @@ const VirtualOfficePrices = () => {
                   key={plan._id}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl"
                 >
-
                   {/* Card Header */}
-
                   <div className="border-b border-slate-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-7">
-
                     <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
                       <Building2 size={25} />
                     </div>
@@ -629,9 +533,7 @@ const VirtualOfficePrices = () => {
                   </div>
 
                   {/* Card Body */}
-
                   <div className="flex flex-1 flex-col p-7">
-
                     <div>
                       <p className="text-sm font-medium text-slate-500">
                         Base Price
@@ -650,9 +552,7 @@ const VirtualOfficePrices = () => {
                     </div>
 
                     {/* GST Breakdown */}
-
                     <div className="my-7 space-y-4 rounded-xl bg-slate-50 p-5">
-
                       <div className="flex items-center justify-between gap-3 text-sm">
                         <span className="text-slate-500">
                           GST ({plan.gstRate}%)
@@ -664,7 +564,6 @@ const VirtualOfficePrices = () => {
                       </div>
 
                       <div className="border-t border-dashed border-slate-300 pt-4">
-
                         <div className="flex items-center justify-between gap-3">
                           <span className="font-semibold text-slate-700">
                             Total Price
@@ -682,9 +581,7 @@ const VirtualOfficePrices = () => {
                     </div>
 
                     {/* Features */}
-
                     <div className="mt-auto space-y-3">
-
                       <div className="flex items-center gap-2 text-sm text-slate-600">
                         <CheckCircle2
                           size={17}
@@ -719,7 +616,6 @@ const VirtualOfficePrices = () => {
                     </div>
 
                     {/* Purchase Button */}
-
                     <button
                       type="button"
                       disabled={!!processingPlanId || authLoading}
@@ -752,7 +648,6 @@ const VirtualOfficePrices = () => {
                         </>
                       )}
                     </button>
-
                   </div>
                 </div>
               );
@@ -762,17 +657,13 @@ const VirtualOfficePrices = () => {
       </section>
 
       {/* ================= CTA ================= */}
-
       <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
-
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 to-indigo-700 px-8 py-14 text-center shadow-xl sm:px-12">
-
           <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
 
           <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-indigo-950/20 blur-3xl" />
 
           <div className="relative">
-
             <h2 className="text-3xl font-bold text-white sm:text-4xl">
               Ready to Get Started?
             </h2>
@@ -793,46 +684,7 @@ const VirtualOfficePrices = () => {
         </div>
       </section>
 
-      {/* ================= FOOTER ================= */}
-
-      <footer className="border-t border-slate-200 bg-white">
-
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:px-8">
-
-          <p>© 2026 Vayuhu - Rental Management System</p>
-
-          <div className="flex flex-wrap justify-center gap-6">
-
-            <Link
-              to="/"
-              className="transition hover:text-blue-600"
-            >
-              Home
-            </Link>
-
-            <Link
-              to="/virtual-office-prices"
-              className="transition hover:text-blue-600"
-            >
-              Virtual Office Plans
-            </Link>
-
-            <Link
-              to="/login"
-              className="transition hover:text-blue-600"
-            >
-              Login
-            </Link>
-
-            <Link
-              to="/register"
-              className="transition hover:text-blue-600"
-            >
-              Register
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -1,11 +1,25 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
+  Building2,
+  CalendarDays,
   CheckCircle2,
   Clock,
-  LoaderCircle,
+  CreditCard,
+  Mail,
+  Phone,
   RefreshCw,
+  ShieldCheck,
+  User,
   UserPlus,
+  Users,
+  Wallet,
+  AlertCircle,
+  BriefcaseBusiness,
+  MapPin,
+  LoaderCircle,
+  Receipt,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios.js";
@@ -88,6 +102,7 @@ const formatTime = (time) => {
 
 const isLegacyMidnight = (date) => {
   const parsed = new Date(date);
+
   return (
     !Number.isNaN(parsed.getTime()) &&
     parsed.getUTCHours() === 0 &&
@@ -99,7 +114,9 @@ const isLegacyMidnight = (date) => {
 
 const getLastBookedDate = (endAt) => {
   const parsed = new Date(endAt);
+
   if (Number.isNaN(parsed.getTime())) return null;
+
   return new Date(parsed.getTime() - 1);
 };
 
@@ -126,7 +143,10 @@ const getBookingLabel = (booking) => {
   }
 
   const planBadge = booking.plan ? ` [${booking.plan.toUpperCase()}]` : "";
-  return `${booking.spaceName || "Workspace"}${seats ? ` (${seats})` : ""}${planBadge} — ${when}`;
+
+  return `${booking.spaceName || "Workspace"}${
+    seats ? ` (${seats})` : ""
+  }${planBadge} — ${when}`;
 };
 
 const validateForm = (form) => {
@@ -137,6 +157,7 @@ const validateForm = (form) => {
   }
 
   const attendees = Number(form.attendees);
+
   if (
     !Number.isInteger(attendees) ||
     attendees < 1 ||
@@ -146,6 +167,7 @@ const validateForm = (form) => {
   }
 
   const hours = Number(form.visitHours);
+
   if (!Number.isInteger(hours) || hours < 1 || hours > MAX_HOURS) {
     errors.visitHours = `Enter between 1 and ${MAX_HOURS} hours.`;
   }
@@ -169,11 +191,26 @@ const validateForm = (form) => {
 };
 
 const inputClass = (hasError) =>
-  `w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:ring-2 ${
+  `w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-4 ${
     hasError
       ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-      : "border-gray-300 focus:border-blue-500 focus:ring-blue-100"
+      : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
   }`;
+
+const FieldLabel = ({ children, required }) => (
+  <label className="mb-2 block text-sm font-semibold text-slate-700">
+    {children}
+    {required && <span className="ml-1 text-red-500">*</span>}
+  </label>
+);
+
+const FieldError = ({ children }) =>
+  children ? (
+    <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-red-600">
+      <AlertCircle size={13} />
+      {children}
+    </p>
+  ) : null;
 
 // ---------------------------------------------
 // Component
@@ -199,7 +236,6 @@ export default function InviteVisitor() {
 
       const [bookingsResponse, companyResponse] = await Promise.all([
         api.get("/visitor/upcoming_bookings"),
-        // A company fetch failure shouldn't block the bookings list
         api.get("/company").catch(() => null),
       ]);
 
@@ -210,6 +246,7 @@ export default function InviteVisitor() {
       }
 
       const now = Date.now();
+
       const upcoming = (bookingsResponse.data.bookings || []).filter(
         (booking) => new Date(booking.endAt).getTime() > now,
       );
@@ -260,7 +297,10 @@ export default function InviteVisitor() {
     setForm((previous) => ({ ...previous, [field]: value }));
 
     if (errors[field]) {
-      setErrors((previous) => ({ ...previous, [field]: undefined }));
+      setErrors((previous) => ({
+        ...previous,
+        [field]: undefined,
+      }));
     }
   };
 
@@ -364,6 +404,7 @@ export default function InviteVisitor() {
             toast.success("Payment verified and visitor invited!");
           } catch (error) {
             console.error("Visitor verification error:", error);
+
             toast.error(
               error.response?.data?.message ||
                 error.message ||
@@ -388,20 +429,24 @@ export default function InviteVisitor() {
 
       razorpay.on("payment.failed", (response) => {
         console.error("Razorpay payment failed:", response.error);
+
         toast.error(
           response.error?.description || "Payment failed. Please try again.",
         );
+
         setSubmitting(false);
       });
 
       razorpay.open();
     } catch (error) {
       console.error("Visitor checkout error:", error);
+
       toast.error(
         error.response?.data?.message ||
           error.message ||
           "Unable to start payment.",
       );
+
       setSubmitting(false);
     }
   };
@@ -412,59 +457,110 @@ export default function InviteVisitor() {
 
   if (confirmedVisit) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-6">
-        <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
-          <CheckCircle2 size={56} className="mx-auto text-green-600" />
+      <div className="flex min-h-screen items-center justify-center bg-[#EAF4FF] p-4 sm:p-6">
+        <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-xl shadow-blue-900/10">
+          <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-9 text-center text-white sm:px-10">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-white/20 bg-white/10">
+              <CheckCircle2 size={43} />
+            </div>
 
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">
-            Visitor Pass Confirmed!
-          </h1>
+            <h1 className="mt-5 text-2xl font-extrabold">
+              Visitor Pass Confirmed!
+            </h1>
 
-          <p className="mt-3 text-gray-600">
-            Your payment was verified and the visitor pass has been issued.
-          </p>
-
-          <div className="mt-6 rounded-xl bg-gray-50 p-4 text-left">
-            <p className="text-sm text-gray-500">Visit ID</p>
-            <p className="mt-1 break-all font-semibold text-gray-900">
-              {confirmedVisit.visitId}
-            </p>
-
-            <p className="mt-4 text-sm text-gray-500">Visitor</p>
-            <p className="mt-1 font-medium text-gray-900">
-              {confirmedVisit.name} ({confirmedVisit.attendees}{" "}
-              {confirmedVisit.attendees === 1 ? "attendee" : "attendees"},{" "}
-              {confirmedVisit.visitHours}{" "}
-              {confirmedVisit.visitHours === 1 ? "hour" : "hours"})
-            </p>
-
-            <p className="mt-4 text-sm text-gray-500">Workspace Booking</p>
-            <p className="mt-1 font-medium text-gray-900">
-              {confirmedVisit.bookingLabel}
-            </p>
-
-            <p className="mt-4 text-sm text-gray-500">Amount paid</p>
-            <p className="mt-1 font-medium text-gray-900">
-              {formatMoney(confirmedVisit.total)}
+            <p className="mt-2 text-sm text-blue-100">
+              Your payment was verified successfully.
             </p>
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={resetForm}
-              className="flex-1 rounded-lg border border-gray-300 bg-white px-5 py-3 font-semibold text-gray-700 hover:bg-gray-100"
-            >
-              Invite Another Visitor
-            </button>
+          <div className="p-6 sm:p-8">
+            <div className="mb-6 flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="text-emerald-600" size={22} />
+                <div>
+                  <p className="text-sm font-bold text-emerald-800">
+                    Payment Successful
+                  </p>
+                  <p className="text-xs text-emerald-600">
+                    Visitor pass has been issued
+                  </p>
+                </div>
+              </div>
 
-            <button
-              type="button"
-              onClick={() => navigate("/customer")}
-              className="flex-1 rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-            >
-              Go to Dashboard
-            </button>
+              <CheckCircle2 size={22} className="text-emerald-600" />
+            </div>
+
+            <h2 className="mb-4 text-sm font-extrabold uppercase tracking-wider text-slate-400">
+              Visit Summary
+            </h2>
+
+            <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50 p-5">
+              <div>
+                <p className="text-xs font-medium text-slate-400">Visit ID</p>
+                <p className="mt-1 break-all text-sm font-bold text-slate-900">
+                  {confirmedVisit.visitId}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-slate-400">Visitor</p>
+                  <p className="mt-1 text-sm font-bold text-slate-800">
+                    {confirmedVisit.name}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400">Attendees</p>
+                  <p className="mt-1 text-sm font-bold text-slate-800">
+                    {confirmedVisit.attendees}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400">Duration</p>
+                  <p className="mt-1 text-sm font-bold text-slate-800">
+                    {confirmedVisit.visitHours}{" "}
+                    {confirmedVisit.visitHours === 1 ? "hour" : "hours"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400">Amount Paid</p>
+                  <p className="mt-1 text-sm font-extrabold text-blue-700">
+                    {formatMoney(confirmedVisit.total)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-200 pt-4">
+                <p className="text-xs text-slate-400">Workspace Booking</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">
+                  {confirmedVisit.bookingLabel}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="flex-1 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-50"
+              >
+                <span className="inline-flex items-center justify-center gap-2">
+                  <UserPlus size={17} />
+                  Invite Another Visitor
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate("/customer")}
+                className="flex-1 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+              >
+                Go to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -476,321 +572,589 @@ export default function InviteVisitor() {
   // ---------------------------------------------
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-            <UserPlus size={22} />
+    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-5xl">
+        {/* PAGE HEADER */}
+        <div className="mb-7">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-700">
+            <Building2 size={17} />
+              <span>Oorza Customer Portal</span>
+              <span className="text-blue-300">/</span>
+            <span className="text-slate-500">Invite Visitor</span>
           </div>
 
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Invite a Visitor
-            </h1>
-            <p className="text-sm text-gray-500">
-              Invite visitors to your booked workspace at the standard hourly
-              rate.
-            </p>
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                Invite a Visitor
+              </h1>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                Register your guests and arrange their access to your booked
+                workspace with a simple visitor pass.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </button>
           </div>
         </div>
 
+        {/* HERO BANNER */}
+        <div className="relative mb-7 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-6 text-white shadow-lg shadow-blue-900/10 sm:p-7">
+          <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-white/10" />
+          <div className="absolute -bottom-28 right-1/3 h-52 w-52 rounded-full bg-indigo-400/20" />
+
+          <div className="relative flex items-center justify-between gap-4">
+            <div>
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-50">
+                <ShieldCheck size={14} />
+                Visitor Access
+              </div>
+
+              <h2 className="text-xl font-extrabold sm:text-2xl">
+                Welcome Your Guests
+              </h2>
+
+              <p className="mt-2 max-w-lg text-sm leading-6 text-blue-100">
+                Invite visitors to your active workspace booking. Complete their
+                details and securely pay the visitor fee online.
+              </p>
+            </div>
+
+            <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 sm:flex">
+              <UserPlus size={40} strokeWidth={1.5} />
+            </div>
+          </div>
+        </div>
+
+        {/* LOADING STATE */}
         {loadingBookings && (
-          <div className="rounded-xl border border-gray-200 bg-white py-16 text-center">
-            <RefreshCw
-              size={32}
-              className="mx-auto animate-spin text-blue-600"
-            />
-            <p className="mt-4 text-gray-500">Loading your bookings...</p>
+          <div className="rounded-2xl border border-blue-100 bg-white px-5 py-16 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
+              <LoaderCircle size={28} className="animate-spin text-blue-600" />
+            </div>
+
+            <h3 className="mt-4 text-base font-bold text-slate-800">
+              Loading your bookings
+            </h3>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Please wait while we fetch your active workspace bookings.
+            </p>
           </div>
         )}
 
+        {/* LOAD ERROR */}
         {!loadingBookings && loadError && (
-          <div className="rounded-xl border border-red-200 bg-white p-8 text-center">
-            <p className="font-medium text-red-600">
-              Could not load your bookings.
-            </p>
-            <p className="mt-2 text-sm text-gray-500">{loadError}</p>
+          <div className="rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+              <AlertCircle size={27} />
+            </div>
+
+            <h2 className="mt-4 text-lg font-bold text-slate-900">
+              Could not load your bookings
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-500">{loadError}</p>
 
             <button
               type="button"
               onClick={fetchBookings}
-              className="mt-5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
             >
+              <RefreshCw size={16} />
               Try Again
             </button>
           </div>
         )}
 
+        {/* NO BOOKINGS */}
         {!loadingBookings && !loadError && bookings.length === 0 && (
-          <div className="rounded-xl border border-gray-200 bg-white px-6 py-16 text-center">
-            <h2 className="text-lg font-semibold text-gray-900">
+          <div className="rounded-2xl border border-blue-100 bg-white px-6 py-14 text-center shadow-sm">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
+              <CalendarDays size={36} strokeWidth={1.5} />
+            </div>
+
+            <h2 className="mt-5 text-xl font-extrabold text-slate-900">
               No upcoming bookings
             </h2>
-            <p className="mt-2 text-sm text-gray-500">
-              You need a confirmed workspace booking before you can invite a
-              visitor.
+
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+              You need an active workspace booking before you can invite
+              visitors.
             </p>
+
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="mt-5 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
             >
+              <Building2 size={17} />
               Book a Space
             </button>
           </div>
         )}
 
+        {/* MAIN FORM */}
         {!loadingBookings && !loadError && bookings.length > 0 && (
-          <form
-            onSubmit={handlePay}
-            noValidate
-            className="space-y-6 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-8"
-          >
-            {/* Booking selection */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Select Your Active Workspace Booking{" "}
-                <span className="text-red-500">*</span>
-              </label>
+          <form onSubmit={handlePay} noValidate className="space-y-6">
+            {/* BOOKING SECTION */}
+            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <Building2 size={21} />
+                </div>
 
-              <select
-                value={form.bookingId}
-                onChange={(event) =>
-                  updateField("bookingId", event.target.value)
-                }
-                disabled={submitting}
-                className={inputClass(Boolean(errors.bookingId))}
-              >
-                <option value="">-- Select an Upcoming Booking --</option>
-                {bookings.map((booking) => (
-                  <option key={booking.bookingId} value={booking.bookingId}>
-                    {getBookingLabel(booking)}
-                  </option>
-                ))}
-              </select>
-
-              {errors.bookingId ? (
-                <p className="mt-1 text-xs text-red-600">{errors.bookingId}</p>
-              ) : (
-                <p className="mt-1 text-xs text-gray-500">
-                  Visitors are billed by the workspace hourly catalog rate (
-                  {selectedBooking
-                    ? `${formatMoney(selectedBooking.hourlyRate)}/hr`
-                    : "select a space to see rate"}
-                  ).
-                </p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Number of Attendees */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Number of Attendees <span className="text-red-500">*</span>
-                </label>
-
-                <input
-                  type="number"
-                  min={1}
-                  max={MAX_ATTENDEES}
-                  step={1}
-                  value={form.attendees}
-                  onChange={(event) =>
-                    updateField("attendees", event.target.value)
-                  }
-                  disabled={submitting}
-                  className={inputClass(Boolean(errors.attendees))}
-                />
-
-                {errors.attendees && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.attendees}
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900">
+                    Workspace Booking
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Select the booking for your visitor
                   </p>
-                )}
+                </div>
+
+                <span className="ml-auto rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                  Step 01
+                </span>
               </div>
 
-              {/* Number of Hours */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Visit Duration (Hours) <span className="text-red-500">*</span>
-                </label>
+              <div className="p-5 sm:p-7">
+                <FieldLabel required>
+                  Select Your Active Workspace Booking
+                </FieldLabel>
 
-                <div className="relative">
-                  <input
-                    type="number"
-                    min={1}
-                    max={MAX_HOURS}
-                    step={1}
-                    value={form.visitHours}
-                    onChange={(event) =>
-                      updateField("visitHours", event.target.value)
-                    }
-                    disabled={submitting}
-                    className={inputClass(Boolean(errors.visitHours))}
-                  />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
-                    <Clock size={16} />
+                <select
+                  value={form.bookingId}
+                  onChange={(event) =>
+                    updateField("bookingId", event.target.value)
+                  }
+                  disabled={submitting}
+                  className={inputClass(Boolean(errors.bookingId))}
+                >
+                  <option value="">-- Select an Upcoming Booking --</option>
+
+                  {bookings.map((booking) => (
+                    <option key={booking.bookingId} value={booking.bookingId}>
+                      {getBookingLabel(booking)}
+                    </option>
+                  ))}
+                </select>
+
+                <FieldError>{errors.bookingId}</FieldError>
+
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  Visitors are charged according to the selected workspace's
+                  hourly rate.
+                </p>
+
+                {/* SELECTED BOOKING DETAILS */}
+                {selectedBooking && (
+                  <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                    <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm">
+                          <Building2 size={19} />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+                            Selected Workspace
+                          </p>
+
+                          <p className="mt-1 text-sm font-extrabold text-slate-900">
+                            {selectedBooking.spaceName || "Workspace"}
+                          </p>
+
+                          {selectedBooking.selectedSpaces?.length > 0 && (
+                            <p className="mt-1 text-xs text-slate-500">
+                              Seats: {selectedBooking.selectedSpaces.join(", ")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg border border-blue-100 bg-white px-4 py-2.5">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          Hourly Rate
+                        </p>
+                        <p className="mt-1 text-lg font-extrabold text-blue-700">
+                          {formatMoney(selectedBooking.hourlyRate)}
+                          <span className="text-xs font-medium text-slate-400">
+                            /hr
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-blue-100 pt-3 text-xs text-slate-600">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarDays size={14} className="text-blue-600" />
+                        {formatDate(selectedBooking.bookingDate)}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock size={14} className="text-blue-600" />
+                        {selectedBooking.startTime
+                          ? `${formatTime(selectedBooking.startTime)} - ${formatTime(selectedBooking.endTime)}`
+                          : selectedBooking.plan || "Booking"}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* VISITOR DETAILS */}
+            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <Users size={21} />
+                </div>
+
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900">
+                    Visitor Details
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Enter the information of your guest
+                  </p>
+                </div>
+
+                <span className="ml-auto rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700">
+                  Step 02
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:gap-6 sm:p-7">
+                {/* ATTENDEES */}
+                <div>
+                  <FieldLabel required>Number of Attendees</FieldLabel>
+
+                  <div className="relative">
+                    <Users
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type="number"
+                      min={1}
+                      max={MAX_ATTENDEES}
+                      step={1}
+                      value={form.attendees}
+                      onChange={(event) =>
+                        updateField("attendees", event.target.value)
+                      }
+                      disabled={submitting}
+                      className={`${inputClass(Boolean(errors.attendees))} pl-11`}
+                    />
+                  </div>
+
+                  <FieldError>{errors.attendees}</FieldError>
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    Maximum {MAX_ATTENDEES} attendees
+                  </p>
+                </div>
+
+                {/* VISIT HOURS */}
+                <div>
+                  <FieldLabel required>Visit Duration (Hours)</FieldLabel>
+
+                  <div className="relative">
+                    <Clock
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type="number"
+                      min={1}
+                      max={MAX_HOURS}
+                      step={1}
+                      value={form.visitHours}
+                      onChange={(event) =>
+                        updateField("visitHours", event.target.value)
+                      }
+                      disabled={submitting}
+                      className={`${inputClass(Boolean(errors.visitHours))} pl-11`}
+                    />
+                  </div>
+
+                  <FieldError>{errors.visitHours}</FieldError>
+                  <p className="mt-1.5 text-xs text-slate-400">
+                    Maximum {MAX_HOURS} hours per visit
+                  </p>
+                </div>
+
+                {/* NAME */}
+                <div>
+                  <FieldLabel required>Visitor Name</FieldLabel>
+
+                  <div className="relative">
+                    <User
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type="text"
+                      value={form.name}
+                      onChange={(event) =>
+                        updateField("name", event.target.value)
+                      }
+                      placeholder="Enter visitor's full name"
+                      maxLength={80}
+                      disabled={submitting}
+                      className={`${inputClass(Boolean(errors.name))} pl-11`}
+                    />
+                  </div>
+
+                  <FieldError>{errors.name}</FieldError>
+                </div>
+
+                {/* CONTACT */}
+                <div>
+                  <FieldLabel required>Visitor Contact Number</FieldLabel>
+
+                  <div className="relative">
+                    <Phone
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      value={form.contact}
+                      onChange={(event) =>
+                        updateField(
+                          "contact",
+                          event.target.value.replace(/\D/g, "").slice(0, 10),
+                        )
+                      }
+                      placeholder="10-digit mobile number"
+                      disabled={submitting}
+                      className={`${inputClass(Boolean(errors.contact))} pl-11`}
+                    />
+                  </div>
+
+                  <FieldError>{errors.contact}</FieldError>
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <FieldLabel>Visitor Email Address</FieldLabel>
+
+                  <div className="relative">
+                    <Mail
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type="email"
+                      value={form.email}
+                      onChange={(event) =>
+                        updateField("email", event.target.value)
+                      }
+                      placeholder="Enter visitor email (optional)"
+                      maxLength={120}
+                      disabled={submitting}
+                      className={`${inputClass(Boolean(errors.email))} pl-11`}
+                    />
+                  </div>
+
+                  <FieldError>{errors.email}</FieldError>
+                </div>
+
+                {/* COMPANY */}
+                <div>
+                  <FieldLabel>Hosting Company</FieldLabel>
+
+                  <div className="relative">
+                    <BriefcaseBusiness
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <input
+                      type="text"
+                      value={companyName}
+                      readOnly
+                      tabIndex={-1}
+                      placeholder="Company not available"
+                      className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-600 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* VISIT PURPOSE */}
+            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                  <MapPin size={21} />
+                </div>
+
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-900">
+                    Visit Purpose
+                  </h2>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Tell us why your visitor is coming
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-5 sm:p-7">
+                <FieldLabel>Reason for Visit</FieldLabel>
+
+                <textarea
+                  rows={3}
+                  value={form.reason}
+                  onChange={(event) =>
+                    updateField("reason", event.target.value)
+                  }
+                  placeholder="Enter the purpose of the visitor's visit..."
+                  maxLength={MAX_REASON_LENGTH}
+                  disabled={submitting}
+                  className={`${inputClass(false)} resize-none`}
+                />
+
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-xs text-slate-400">Optional information</p>
+
+                  <p className="text-xs font-medium text-slate-400">
+                    {form.reason.length}/{MAX_REASON_LENGTH}
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            {/* PAYMENT SUMMARY */}
+            {selectedBooking && (
+              <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+                <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <Wallet size={21} />
+                  </div>
+
+                  <div>
+                    <h2 className="text-base font-extrabold text-slate-900">
+                      Payment Summary
+                    </h2>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Review your visitor pass charges
+                    </p>
+                  </div>
+
+                  <span className="ml-auto rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                    Step 03
+                  </span>
+                </div>
+
+                <div className="grid gap-6 p-5 sm:grid-cols-2 sm:p-7">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Charge Calculation
+                    </p>
+
+                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
+                      {formatMoney(pricing.rate)} × {pricing.hours}{" "}
+                      {pricing.hours === 1 ? "hour" : "hours"} ×{" "}
+                      {pricing.attendees}{" "}
+                      {pricing.attendees === 1 ? "attendee" : "attendees"}
+                    </p>
+
+                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                      Visitor charges are calculated using the selected
+                      workspace hourly rate.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between gap-3 text-slate-600">
+                        <span>Subtotal</span>
+                        <span className="font-semibold text-slate-800">
+                          {formatMoney(pricing.subtotal)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between gap-3 text-slate-600">
+                        <span>GST (18%)</span>
+                        <span className="font-semibold text-slate-800">
+                          {formatMoney(pricing.gst)}
+                        </span>
+                      </div>
+
+                      <div className="border-t border-blue-200 pt-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-bold text-slate-900">
+                            Total Amount
+                          </span>
+
+                          <span className="text-xl font-extrabold text-blue-700">
+                            {formatMoney(pricing.total)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* PAYMENT BUTTON */}
+            <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <ShieldCheck size={22} />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">
+                      Secure Online Payment
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Payments are securely processed by Razorpay.
+                    </p>
                   </div>
                 </div>
 
-                {errors.visitHours && (
-                  <p className="mt-1 text-xs text-red-600">
-                    {errors.visitHours}
-                  </p>
-                )}
+                <button
+                  type="submit"
+                  disabled={submitting || !selectedBooking}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                >
+                  {submitting ? (
+                    <>
+                      <LoaderCircle size={18} className="animate-spin" />
+                      Processing Payment...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard size={18} />
+                      Pay {formatMoney(pricing.total)}
+                    </>
+                  )}
+                </button>
               </div>
 
-              {/* Name */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Visitor Name <span className="text-red-500">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(event) => updateField("name", event.target.value)}
-                  placeholder="Enter Visitor's Name"
-                  maxLength={80}
-                  disabled={submitting}
-                  className={inputClass(Boolean(errors.name))}
-                />
-
-                {errors.name && (
-                  <p className="mt-1 text-xs text-red-600">{errors.name}</p>
-                )}
-              </div>
-
-              {/* Contact */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Visitor Contact No <span className="text-red-500">*</span>
-                </label>
-
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  value={form.contact}
-                  onChange={(event) =>
-                    updateField(
-                      "contact",
-                      event.target.value.replace(/\D/g, "").slice(0, 10),
-                    )
-                  }
-                  placeholder="Enter 10-digit mobile number"
-                  disabled={submitting}
-                  className={inputClass(Boolean(errors.contact))}
-                />
-
-                {errors.contact && (
-                  <p className="mt-1 text-xs text-red-600">{errors.contact}</p>
-                )}
-              </div>
-
-              {/* Email */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Visitor Email Id
-                </label>
-
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(event) => updateField("email", event.target.value)}
-                  placeholder="Enter Visitor Email (optional)"
-                  maxLength={120}
-                  disabled={submitting}
-                  className={inputClass(Boolean(errors.email))}
-                />
-
-                {errors.email && (
-                  <p className="mt-1 text-xs text-red-600">{errors.email}</p>
-                )}
-              </div>
-
-              {/* Company (read only) */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Hosting Company
-                </label>
-
-                <input
-                  type="text"
-                  value={companyName}
-                  readOnly
-                  tabIndex={-1}
-                  className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-sm text-gray-600 outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Reason */}
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
-                Reason for Visit
-              </label>
-
-              <textarea
-                rows={3}
-                value={form.reason}
-                onChange={(event) => updateField("reason", event.target.value)}
-                placeholder="Enter purpose of visit"
-                maxLength={MAX_REASON_LENGTH}
-                disabled={submitting}
-                className={`${inputClass(false)} resize-none`}
-              />
-
-              <p className="mt-1 text-right text-xs text-gray-400">
-                {form.reason.length}/{MAX_REASON_LENGTH}
+              <p className="mt-4 text-center text-[11px] text-slate-400">
+                By proceeding, you agree to pay the displayed visitor pass
+                amount, including applicable GST.
               </p>
-            </div>
-
-            {/* Fee breakdown */}
-            {selectedBooking && (
-              <div className="rounded-xl bg-gray-50 p-4 text-sm">
-                <div className="flex items-center justify-between text-gray-600">
-                  <span>
-                    {formatMoney(pricing.rate)} / hr × {pricing.hours}{" "}
-                    {pricing.hours === 1 ? "hr" : "hrs"} × {pricing.attendees}{" "}
-                    {pricing.attendees === 1 ? "attendee" : "attendees"}
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    {formatMoney(pricing.subtotal)}
-                  </span>
-                </div>
-
-                <div className="mt-2 flex items-center justify-between text-gray-600">
-                  <span>GST (18%)</span>
-                  <span className="font-medium text-gray-900">
-                    {formatMoney(pricing.gst)}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
-                  <span className="font-semibold text-gray-900">Total</span>
-                  <span className="text-lg font-bold text-gray-900">
-                    {formatMoney(pricing.total)}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Submit */}
-            <div className="flex justify-center pt-2">
-              <button
-                type="submit"
-                disabled={submitting || !selectedBooking}
-                className="inline-flex min-w-[260px] items-center justify-center gap-2 rounded-lg bg-blue-600 px-8 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
-              >
-                {submitting ? (
-                  <>
-                    <LoaderCircle size={18} className="animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  `Pay ${formatMoney(pricing.total)} (incl. 18% GST)`
-                )}
-              </button>
             </div>
           </form>
         )}
