@@ -12,34 +12,15 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import VirtualOfficePrices from "./pages/VirtualOfficePrices";
 
-/* Tenant pages */
-import TenantDashboard from "./pages/tenant/TenantDashboard";
-import PropertyDetails from "./pages/tenant/PropertyDetails";
-import RentStatus from "./pages/tenant/RentStatus";
-import PaymentHistory from "./pages/tenant/PaymentHistory";
-import PaymentReceipt from "./pages/tenant/PaymentReceipt";
-
 /* Landlord / Customer pages */
-import LandlordDashboard from "./pages/landloard/LandlordDashboard";
-import PropertyList from "./pages/landloard/PropertyList";
-import AddProperty from "./pages/landloard/AddProperty";
-import TenantList from "./pages/landloard/TenantList";
-import Payments from "./pages/landloard/Payments";
 import Profile2 from "./pages/landloard/Profile2";
 import CompanyProfile from "./pages/landloard/CompanyProfile";
-import EditProperty from "./pages/landloard/EditProperty";
-import AddTenant from "./pages/landloard/AddTenant";
-import EditTenant from "./pages/landloard/EditTenant";
-import UpdateTenantPassword from "./pages/landloard/UpdateTenantPassword";
-import AssignTenant from "./pages/landloard/AssignTenant";
-import AssignedTenants from "./pages/landloard/AssignedTenants";
 import Reservations from "./pages/landloard/Reservations";
 
 /* Admin pages */
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Users from "./pages/admin/Users";
-import AdminProperties from "./pages/admin/Properties";
-import AdminPayments from "./pages/admin/Payments";
+
 import AddSpaceMaster from "./pages/admin/AddSpaceMaster";
 import SpaceMaster from "./pages/admin/SpaceMaster";
 
@@ -84,19 +65,6 @@ const App = () => {
         {/* Workspace selection */}
         <Route path="/book-space/:id" element={<BookSpace />} />
 
-        {/* ================= TENANT ROUTES ================= */}
-
-        <Route element={<ProtectedRoute allowedRoles={["tenant"]} />}>
-          <Route path="/tenant" element={<TenantLayout />}>
-            <Route index element={<TenantDashboard />} />
-
-            <Route path="property" element={<PropertyDetails />} />
-            <Route path="rent" element={<RentStatus />} />
-            <Route path="history" element={<PaymentHistory />} />
-            <Route path="receipt" element={<PaymentReceipt />} />
-          </Route>
-        </Route>
-
         {/* ================= CUSTOMER ROUTES ================= */}
 
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
@@ -106,30 +74,6 @@ const App = () => {
           {/* Customer layout */}
           <Route path="/customer" element={<LandlordLayout />}>
             <Route index element={<Navigate to="reservations" replace />} />
-
-            <Route path="properties" element={<PropertyList />} />
-            <Route path="add-property" element={<AddProperty />} />
-
-            <Route path="property/edit/:id" element={<EditProperty />} />
-
-            <Route
-              path="property/:id/assign-tenant"
-              element={<AssignTenant />}
-            />
-
-            <Route path="assigned-tenants" element={<AssignedTenants />} />
-
-            <Route path="tenants" element={<TenantList />} />
-            <Route path="add-tenant" element={<AddTenant />} />
-
-            <Route path="tenant/edit/:id" element={<EditTenant />} />
-
-            <Route
-              path="tenant/password/:id"
-              element={<UpdateTenantPassword />}
-            />
-
-            <Route path="payments" element={<Payments />} />
 
             <Route path="reservations" element={<Reservations />} />
 
@@ -161,8 +105,6 @@ const App = () => {
             <Route index element={<AdminDashboard />} />
 
             <Route path="users" element={<Users />} />
-            <Route path="properties" element={<AdminProperties />} />
-            <Route path="payments" element={<AdminPayments />} />
 
             <Route path="add-space-master" element={<AddSpaceMaster />} />
             <Route path="occupancy" element={<AdminOccupancyDashboard />} />

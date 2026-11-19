@@ -171,7 +171,7 @@ const RevenueChart = ({ data }) => {
           ))}
         </div>
 
-        <div className="min-w-0 flex-1 overflow-x-auto">
+        <div className="min-w-0 flex-1 overflow-visible">
           <div className="min-w-[520px]">
             {/* Chart Plot */}
             <div className="relative h-64">
@@ -199,20 +199,21 @@ const RevenueChart = ({ data }) => {
                     >
                       {isActive && (
                         <div
-                          className="absolute z-20 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-xs text-white shadow-xl"
+                          className="absolute z-30 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-xs text-white shadow-xl pointer-events-none"
                           style={{
-                            bottom: `calc(${height}% + 10px)`,
+                            bottom: `max(8px, calc(${height}% - 75px))`,
+                            left: "50%",
+                            transform: "translateX(-50%)",
                           }}
                         >
                           <p className="font-semibold">{item.fullLabel}</p>
 
                           <p className="mt-1 font-bold text-blue-300">
-                            {formatCurrency(item.value)}
+                            Revenue: {formatCurrency(item.value)}
                           </p>
 
                           <p className="mt-1 text-slate-300">
-                            {item.count}{" "}
-                            {item.count === 1 ? "booking" : "bookings"}
+                            Bookings: {item.count}
                           </p>
                         </div>
                       )}

@@ -27,18 +27,7 @@ const AdminSidebar = () => {
       icon: "♧",
       description: "Manage customer teams",
     },
-    {
-      label: "Properties",
-      path: "properties",
-      icon: "⌂",
-      description: "Manage listings",
-    },
-    {
-      label: "Payments",
-      path: "payments",
-      icon: "₹",
-      description: "Transactions",
-    },
+
     {
       label: "Invoices",
       path: "invoices",
