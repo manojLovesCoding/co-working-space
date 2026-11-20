@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import api from "../../api/axios.js";
+import { useNavigate } from "react-router-dom";
 
 const SPACE_TYPES = [
   "Workspace",
@@ -70,6 +71,8 @@ const parseEmails = (value) => [
 const AddCoupon = () => {
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+
+  const navigate = useNavigate();
 
   const handleInput = useCallback((event) => {
     const { name, value } = event.target;
@@ -181,6 +184,7 @@ const AddCoupon = () => {
 
         toast.success(response.data?.message || "Coupon created successfully");
         setForm(EMPTY_FORM);
+        navigate("/admin/coupon-list");
       } catch (error) {
         console.error("Create coupon error:", error);
         toast.error(error.response?.data?.message || "Failed to create coupon");
@@ -202,77 +206,88 @@ const AddCoupon = () => {
       : [];
 
   const inputClass =
-    "w-full rounded-xl border border-blue-100 bg-[#F8FBFF] px-4 py-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60";
+    "w-full rounded-xl border border-[#E9DED0] bg-[#FBF3ED] px-3.5 py-2.5 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99A8D] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
-  const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+  const labelClass = "mb-1.5 block text-xs font-semibold text-[#6F5D52]";
 
   const selectClass =
-    "w-full cursor-pointer appearance-none rounded-xl border border-blue-100 bg-[#F8FBFF] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60";
+    "w-full cursor-pointer appearance-none rounded-xl border border-[#E9DED0] bg-[#FBF3ED] px-3.5 py-2.5 text-sm text-[#382B26] outline-none transition focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
   const SectionHeading = ({ icon: Icon, title, description }) => (
-    <div className="mb-6 flex items-start gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-        <Icon size={19} />
+    <div className="mb-4 flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
+        <Icon size={18} />
       </div>
-      <div>
-        <h3 className="font-semibold text-slate-800">{title}</h3>
-        <p className="mt-1 text-xs text-slate-500">{description}</p>
+
+      <div className="min-w-0">
+        <h3 className="text-sm font-bold text-[#382B26]">{title}</h3>
+        <p className="mt-0.5 text-xs text-[#8F8175]">{description}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FAF6EF] p-3 sm:p-4 lg:p-5">
       <div className="mx-auto max-w-7xl">
         {/* PAGE HEADER */}
-        <div className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 p-6 shadow-lg shadow-blue-200/60 sm:p-8">
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+
+        <div className="relative mb-4 overflow-hidden rounded-2xl bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] p-4 text-white shadow-md shadow-[#71392F]/10 sm:p-5">
+          <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full bg-white/10" />
+          <div className="absolute -bottom-20 right-40 h-36 w-36 rounded-full bg-white/10" />
+
+          <div className="relative z-10 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-blue-50">
-                <Sparkles size={14} />
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90">
+                <Sparkles size={13} />
                 Oorza Admin Panel
               </div>
 
-              <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                 Create a Coupon
               </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100">
+              <p className="mt-1.5 max-w-xl text-sm leading-5 text-white/80">
                 Create promotional offers and manage discounts for workspace
                 bookings.
               </p>
             </div>
 
-            <div className="hidden h-24 w-24 items-center justify-center rounded-2xl border border-white/20 bg-white/10 sm:flex">
-              <Ticket size={48} strokeWidth={1.4} className="text-white" />
+            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 sm:flex">
+              <Ticket size={34} strokeWidth={1.5} />
             </div>
           </div>
         </div>
 
         {/* MAIN FORM CARD */}
-        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
+
+        <div className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
           {/* CARD HEADER */}
-          <div className="flex flex-col gap-3 border-b border-blue-100 bg-[#F5F9FF] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+
+          <div className="flex flex-col gap-2 border-b border-[#E9DED0] bg-[#FBF3ED] px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
-                <Tag size={21} />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
+                <Tag size={19} />
               </div>
+
               <div>
-                <h2 className="font-bold text-slate-800">Coupon Information</h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <h2 className="text-sm font-bold text-[#382B26]">
+                  Coupon Information
+                </h2>
+                <p className="mt-0.5 text-xs text-[#8F8175]">
                   Configure coupon details and booking eligibility
                 </p>
               </div>
             </div>
 
-            <span className="w-fit rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-semibold text-blue-600">
+            <span className="w-fit rounded-full border border-[#E9DED0] bg-[#FFFDFA] px-3 py-1 text-xs font-semibold text-[#A95643]">
               Required fields *
             </span>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="space-y-8 p-5 sm:p-7">
+            <div className="space-y-5 p-4 sm:p-5">
               {/* BASIC INFORMATION */}
+
               <section>
                 <SectionHeading
                   icon={Ticket}
@@ -280,14 +295,16 @@ const AddCoupon = () => {
                   description="Set your coupon code and its validity period."
                 />
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <label className={labelClass}>Coupon Code *</label>
+
                     <div className="relative">
                       <Ticket
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
+
                       <input
                         type="text"
                         name="couponCode"
@@ -299,18 +316,21 @@ const AddCoupon = () => {
                         className={`${inputClass} pl-10 font-semibold uppercase tracking-wider`}
                       />
                     </div>
-                    <p className="mt-2 text-xs text-slate-400">
+
+                    <p className="mt-1.5 text-[11px] text-[#A99A8D]">
                       Letters, numbers, hyphens and underscores.
                     </p>
                   </div>
 
                   <div>
                     <label className={labelClass}>Valid From *</label>
+
                     <div className="relative">
                       <CalendarDays
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
+
                       <input
                         type="date"
                         name="validFrom"
@@ -324,11 +344,13 @@ const AddCoupon = () => {
 
                   <div>
                     <label className={labelClass}>Valid To *</label>
+
                     <div className="relative">
                       <CalendarDays
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
+
                       <input
                         type="date"
                         name="validTo"
@@ -343,9 +365,10 @@ const AddCoupon = () => {
                 </div>
               </section>
 
-              <div className="border-t border-dashed border-blue-100" />
+              <div className="border-t border-dashed border-[#E9DED0]" />
 
               {/* ELIGIBILITY */}
+
               <section>
                 <SectionHeading
                   icon={Users}
@@ -353,24 +376,23 @@ const AddCoupon = () => {
                   description="Choose which customers can use this coupon."
                 />
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className={labelClass}>User Type *</label>
-                    <div className="relative">
-                      <select
-                        name="userType"
-                        value={form.userType}
-                        onChange={handleInput}
-                        disabled={saving}
-                        className={selectClass}
-                      >
-                        {USER_TYPES.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+
+                    <select
+                      name="userType"
+                      value={form.userType}
+                      onChange={handleInput}
+                      disabled={saving}
+                      className={selectClass}
+                    >
+                      {USER_TYPES.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {form.userType === "Selected Email Addresses" && (
@@ -378,11 +400,13 @@ const AddCoupon = () => {
                       <label className={labelClass}>
                         Customer Email Addresses *
                       </label>
+
                       <div className="relative">
                         <Mail
-                          size={17}
-                          className="absolute left-4 top-4 text-blue-500"
+                          size={16}
+                          className="absolute left-3.5 top-3.5 text-[#A95643]"
                         />
+
                         <textarea
                           name="selectedEmails"
                           value={form.selectedEmails}
@@ -390,18 +414,19 @@ const AddCoupon = () => {
                           placeholder={
                             "customer1@gmail.com\ncustomer2@gmail.com\ncustomer3@gmail.com"
                           }
-                          rows={4}
+                          rows={3}
                           disabled={saving}
-                          className={`${inputClass} resize-y pl-11`}
+                          className={`${inputClass} resize-y pl-10`}
                         />
                       </div>
 
-                      <div className="mt-2 flex flex-col gap-1 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="mt-1.5 flex flex-col gap-1 text-[11px] text-[#A99A8D] sm:flex-row sm:items-center sm:justify-between">
                         <span>
                           Separate addresses using commas, semicolons, or new
                           lines. Duplicates are removed.
                         </span>
-                        <span className="font-medium text-blue-600">
+
+                        <span className="font-semibold text-[#A95643]">
                           {previewEmails.length} email(s)
                         </span>
                       </div>
@@ -410,9 +435,10 @@ const AddCoupon = () => {
                 </div>
               </section>
 
-              <div className="border-t border-dashed border-blue-100" />
+              <div className="border-t border-dashed border-[#E9DED0]" />
 
               {/* BOOKING CONDITIONS */}
+
               <section>
                 <SectionHeading
                   icon={Building2}
@@ -420,9 +446,10 @@ const AddCoupon = () => {
                   description="Select the workspace category and booking duration."
                 />
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className={labelClass}>Space Type *</label>
+
                     <select
                       name="spaceType"
                       value={form.spaceType}
@@ -440,11 +467,13 @@ const AddCoupon = () => {
 
                   <div>
                     <label className={labelClass}>Pack Type *</label>
+
                     <div className="relative">
                       <Clock3
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
+
                       <select
                         name="packType"
                         value={form.packType}
@@ -463,9 +492,10 @@ const AddCoupon = () => {
                 </div>
               </section>
 
-              <div className="border-t border-dashed border-blue-100" />
+              <div className="border-t border-dashed border-[#E9DED0]" />
 
               {/* DISCOUNT CONFIGURATION */}
+
               <section>
                 <SectionHeading
                   icon={Percent}
@@ -473,9 +503,10 @@ const AddCoupon = () => {
                   description="Define the discount percentage and eligible booking price range."
                 />
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   <div>
                     <label className={labelClass}>Discount (%) *</label>
+
                     <div className="relative">
                       <input
                         type="number"
@@ -487,25 +518,29 @@ const AddCoupon = () => {
                         max="100"
                         step="any"
                         disabled={saving}
-                        className={`${inputClass} pr-11`}
+                        className={`${inputClass} pr-10`}
                       />
+
                       <Percent
-                        size={17}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
                     </div>
-                    <p className="mt-2 text-xs text-slate-400">
+
+                    <p className="mt-1.5 text-[11px] text-[#A99A8D]">
                       Enter a value between 1 and 100.
                     </p>
                   </div>
 
                   <div>
                     <label className={labelClass}>Minimum Price (₹) *</label>
+
                     <div className="relative">
                       <IndianRupee
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
+
                       <input
                         type="number"
                         name="minimumPrice"
@@ -522,11 +557,13 @@ const AddCoupon = () => {
 
                   <div>
                     <label className={labelClass}>Maximum Price (₹) *</label>
+
                     <div className="relative">
                       <IndianRupee
-                        size={17}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500"
+                        size={16}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A95643]"
                       />
+
                       <input
                         type="number"
                         name="maximumPrice"
@@ -544,39 +581,43 @@ const AddCoupon = () => {
               </section>
 
               {/* COUPON PREVIEW */}
-              <section className="overflow-hidden rounded-2xl border border-blue-200 bg-gradient-to-br from-[#F0F7FF] via-white to-indigo-50">
-                <div className="flex items-center justify-between border-b border-blue-100 px-5 py-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                      <Sparkles size={18} />
+
+              <section className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-gradient-to-br from-[#F8EDE6] via-[#FFFDFA] to-[#FBF3ED]">
+                <div className="flex items-center justify-between gap-3 border-b border-[#E9DED0] px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F1DED3] text-[#A95643]">
+                      <Sparkles size={17} />
                     </div>
+
                     <div>
-                      <h3 className="font-bold text-slate-800">
+                      <h3 className="text-sm font-bold text-[#382B26]">
                         Coupon Preview
                       </h3>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-[11px] text-[#8F8175]">
                         Live preview of your offer
                       </p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+
+                  <span className="shrink-0 rounded-full bg-[#F1DED3] px-3 py-1 text-[11px] font-semibold text-[#71392F]">
                     Preview
                   </span>
                 </div>
 
-                <div className="p-5">
-                  <div className="mb-5 flex flex-col gap-4 rounded-xl border border-dashed border-blue-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <div className="p-3.5 sm:p-4">
+                  <div className="mb-3 flex flex-col gap-3 rounded-xl border border-dashed border-[#C9826C] bg-[#FFFDFA] p-3.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-[#8F8175]">
                         Coupon Code
                       </p>
-                      <p className="mt-1 break-all text-xl font-extrabold tracking-widest text-blue-700">
+
+                      <p className="mt-1 break-all text-lg font-extrabold tracking-widest text-[#71392F]">
                         {form.couponCode || "YOURCOUPON"}
                       </p>
                     </div>
 
-                    <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-md">
-                      <span className="text-xl font-extrabold">
+                    <div className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-[#71392F] to-[#A95643] text-white shadow-sm">
+                      <span className="text-lg font-extrabold">
                         {form.discount ? `${form.discount}%` : "0%"}
                       </span>
                       <span className="text-[9px] font-semibold uppercase tracking-wider">
@@ -585,45 +626,47 @@ const AddCoupon = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <div className="rounded-xl bg-white/80 p-3">
-                      <p className="text-xs text-slate-400">Discount</p>
-                      <p className="mt-1 font-bold text-blue-700">
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                    <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA]/90 p-3">
+                      <p className="text-[11px] text-[#8F8175]">Discount</p>
+                      <p className="mt-1 font-bold text-[#A95643]">
                         {form.discount ? `${form.discount}%` : "-"}
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-white/80 p-3">
-                      <p className="text-xs text-slate-400">User Type</p>
-                      <p className="mt-1 break-words text-sm font-semibold text-slate-700">
+                    <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA]/90 p-3">
+                      <p className="text-[11px] text-[#8F8175]">User Type</p>
+                      <p className="mt-1 break-words text-xs font-semibold text-[#382B26]">
                         {form.userType}
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-white/80 p-3">
-                      <p className="text-xs text-slate-400">Space Type</p>
-                      <p className="mt-1 break-words text-sm font-semibold text-slate-700">
+                    <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA]/90 p-3">
+                      <p className="text-[11px] text-[#8F8175]">Space Type</p>
+                      <p className="mt-1 break-words text-xs font-semibold text-[#382B26]">
                         {form.spaceType}
                       </p>
                     </div>
 
-                    <div className="rounded-xl bg-white/80 p-3">
-                      <p className="text-xs text-slate-400">Pack Type</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-700">
+                    <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA]/90 p-3">
+                      <p className="text-[11px] text-[#8F8175]">Pack Type</p>
+                      <p className="mt-1 break-words text-xs font-semibold text-[#382B26]">
                         {form.packType}
                       </p>
                     </div>
                   </div>
 
                   {form.userType === "Selected Email Addresses" && (
-                    <div className="mt-4 rounded-xl bg-white/80 p-4">
+                    <div className="mt-3 rounded-xl border border-[#E9DED0] bg-[#FFFDFA]/90 p-3">
                       <div className="mb-2 flex items-center gap-2">
-                        <Mail size={15} className="text-blue-500" />
-                        <p className="text-sm font-semibold text-slate-700">
+                        <Mail size={14} className="text-[#A95643]" />
+
+                        <p className="text-xs font-semibold text-[#382B26]">
                           Eligible Email Addresses ({previewEmails.length})
                         </p>
                       </div>
-                      <p className="break-words text-sm leading-relaxed text-slate-600">
+
+                      <p className="break-words text-xs leading-relaxed text-[#6F5D52]">
                         {previewEmails.join(", ") || "-"}
                       </p>
                     </div>
@@ -633,21 +676,22 @@ const AddCoupon = () => {
             </div>
 
             {/* FORM FOOTER */}
-            <div className="flex flex-col-reverse gap-3 border-t border-blue-100 bg-[#F5F9FF] p-5 sm:flex-row sm:items-center sm:justify-end sm:px-7">
+
+            <div className="flex shrink-0 flex-col-reverse gap-2.5 border-t border-[#E9DED0] bg-[#FBF3ED] p-3.5 sm:flex-row sm:items-center sm:justify-end sm:px-5">
               <button
                 type="button"
                 onClick={handleReset}
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E9DED0] bg-[#FFFDFA] px-4 py-2.5 text-sm font-semibold text-[#6F5D52] transition hover:border-[#C9826C] hover:bg-[#F8EDE6] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <RotateCcw size={16} />
+                <RotateCcw size={15} />
                 Reset Form
               </button>
 
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-md shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#A95643] to-[#71392F] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-[#71392F] hover:to-[#5D2D25] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? (
                   <>
@@ -656,7 +700,7 @@ const AddCoupon = () => {
                   </>
                 ) : (
                   <>
-                    <Plus size={17} />
+                    <Plus size={16} />
                     Create Coupon
                   </>
                 )}
@@ -666,8 +710,9 @@ const AddCoupon = () => {
         </div>
 
         {/* FOOTNOTE */}
-        <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-          <CheckCircle2 size={14} className="text-blue-500" />
+
+        <div className="mt-3 flex items-center justify-center gap-2 text-[11px] text-[#8F8175]">
+          <CheckCircle2 size={13} className="text-emerald-600" />
           Review the coupon details before creating the offer.
         </div>
       </div>

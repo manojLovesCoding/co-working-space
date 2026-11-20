@@ -58,22 +58,22 @@ const FLOOR_ZONE_LAYOUT = {
   Workspace: {
     title: "Open Workspace",
     span: "lg:col-span-12",
-    tone: "violet",
+    tone: "terracotta",
   },
   "Executive Cabin": {
     title: "Executive Cubicles",
     span: "lg:col-span-4",
-    tone: "blue",
+    tone: "sand",
   },
   "Team Leads Cubicle": {
     title: "Team Lead Cubicles",
     span: "lg:col-span-4",
-    tone: "teal",
+    tone: "sage",
   },
   "Senior Leads Cubicle": {
     title: "Senior Lead Cubicles",
     span: "lg:col-span-4",
-    tone: "indigo",
+    tone: "rose",
   },
   "Manager Cubicle": {
     title: "Manager Cubicles",
@@ -83,33 +83,33 @@ const FLOOR_ZONE_LAYOUT = {
   "CEO Cabin": {
     title: "CEO Suite",
     span: "lg:col-span-4",
-    tone: "rose",
+    tone: "brown",
   },
   "Video Conferencing": {
     title: "Video Conference Room",
     span: "lg:col-span-4",
-    tone: "cyan",
+    tone: "cafe",
   },
 };
 
 const ZONE_TONES = {
-  violet: "border-violet-200 bg-violet-50/70",
-  blue: "border-blue-200 bg-blue-50/70",
-  teal: "border-teal-200 bg-teal-50/70",
-  indigo: "border-indigo-200 bg-indigo-50/70",
+  terracotta: "border-[#C9826C] bg-[#F8EDE6]/80",
+  sand: "border-[#E9DED0] bg-[#FBF3ED]/80",
+  sage: "border-[#A8BDA5] bg-[#EDF3EA]/80",
+  rose: "border-[#E7C4B9] bg-[#F9EEEA]/80",
   amber: "border-amber-200 bg-amber-50/70",
-  rose: "border-rose-200 bg-rose-50/70",
-  cyan: "border-cyan-200 bg-cyan-50/70",
+  brown: "border-[#BCA99A] bg-[#F1EAE2]/80",
+  cafe: "border-[#D6A45D] bg-[#FBF3E7]/80",
 };
 
 const ZONE_PILLS = {
-  violet: "bg-violet-100 text-violet-700",
-  blue: "bg-blue-100 text-blue-700",
-  teal: "bg-teal-100 text-teal-700",
-  indigo: "bg-indigo-100 text-indigo-700",
-  amber: "bg-amber-100 text-amber-700",
-  rose: "bg-rose-100 text-rose-700",
-  cyan: "bg-cyan-100 text-cyan-700",
+  terracotta: "bg-[#A95643]/10 text-[#71392F]",
+  sand: "bg-[#E9DED0]/70 text-[#6F5B4D]",
+  sage: "bg-[#A8BDA5]/25 text-[#42634A]",
+  rose: "bg-[#F1DCD5] text-[#914F40]",
+  amber: "bg-amber-100 text-amber-800",
+  brown: "bg-[#E8DED3] text-[#5D4638]",
+  cafe: "bg-[#F4E4C9] text-[#805B25]",
 };
 
 /* ---------- seat states ---------- */
@@ -124,17 +124,17 @@ const STATES = {
   },
   occupied: {
     label: "Occupied",
-    tile: "border-rose-400 bg-rose-500 text-white hover:bg-rose-600",
-    badge: "bg-rose-50 text-rose-700 ring-rose-600/20",
-    dot: "bg-rose-500",
-    bar: "bg-rose-500",
+    tile: "border-[#A95643] bg-[#A95643] text-white hover:border-[#71392F] hover:bg-[#71392F]",
+    badge: "bg-[#F8EDE6] text-[#71392F] ring-[#A95643]/20",
+    dot: "bg-[#A95643]",
+    bar: "bg-[#A95643]",
   },
   reserved: {
     label: "Reserved later today",
-    tile: "border-sky-200 bg-sky-50 text-sky-800 hover:border-sky-400 hover:bg-sky-100",
-    badge: "bg-sky-50 text-sky-700 ring-sky-600/20",
-    dot: "bg-sky-500",
-    bar: "bg-sky-400",
+    tile: "border-[#D9A18F] bg-[#F8EDE6] text-[#71392F] hover:border-[#A95643] hover:bg-[#F3DFD5]",
+    badge: "bg-[#F8EDE6] text-[#71392F] ring-[#A95643]/20",
+    dot: "bg-[#C9826C]",
+    bar: "bg-[#C9826C]",
   },
   held: {
     label: "Payment in progress",
@@ -212,9 +212,9 @@ const formatDateTime = (ms) =>
 // Human readable schedule of one booking.
 const getSchedule = (booking) => {
   if (booking.plan === "hourly") {
-    return `${formatDay(booking.start)}, ${formatClock(booking.start)} - ${formatClock(
-      booking.end,
-    )}`;
+    return `${formatDay(booking.start)}, ${formatClock(
+      booking.start,
+    )} - ${formatClock(booking.end)}`;
   }
 
   return `${formatDay(booking.start)} to ${formatDay(booking.end - 1)}`;
@@ -309,22 +309,22 @@ const LiveClock = () => {
 };
 
 const StatCard = ({ title, value, hint, tone, icon: Icon }) => (
-  <div className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_3px_15px_rgba(30,64,175,0.04)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(30,64,175,0.08)]">
-    <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-blue-50/80 transition-transform duration-300 group-hover:scale-125" />
+  <div className="group relative overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-[0_3px_15px_rgba(113,57,47,0.04)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(113,57,47,0.08)]">
+    <div className="absolute -right-7 -top-7 h-24 w-24 rounded-full bg-[#F8EDE6]/80 transition-transform duration-300 group-hover:scale-125" />
 
     <div className="relative flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <p className={`mt-3 text-3xl font-extrabold tracking-tight ${tone}`}>
+        <p className="text-sm font-medium text-[#8F8175]">{title}</p>
+        <p className={`mt-2 text-3xl font-extrabold tracking-tight ${tone}`}>
           {value}
         </p>
         {hint && (
-          <p className="mt-2 text-xs font-medium text-slate-400">{hint}</p>
+          <p className="mt-2 text-xs font-medium text-[#A99A8D]">{hint}</p>
         )}
       </div>
 
       {Icon && (
-        <div className="rounded-2xl bg-blue-50 p-3.5 text-blue-700">
+        <div className="rounded-2xl bg-[#F8EDE6] p-3 text-[#A95643]">
           <Icon size={22} />
         </div>
       )}
@@ -333,31 +333,31 @@ const StatCard = ({ title, value, hint, tone, icon: Icon }) => (
 );
 
 const SectionHeading = ({ icon: Icon, title, subtitle }) => (
-  <div className="mb-5 flex items-center gap-3">
-    <div className="rounded-xl bg-blue-100 p-2.5 text-blue-700">
+  <div className="mb-4 flex items-center gap-3">
+    <div className="rounded-xl bg-[#F8EDE6] p-2.5 text-[#A95643]">
       <Icon size={19} />
     </div>
     <div>
-      <h2 className="text-base font-bold text-slate-900">{title}</h2>
-      {subtitle && <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p>}
+      <h2 className="text-base font-bold text-[#382B26]">{title}</h2>
+      {subtitle && <p className="mt-0.5 text-xs text-[#8F8175]">{subtitle}</p>}
     </div>
   </div>
 );
 
 const DetailItem = ({ label, value, icon: Icon }) => (
-  <div className="min-w-0 rounded-xl border border-blue-100 bg-white p-3.5">
-    <div className="flex items-center gap-2 text-slate-400">
+  <div className="min-w-0 rounded-xl border border-[#E9DED0] bg-[#FFFDFA] p-3">
+    <div className="flex items-center gap-2 text-[#A99A8D]">
       {Icon && <Icon size={14} />}
       <p className="text-[10px] font-bold uppercase tracking-wider">{label}</p>
     </div>
-    <p className="mt-2 break-all text-sm font-semibold text-slate-800">
+    <p className="mt-2 break-all text-sm font-semibold text-[#382B26]">
       {value || "—"}
     </p>
   </div>
 );
 
 const selectClass =
-  "rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50";
+  "w-full rounded-xl border border-[#E9DED0] bg-[#FBF3ED] px-3 py-2.5 text-sm font-medium text-[#382B26] outline-none transition focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10";
 
 /* ---------- component ---------- */
 
@@ -643,7 +643,9 @@ const AdminOccupancyDashboard = () => {
       const holders = getHolders(seat.current, seat.code);
 
       if (PER_HEAD_SPACES.includes(seat.type)) {
-        return `${holders.length} ${holders.length === 1 ? "person" : "people"}`;
+        return `${holders.length} ${
+          holders.length === 1 ? "person" : "people"
+        }`;
       }
 
       return holders[0]?.name?.split(" ")[0] || "Occupied";
@@ -660,17 +662,17 @@ const AdminOccupancyDashboard = () => {
   /* ---------- render ---------- */
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-[1550px] space-y-6">
+    <div className="min-h-screen bg-[#FAF6EF] p-4 sm:p-5 lg:p-6">
+      <div className="mx-auto max-w-[1550px] space-y-5">
         {/* HEADER */}
 
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 p-6 shadow-lg shadow-blue-900/10 sm:p-8">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] p-5 shadow-lg shadow-[#71392F]/10 sm:p-7">
           <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full border-[35px] border-white/5" />
           <div className="absolute -bottom-28 right-44 h-64 w-64 rounded-full bg-white/5" />
 
-          <div className="relative flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
+          <div className="relative flex flex-col justify-between gap-5 xl:flex-row xl:items-center">
             <div>
-              <div className="mb-4 flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-50">
+              <div className="mb-3 flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90">
                 <Building2 size={14} />
                 Oorza Administration
               </div>
@@ -684,36 +686,36 @@ const AdminOccupancyDashboard = () => {
                   className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${
                     officeOpen
                       ? "border-emerald-300/30 bg-emerald-400/15 text-emerald-100"
-                      : "border-white/20 bg-white/10 text-blue-100"
+                      : "border-white/20 bg-white/10 text-white/80"
                   }`}
                 >
                   <span
                     className={`h-2 w-2 rounded-full ${
                       officeOpen
                         ? "animate-pulse bg-emerald-400"
-                        : "bg-slate-300"
+                        : "bg-white/50"
                     }`}
                   />
                   Office {officeOpen ? "Open" : "Closed"}
                 </span>
               </div>
 
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-blue-100">
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
                 Monitor real-time workspace availability, track reservations and
                 view the occupancy of every office space.
               </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-medium text-blue-100">
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-xs font-medium text-white/80">
                 <span className="flex items-center gap-1.5">
                   <Activity size={15} />
                   Live monitoring
                 </span>
-                <span className="h-1 w-1 rounded-full bg-blue-300" />
+                <span className="h-1 w-1 rounded-full bg-white/50" />
                 <span className="flex items-center gap-1.5">
                   <LayoutGrid size={15} />
                   Floor overview
                 </span>
-                <span className="h-1 w-1 rounded-full bg-blue-300" />
+                <span className="h-1 w-1 rounded-full bg-white/50" />
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck size={15} />
                   Booking status
@@ -724,13 +726,13 @@ const AdminOccupancyDashboard = () => {
             <div className="flex flex-col gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm sm:min-w-[300px]">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-200">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/65">
                     Current India time
                   </p>
                   <p className="mt-1 text-2xl font-extrabold tabular-nums text-white">
                     <LiveClock />
                   </p>
-                  <p className="mt-1 text-xs text-blue-200">
+                  <p className="mt-1 text-xs text-white/65">
                     {formatDay(now)} · IST
                   </p>
                 </div>
@@ -742,7 +744,7 @@ const AdminOccupancyDashboard = () => {
 
               <div className="flex items-center justify-between gap-3 border-t border-white/15 pt-3">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-200">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-white/65">
                     Last synchronized
                   </p>
                   <p className="mt-1 text-xs font-bold text-white">
@@ -756,7 +758,7 @@ const AdminOccupancyDashboard = () => {
                   type="button"
                   onClick={() => fetchData(false)}
                   disabled={loading || refreshing}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-blue-700 shadow-sm transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#FFFDFA] px-4 py-2.5 text-xs font-bold text-[#71392F] shadow-sm transition hover:bg-[#F8EDE6] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <RefreshCw
                     size={15}
@@ -771,7 +773,7 @@ const AdminOccupancyDashboard = () => {
 
         {/* SUMMARY */}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard
             title="Utilization"
             value={loading ? "—" : `${totals.utilization}%`}
@@ -780,7 +782,7 @@ const AdminOccupancyDashboard = () => {
                 ? ""
                 : `${totals.occupied} of ${totals.inService} seats in use`
             }
-            tone="text-blue-700"
+            tone="text-[#A95643]"
             icon={Activity}
           />
 
@@ -796,7 +798,7 @@ const AdminOccupancyDashboard = () => {
             title="Occupied Now"
             value={loading ? "—" : totals.occupied}
             hint="Booking in progress"
-            tone="text-rose-600"
+            tone="text-[#A95643]"
             icon={Users}
           />
 
@@ -808,7 +810,7 @@ const AdminOccupancyDashboard = () => {
                 ? "Booked for later"
                 : `Includes ${totals.held} being paid for`
             }
-            tone="text-sky-600"
+            tone="text-amber-600"
             icon={CalendarCheck}
           />
 
@@ -824,7 +826,7 @@ const AdminOccupancyDashboard = () => {
         {/* UTILIZATION BY SPACE TYPE */}
 
         {!loading && groups.length > 0 && (
-          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_3px_15px_rgba(30,64,175,0.04)] sm:p-6">
+          <div className="rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-[0_3px_15px_rgba(113,57,47,0.04)] sm:p-5">
             <SectionHeading
               icon={Activity}
               title="Utilization by Space Type"
@@ -842,32 +844,34 @@ const AdminOccupancyDashboard = () => {
                   <div key={group.type}>
                     <div className="mb-2 flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-bold text-slate-800">
+                        <p className="truncate text-sm font-bold text-[#382B26]">
                           {group.type}
                         </p>
-                        <p className="mt-0.5 text-[11px] text-slate-400">
+                        <p className="mt-0.5 text-[11px] text-[#A99A8D]">
                           {inService} active spaces
                         </p>
                       </div>
 
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-extrabold text-slate-800">
+                        <p className="text-sm font-extrabold text-[#382B26]">
                           {percent}%
                         </p>
-                        <p className="text-[10px] text-slate-400">
+                        <p className="text-[10px] text-[#A99A8D]">
                           {group.counts.occupied}/{inService} occupied
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100">
+                    <div className="flex h-3 w-full overflow-hidden rounded-full bg-[#F1EAE2]">
                       {["occupied", "held", "reserved"].map((state) =>
                         group.counts[state] > 0 ? (
                           <div
                             key={state}
                             className={STATES[state].bar}
                             style={{
-                              width: `${(group.counts[state] / group.total) * 100}%`,
+                              width: `${
+                                (group.counts[state] / group.total) * 100
+                              }%`,
                             }}
                             title={`${STATES[state].label}: ${group.counts[state]}`}
                           />
@@ -883,15 +887,15 @@ const AdminOccupancyDashboard = () => {
 
         {/* FILTERS + LEGEND */}
 
-        <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_3px_15px_rgba(30,64,175,0.04)] sm:p-6">
-          <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-[0_3px_15px_rgba(113,57,47,0.04)] sm:p-5">
+          <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-blue-100 p-2.5 text-blue-700">
+              <div className="rounded-xl bg-[#F8EDE6] p-2.5 text-[#A95643]">
                 <Search size={19} />
               </div>
               <div>
-                <h2 className="font-bold text-slate-900">Find a Workspace</h2>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <h2 className="font-bold text-[#382B26]">Find a Workspace</h2>
+                <p className="mt-0.5 text-xs text-[#8F8175]">
                   Search seats and filter by space type or availability
                 </p>
               </div>
@@ -901,7 +905,7 @@ const AdminOccupancyDashboard = () => {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 transition hover:text-indigo-800"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#A95643] transition hover:text-[#71392F]"
               >
                 <X size={14} />
                 Clear all filters
@@ -913,14 +917,14 @@ const AdminOccupancyDashboard = () => {
             <div className="relative">
               <Search
                 size={17}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99A8D]"
               />
               <input
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search seat code, person, customer or booking ID..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-50"
+                className="w-full rounded-xl border border-[#E9DED0] bg-[#FBF3ED] py-3 pl-11 pr-4 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99A8D] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10"
               />
             </div>
 
@@ -939,12 +943,12 @@ const AdminOccupancyDashboard = () => {
             </select>
           </div>
 
-          <div className="mt-5 border-t border-slate-100 pt-4">
+          <div className="mt-4 border-t border-[#E9DED0] pt-4">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-[#A99A8D]">
                 Filter by availability
               </p>
-              <p className="text-xs font-medium text-slate-400">
+              <p className="text-xs font-medium text-[#A99A8D]">
                 {filteredSeats.length} of {totals.total} spaces
               </p>
             </div>
@@ -955,8 +959,8 @@ const AdminOccupancyDashboard = () => {
                 onClick={() => setStateFilter("All")}
                 className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 transition ${
                   stateFilter === "All"
-                    ? "bg-blue-700 text-white ring-blue-700"
-                    : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50"
+                    ? "bg-[#A95643] text-white ring-[#A95643]"
+                    : "bg-white text-[#6F6259] ring-[#E9DED0] hover:bg-[#F8EDE6]"
                 }`}
               >
                 All Spaces ({totals.total})
@@ -971,8 +975,8 @@ const AdminOccupancyDashboard = () => {
                   }
                   className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-bold ring-1 transition ${
                     stateFilter === state
-                      ? "bg-blue-700 text-white ring-blue-700"
-                      : "bg-white text-slate-600 ring-slate-200 hover:bg-blue-50"
+                      ? "bg-[#A95643] text-white ring-[#A95643]"
+                      : "bg-white text-[#6F6259] ring-[#E9DED0] hover:bg-[#F8EDE6]"
                   }`}
                 >
                   <span
@@ -989,24 +993,24 @@ const AdminOccupancyDashboard = () => {
 
         {/* FLOOR PLAN */}
 
-        <div className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-[0_3px_15px_rgba(30,64,175,0.04)]">
-          <div className="flex flex-col justify-between gap-4 border-b border-blue-100 p-5 sm:flex-row sm:items-center sm:p-6">
+        <div className="overflow-hidden rounded-3xl border border-[#E9DED0] bg-[#FFFDFA] shadow-[0_3px_15px_rgba(113,57,47,0.04)]">
+          <div className="flex flex-col justify-between gap-4 border-b border-[#E9DED0] p-4 sm:flex-row sm:items-center sm:p-5">
             <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-indigo-100 p-2.5 text-indigo-700">
+              <div className="rounded-xl bg-[#F8EDE6] p-2.5 text-[#A95643]">
                 <LayoutGrid size={21} />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-[#382B26]">
                   Office Floor Plan
                 </h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-xs text-[#8F8175]">
                   Select any seat or room to view its live booking details
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1.5 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+              <span className="flex items-center gap-1.5 rounded-lg bg-[#F8EDE6] px-3 py-2 text-xs font-bold text-[#71392F]">
                 <Armchair size={14} />
                 {totals.total} Total Spaces
               </span>
@@ -1018,62 +1022,62 @@ const AdminOccupancyDashboard = () => {
           </div>
 
           {loading ? (
-            <div className="flex min-h-80 flex-col items-center justify-center gap-4 bg-[#F5F9FF]">
-              <div className="rounded-2xl bg-blue-100 p-4">
-                <RefreshCw size={30} className="animate-spin text-blue-600" />
+            <div className="flex min-h-80 flex-col items-center justify-center gap-4 bg-[#FAF6EF]">
+              <div className="rounded-2xl bg-[#F8EDE6] p-4">
+                <RefreshCw size={30} className="animate-spin text-[#A95643]" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-bold text-slate-700">
+                <p className="text-sm font-bold text-[#382B26]">
                   Loading office floor
                 </p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-[#A99A8D]">
                   Retrieving spaces and reservations...
                 </p>
               </div>
             </div>
           ) : seats.length === 0 ? (
-            <div className="flex min-h-80 flex-col items-center justify-center bg-[#F5F9FF] px-4 text-center">
-              <div className="rounded-2xl bg-blue-100 p-5 text-blue-600">
+            <div className="flex min-h-80 flex-col items-center justify-center bg-[#FAF6EF] px-4 text-center">
+              <div className="rounded-2xl bg-[#F8EDE6] p-5 text-[#A95643]">
                 <Armchair size={32} />
               </div>
-              <h3 className="mt-4 font-bold text-slate-800">
+              <h3 className="mt-4 font-bold text-[#382B26]">
                 No spaces available
               </h3>
-              <p className="mt-1 max-w-sm text-sm text-slate-500">
+              <p className="mt-1 max-w-sm text-sm text-[#8F8175]">
                 No seats have been created yet. Add spaces first to see
                 occupancy.
               </p>
             </div>
           ) : filteredSeats.length === 0 ? (
-            <div className="flex min-h-80 flex-col items-center justify-center bg-[#F5F9FF] px-4 text-center">
-              <div className="rounded-2xl bg-blue-100 p-5 text-blue-600">
+            <div className="flex min-h-80 flex-col items-center justify-center bg-[#FAF6EF] px-4 text-center">
+              <div className="rounded-2xl bg-[#F8EDE6] p-5 text-[#A95643]">
                 <Search size={32} />
               </div>
-              <h3 className="mt-4 font-bold text-slate-800">
+              <h3 className="mt-4 font-bold text-[#382B26]">
                 No matching spaces
               </h3>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[#8F8175]">
                 Try changing your search or availability filters.
               </p>
               <button
                 type="button"
                 onClick={clearFilters}
-                className="mt-4 rounded-xl bg-blue-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-blue-800"
+                className="mt-4 rounded-xl bg-[#A95643] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-[#71392F]"
               >
                 Clear Filters
               </button>
             </div>
           ) : (
-            <div className="bg-[#F5F8FE] p-3 sm:p-5">
-              <div className="mb-5 flex flex-col gap-2 border-b border-blue-100 px-1 pb-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="bg-[#FAF6EF] p-3 sm:p-4">
+              <div className="mb-4 flex flex-col gap-2 border-b border-[#E9DED0] px-1 pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-blue-600">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#A95643]">
                     Workspace Layout
                   </p>
-                  <h3 className="mt-1 text-lg font-extrabold text-slate-900">
+                  <h3 className="mt-1 text-lg font-extrabold text-[#382B26]">
                     Live Space Map
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-[#8F8175]">
                     Each tile represents a bookable space
                   </p>
                 </div>
@@ -1082,7 +1086,7 @@ const AdminOccupancyDashboard = () => {
                   {STATE_ORDER.map((state) => (
                     <span
                       key={state}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 shadow-sm"
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[#E9DED0] bg-[#FFFDFA] px-2.5 py-1.5 text-[10px] font-semibold text-[#6F6259] shadow-sm"
                     >
                       <span
                         className={`h-2 w-2 rounded-full ${STATES[state].dot}`}
@@ -1100,7 +1104,7 @@ const AdminOccupancyDashboard = () => {
                     const layout = FLOOR_ZONE_LAYOUT[group.type] || {
                       title: group.type,
                       span: "lg:col-span-6",
-                      tone: "blue",
+                      tone: "terracotta",
                     };
                     const tone = layout.tone;
                     const inService = group.total - group.counts.inactive;
@@ -1112,19 +1116,19 @@ const AdminOccupancyDashboard = () => {
                       <section
                         key={group.type}
                         className={`${layout.span} min-w-0 rounded-2xl border-2 p-3 shadow-sm transition hover:shadow-md sm:p-4 ${
-                          ZONE_TONES[tone] || ZONE_TONES.blue
+                          ZONE_TONES[tone] || ZONE_TONES.terracotta
                         }`}
                       >
-                        <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
                           <div>
                             <span
                               className={`inline-flex rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
-                                ZONE_PILLS[tone] || ZONE_PILLS.blue
+                                ZONE_PILLS[tone] || ZONE_PILLS.terracotta
                               }`}
                             >
                               {layout.title}
                             </span>
-                            <p className="mt-2 text-xs font-medium text-slate-500">
+                            <p className="mt-2 text-xs font-medium text-[#8F8175]">
                               {group.total}{" "}
                               {group.total === 1 ? "space" : "spaces"} ·{" "}
                               {occupiedPercent}% occupied
@@ -1137,7 +1141,7 @@ const AdminOccupancyDashboard = () => {
                             ).map((state) => (
                               <span
                                 key={state}
-                                className="rounded-lg border border-white/80 bg-white/80 px-2 py-1 text-[10px] font-bold text-slate-600"
+                                className="rounded-lg border border-white/80 bg-white/80 px-2 py-1 text-[10px] font-bold text-[#6F6259]"
                               >
                                 {group.counts[state]}{" "}
                                 {state === "available" ? "free" : state}
@@ -1193,7 +1197,7 @@ const AdminOccupancyDashboard = () => {
                                   onClick={() => setSelectedCode(seat.code)}
                                   title={`${seat.code} · ${STATES[seat.state].label}`}
                                   style={workspacePosition}
-                                  className={`group relative flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-xl border px-2 py-3 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 ${
+                                  className={`group relative flex min-h-[72px] min-w-0 flex-col items-center justify-center rounded-xl border px-2 py-3 text-center shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#A95643] focus:ring-offset-2 ${
                                     STATES[seat.state].tile
                                   }`}
                                 >
@@ -1220,20 +1224,20 @@ const AdminOccupancyDashboard = () => {
                   })}
 
                 {/* Decorative shared area from the reference plan; it is not a bookable seat. */}
-                <aside className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border-2 border-sky-200 bg-sky-50 p-4 text-center shadow-sm md:flex lg:col-span-4 lg:col-start-9 lg:row-start-2">
-                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-sky-700 shadow-sm">
+                <aside className="hidden min-h-[150px] flex-col items-center justify-center rounded-2xl border-2 border-[#D6A45D] bg-[#FBF3E7] p-4 text-center shadow-sm md:flex lg:col-span-4 lg:col-start-9 lg:row-start-2">
+                  <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#A95643] shadow-sm">
                     <Coffee size={25} />
                   </span>
-                  <p className="text-xs font-extrabold uppercase tracking-wider text-sky-800">
+                  <p className="text-xs font-extrabold uppercase tracking-wider text-[#71392F]">
                     Breakout Lounge & Café
                   </p>
-                  <p className="mt-1 text-[11px] text-sky-600">
+                  <p className="mt-1 text-[11px] text-[#8F8175]">
                     Shared space · Not bookable
                   </p>
                 </aside>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-blue-100 px-1 pt-4 text-[11px] font-medium text-slate-500">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-[#E9DED0] px-1 pt-4 text-[11px] font-medium text-[#8F8175]">
                 <span className="flex items-center gap-1.5">
                   <CircleDot size={13} className="text-emerald-500" />
                   Live status synced with booking system
@@ -1248,19 +1252,19 @@ const AdminOccupancyDashboard = () => {
 
         {/* AUTO REFRESH FOOTER */}
 
-        <div className="flex flex-col justify-between gap-2 rounded-2xl border border-blue-100 bg-white px-5 py-4 shadow-sm sm:flex-row sm:items-center">
+        <div className="flex flex-col justify-between gap-2 rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] px-4 py-3 shadow-sm sm:flex-row sm:items-center">
           <div className="flex items-center gap-2.5">
-            <div className="rounded-lg bg-blue-50 p-2 text-blue-700">
+            <div className="rounded-lg bg-[#F8EDE6] p-2 text-[#A95643]">
               <RefreshCw
                 size={15}
                 className={autoRefresh ? "animate-spin" : ""}
               />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-xs font-bold text-[#382B26]">
                 Automatic occupancy synchronization
               </p>
-              <p className="mt-0.5 text-[11px] text-slate-500">
+              <p className="mt-0.5 text-[11px] text-[#8F8175]">
                 {autoRefresh
                   ? "Dashboard refreshes every 30 seconds when the tab is visible."
                   : "Automatic refresh is currently paused."}
@@ -1268,12 +1272,12 @@ const AdminOccupancyDashboard = () => {
             </div>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+          <label className="flex cursor-pointer items-center gap-2 rounded-xl bg-[#F8EDE6] px-3 py-2 text-xs font-bold text-[#71392F]">
             <input
               type="checkbox"
               checked={autoRefresh}
               onChange={(event) => setAutoRefresh(event.target.checked)}
-              className="h-4 w-4 accent-blue-600"
+              className="h-4 w-4 accent-[#A95643]"
             />
             Auto Refresh
           </label>
@@ -1284,20 +1288,20 @@ const AdminOccupancyDashboard = () => {
 
       {selectedSeat && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#382B26]/60 p-3 backdrop-blur-sm sm:p-5"
           onClick={() => setSelectedCode(null)}
         >
           <div
-            className="max-h-[94vh] w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="max-h-[94vh] w-full max-w-2xl overflow-hidden rounded-3xl bg-[#FFFDFA] shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 px-5 py-6 sm:px-7">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] px-5 py-5 sm:px-6">
               <div className="absolute -right-10 -top-16 h-48 w-48 rounded-full border-[25px] border-white/5" />
 
               <div className="relative flex items-start justify-between gap-4">
                 <div>
-                  <div className="mb-3 flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-blue-100">
+                  <div className="mb-3 flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white/80">
                     <Building2 size={12} />
                     Workspace Details
                   </div>
@@ -1306,7 +1310,7 @@ const AdminOccupancyDashboard = () => {
                     {selectedSeat.code}
                   </h2>
 
-                  <p className="mt-1 text-sm text-blue-100">
+                  <p className="mt-1 text-sm text-white/80">
                     {selectedSeat.type}
                   </p>
                 </div>
@@ -1321,7 +1325,7 @@ const AdminOccupancyDashboard = () => {
                 </button>
               </div>
 
-              <div className="relative mt-5 flex flex-wrap items-center gap-2">
+              <div className="relative mt-4 flex flex-wrap items-center gap-2">
                 <span
                   className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ring-1 ring-inset ${
                     STATES[selectedSeat.state].badge
@@ -1340,7 +1344,7 @@ const AdminOccupancyDashboard = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="max-h-[calc(94vh-190px)] space-y-6 overflow-y-auto bg-[#F5F9FF] p-5 sm:p-7">
+            <div className="max-h-[calc(94vh-180px)] space-y-5 overflow-y-auto bg-[#FAF6EF] p-4 sm:p-5">
               {/* Current / held booking */}
               {(selectedSeat.current || selectedSeat.held) &&
                 (() => {
@@ -1360,12 +1364,12 @@ const AdminOccupancyDashboard = () => {
                         subtitle="Active booking and customer information"
                       />
 
-                      <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm sm:p-5">
-                        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <div className="rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-sm">
+                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#A99A8D]">
                             Booking Reference
                           </span>
-                          <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-700">
+                          <span className="rounded-lg bg-[#F8EDE6] px-3 py-1.5 text-xs font-extrabold text-[#71392F]">
                             {booking.bookingId || "—"}
                           </span>
                         </div>
@@ -1373,7 +1377,9 @@ const AdminOccupancyDashboard = () => {
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                           <DetailItem
                             label="Plan"
-                            value={`${booking.plan || "—"} · ${booking.duration || "—"}`}
+                            value={`${booking.plan || "—"} · ${
+                              booking.duration || "—"
+                            }`}
                             icon={CalendarDays}
                           />
                           <DetailItem
@@ -1401,59 +1407,59 @@ const AdminOccupancyDashboard = () => {
                         )}
                       </div>
 
-                      <div className="mb-3 mt-5 flex items-center justify-between gap-2">
+                      <div className="mb-3 mt-4 flex items-center justify-between gap-2">
                         <div>
-                          <h3 className="text-sm font-bold text-slate-900">
+                          <h3 className="text-sm font-bold text-[#382B26]">
                             {PER_HEAD_SPACES.includes(selectedSeat.type)
                               ? `Attendees (${holders.length})`
                               : "Seat Holder"}
                           </h3>
-                          <p className="mt-0.5 text-xs text-slate-500">
+                          <p className="mt-0.5 text-xs text-[#8F8175]">
                             Assigned people for this space
                           </p>
                         </div>
-                        <span className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700">
+                        <span className="rounded-lg bg-[#F8EDE6] px-2.5 py-1 text-xs font-bold text-[#71392F]">
                           {holders.length}{" "}
                           {holders.length === 1 ? "Person" : "People"}
                         </span>
                       </div>
 
-                      <div className="overflow-x-auto rounded-2xl border border-blue-100 bg-white">
+                      <div className="overflow-x-auto rounded-2xl border border-[#E9DED0] bg-[#FFFDFA]">
                         <table className="w-full min-w-[520px] border-collapse text-sm">
                           <thead>
-                            <tr className="border-b border-blue-100 bg-[#F3F7FF]">
-                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                            <tr className="border-b border-[#E9DED0] bg-[#FBF3ED]">
+                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-[#8F8175]">
                                 Person
                               </th>
-                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-[#8F8175]">
                                 Email
                               </th>
-                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                              <th className="p-3 text-left text-[10px] font-extrabold uppercase tracking-wider text-[#8F8175]">
                                 Phone
                               </th>
                             </tr>
                           </thead>
 
-                          <tbody className="divide-y divide-blue-50">
+                          <tbody className="divide-y divide-[#F1EAE2]">
                             {holders.map((holder, index) => (
                               <tr
                                 key={`${holder.name}-${index}`}
-                                className="transition hover:bg-blue-50/50"
+                                className="transition hover:bg-[#FBF3ED]"
                               >
                                 <td className="p-3">
-                                  <p className="font-bold text-slate-800">
+                                  <p className="font-bold text-[#382B26]">
                                     {holder.name}
                                   </p>
                                   {holder.isSelf && (
-                                    <span className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                                    <span className="mt-1 inline-flex rounded-full bg-[#F8EDE6] px-2 py-0.5 text-[10px] font-bold text-[#71392F]">
                                       Customer
                                     </span>
                                   )}
                                 </td>
-                                <td className="break-all p-3 text-xs text-slate-600">
+                                <td className="break-all p-3 text-xs text-[#6F6259]">
                                   {holder.email || "—"}
                                 </td>
-                                <td className="p-3 text-xs text-slate-600">
+                                <td className="p-3 text-xs text-[#6F6259]">
                                   {holder.phone || "—"}
                                 </td>
                               </tr>
@@ -1481,19 +1487,19 @@ const AdminOccupancyDashboard = () => {
                       return (
                         <div
                           key={booking._id || booking.bookingId}
-                          className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition hover:shadow-md"
+                          className="rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-sm transition hover:shadow-md"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex min-w-0 items-start gap-3">
-                              <div className="rounded-xl bg-blue-100 p-2.5 text-blue-700">
+                              <div className="rounded-xl bg-[#F8EDE6] p-2.5 text-[#A95643]">
                                 <CalendarDays size={18} />
                               </div>
 
                               <div className="min-w-0">
-                                <p className="text-sm font-bold text-slate-800">
+                                <p className="text-sm font-bold text-[#382B26]">
                                   {getSchedule(booking)}
                                 </p>
-                                <p className="mt-1 text-xs text-slate-500">
+                                <p className="mt-1 text-xs text-[#8F8175]">
                                   {holders
                                     .map((holder) => holder.name)
                                     .join(", ")}
@@ -1501,16 +1507,16 @@ const AdminOccupancyDashboard = () => {
                               </div>
                             </div>
 
-                            <span className="shrink-0 rounded-lg bg-blue-50 px-2.5 py-1 text-[10px] font-bold text-blue-700">
+                            <span className="shrink-0 rounded-lg bg-[#F8EDE6] px-2.5 py-1 text-[10px] font-bold text-[#71392F]">
                               #{index + 1}
                             </span>
                           </div>
 
-                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-blue-50 pt-3">
-                            <span className="text-[10px] font-semibold text-slate-400">
+                          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-[#F1EAE2] pt-3">
+                            <span className="text-[10px] font-semibold text-[#A99A8D]">
                               Booking ID
                             </span>
-                            <span className="break-all text-xs font-semibold text-slate-600">
+                            <span className="break-all text-xs font-semibold text-[#6F6259]">
                               {booking.bookingId || "—"}
                             </span>
                           </div>
@@ -1519,14 +1525,14 @@ const AdminOccupancyDashboard = () => {
                     })}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-blue-200 bg-white p-6 text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+                  <div className="rounded-2xl border border-dashed border-[#D9C8B9] bg-[#FFFDFA] p-6 text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
                       <CalendarDays size={22} />
                     </div>
-                    <p className="mt-3 text-sm font-bold text-slate-800">
+                    <p className="mt-3 text-sm font-bold text-[#382B26]">
                       No upcoming bookings
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-[#8F8175]">
                       {selectedSeat.state === "inactive"
                         ? "This seat is currently out of service."
                         : "There are no upcoming reservations for this space."}
@@ -1574,7 +1580,9 @@ const AdminOccupancyDashboard = () => {
                         {selectedSeat.state === "inactive"
                           ? "This space is currently not available for booking."
                           : selectedSeat.state === "reserved"
-                            ? `Next reservation starts at ${formatClock(selectedSeat.next.start)}.`
+                            ? `Next reservation starts at ${formatClock(
+                                selectedSeat.next.start,
+                              )}.`
                             : "No active booking is using this space right now."}
                       </p>
                     </div>
@@ -1584,11 +1592,11 @@ const AdminOccupancyDashboard = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-blue-100 bg-white p-4 sm:px-7 sm:py-5">
+            <div className="border-t border-[#E9DED0] bg-[#FFFDFA] p-4 sm:px-6 sm:py-4">
               <button
                 type="button"
                 onClick={() => setSelectedCode(null)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 px-5 py-3.5 text-sm font-bold text-white shadow-md shadow-blue-900/10 transition hover:from-blue-800 hover:to-indigo-800"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#71392F] to-[#A95643] px-5 py-3 text-sm font-bold text-white shadow-md shadow-[#71392F]/10 transition hover:from-[#5D2E27] hover:to-[#8F4435]"
               >
                 <X size={17} />
                 Close Details

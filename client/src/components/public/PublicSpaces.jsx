@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -46,7 +47,6 @@ const getStartingPrice = (space) => {
 const getSpaceIcon = (spaceName = "") => {
   const name = spaceName.toLowerCase();
 
-  // "conferenc" matches both "Conference" and "Video Conferencing".
   if (name.includes("conferenc")) {
     return Users;
   }
@@ -128,15 +128,6 @@ export default function PublicSpaces() {
     }
   };
 
-  /*
-   * Categories are based on grouped workspace types.
-   *
-   * Example:
-   * Workspace
-   * Team Leads Cubicle
-   * Manager Cubicle
-   * Executive Cabin
-   */
   const categories = useMemo(() => {
     const uniqueCategories = [
       ...new Set(spaces.map((space) => space.space).filter(Boolean)),
@@ -145,9 +136,6 @@ export default function PublicSpaces() {
     return ["All", ...uniqueCategories];
   }, [spaces]);
 
-  /*
-   * Search/filter grouped workspace cards.
-   */
   const filteredSpaces = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
 
@@ -163,20 +151,23 @@ export default function PublicSpaces() {
   }, [spaces, search, selectedCategory]);
 
   return (
-    <section id="spaces" className="w-full bg-gray-50 py-16 sm:py-20">
+    <section
+      id="spaces"
+      className="w-full bg-[#FAF6EF] py-16 sm:py-20"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10 text-center">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-2 text-sm font-medium text-blue-600">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#E9DED0] bg-[#F8EDE6] px-4 py-2 text-sm font-medium text-[#A95643]">
             <MapPin size={16} />
             Find Your Perfect Space
           </div>
 
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          <h2 className="text-3xl font-bold tracking-tight text-[#382B26] sm:text-4xl">
             Book Your Space
           </h2>
 
-          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+          <p className="mx-auto mt-3 max-w-2xl text-[#8F8175]">
             Choose from our available workspaces, cabins and meeting spaces and
             book the one that fits your needs.
           </p>
@@ -189,7 +180,7 @@ export default function PublicSpaces() {
             <div className="relative mx-auto max-w-xl">
               <Search
                 size={20}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99A8D]"
               />
 
               <input
@@ -197,7 +188,7 @@ export default function PublicSpaces() {
                 placeholder="Search workspace, cabin, conference room..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                className="w-full rounded-xl border border-[#E9DED0] bg-white py-3.5 pl-12 pr-4 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99A8D] focus:border-[#A95643] focus:ring-2 focus:ring-[#A95643]/15"
               />
             </div>
 
@@ -210,8 +201,8 @@ export default function PublicSpaces() {
                   onClick={() => setSelectedCategory(category)}
                   className={`whitespace-nowrap rounded-full px-5 py-2.5 text-sm font-medium transition ${
                     selectedCategory === category
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-100"
+                      ? "bg-[#A95643] text-white shadow-sm hover:bg-[#71392F]"
+                      : "border border-[#E9DED0] bg-white text-[#76675D] hover:border-[#C9826C] hover:bg-[#F8EDE6] hover:text-[#71392F]"
                   }`}
                 >
                   {category}
@@ -224,8 +215,11 @@ export default function PublicSpaces() {
         {/* Loading */}
         {loading && (
           <div className="flex min-h-[300px] items-center justify-center">
-            <div className="flex flex-col items-center gap-3 text-gray-500">
-              <Loader2 size={32} className="animate-spin text-blue-600" />
+            <div className="flex flex-col items-center gap-3 text-[#8F8175]">
+              <Loader2
+                size={32}
+                className="animate-spin text-[#A95643]"
+              />
               <p className="text-sm">Loading available spaces...</p>
             </div>
           </div>
@@ -248,16 +242,16 @@ export default function PublicSpaces() {
 
         {/* Empty */}
         {!loading && !error && spaces.length === 0 && (
-          <div className="mx-auto max-w-xl rounded-2xl border border-gray-200 bg-white p-10 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
-              <Home size={26} className="text-gray-500" />
+          <div className="mx-auto max-w-xl rounded-2xl border border-[#E9DED0] bg-white p-10 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#F8EDE6]">
+              <Home size={26} className="text-[#A95643]" />
             </div>
 
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-[#382B26]">
               No spaces available
             </h3>
 
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-2 text-sm text-[#8F8175]">
               There are currently no spaces available for booking.
             </p>
           </div>
@@ -269,13 +263,16 @@ export default function PublicSpaces() {
           spaces.length > 0 &&
           filteredSpaces.length === 0 && (
             <div className="py-12 text-center">
-              <Search size={40} className="mx-auto text-gray-300" />
+              <Search
+                size={40}
+                className="mx-auto text-[#C9B8A9]"
+              />
 
-              <h3 className="mt-4 text-lg font-semibold text-gray-900">
+              <h3 className="mt-4 text-lg font-semibold text-[#382B26]">
                 No spaces found
               </h3>
 
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-[#8F8175]">
                 Try changing your search or category.
               </p>
             </div>
@@ -293,10 +290,10 @@ export default function PublicSpaces() {
               return (
                 <article
                   key={space.space}
-                  className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  className="group overflow-hidden rounded-2xl border border-[#E9DED0] bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[#71392F]/10"
                 >
                   {/* Image */}
-                  <div className="relative h-56 overflow-hidden bg-gray-100">
+                  <div className="relative h-56 overflow-hidden bg-[#F8EDE6]">
                     {space.image ? (
                       <img
                         src={space.image}
@@ -306,18 +303,18 @@ export default function PublicSpaces() {
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
-                        <Home size={50} className="text-gray-300" />
+                        <Home size={50} className="text-[#C9B8A9]" />
                       </div>
                     )}
 
                     {/* Available badge */}
-                    <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-green-600 shadow">
+                    <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-green-700 shadow-sm">
                       <CheckCircle2 size={14} />
                       Available
                     </div>
 
                     {/* Number of spaces */}
-                    <div className="absolute right-4 top-4 rounded-full bg-black/70 px-3 py-1.5 text-xs font-medium text-white">
+                    <div className="absolute right-4 top-4 rounded-full bg-[#382B26]/85 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-sm">
                       {availableCount}{" "}
                       {availableCount === 1 ? "Space" : "Spaces"}
                     </div>
@@ -328,15 +325,16 @@ export default function PublicSpaces() {
                     {/* Title */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-lg font-bold text-gray-900">
+                        <h3 className="text-lg font-bold text-[#382B26]">
                           {space.space}
                         </h3>
 
-                        <div className="mt-1 flex items-center gap-1.5 text-sm text-gray-500">
-                          <Icon size={15} />
+                        <div className="mt-1 flex items-center gap-1.5 text-sm text-[#8F8175]">
+                          <Icon size={15} className="text-[#A95643]" />
                           {getSpaceCapacity(space.space)}
+
                           {perHead && (
-                            <span className="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                            <span className="ml-1 rounded-full bg-[#F8EDE6] px-2 py-0.5 text-xs font-medium text-[#A95643]">
                               Per person
                             </span>
                           )}
@@ -345,9 +343,12 @@ export default function PublicSpaces() {
                     </div>
 
                     {/* Availability */}
-                    <div className="mt-4 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2.5">
-                      <CheckCircle2 size={16} className="text-green-600" />
-                      <span className="text-sm font-medium text-green-700">
+                    <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#DCE8D9] bg-[#F0F5ED] px-3 py-2.5">
+                      <CheckCircle2
+                        size={16}
+                        className="text-[#527C61]"
+                      />
+                      <span className="text-sm font-medium text-[#42664C]">
                         {availableCount}{" "}
                         {availableCount === 1 ? "space" : "spaces"} available
                       </span>
@@ -357,24 +358,27 @@ export default function PublicSpaces() {
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       {space.perHour !== null &&
                         space.perHour !== undefined && (
-                          <div className="rounded-lg bg-gray-50 p-3">
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                              <Clock3 size={14} />
+                          <div className="rounded-lg border border-[#F0E7DD] bg-[#FBF8F3] p-3">
+                            <div className="flex items-center gap-1.5 text-xs text-[#8F8175]">
+                              <Clock3 size={14} className="text-[#A95643]" />
                               {perHead ? "Hourly / person" : "Hourly"}
                             </div>
-                            <p className="mt-1 font-semibold text-gray-900">
+                            <p className="mt-1 font-semibold text-[#382B26]">
                               {formatPrice(space.perHour)}
                             </p>
                           </div>
                         )}
 
                       {space.perDay !== null && space.perDay !== undefined && (
-                        <div className="rounded-lg bg-gray-50 p-3">
-                          <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                            <CalendarDays size={14} />
+                        <div className="rounded-lg border border-[#F0E7DD] bg-[#FBF8F3] p-3">
+                          <div className="flex items-center gap-1.5 text-xs text-[#8F8175]">
+                            <CalendarDays
+                              size={14}
+                              className="text-[#A95643]"
+                            />
                             {perHead ? "Daily / person" : "Daily"}
                           </div>
-                          <p className="mt-1 font-semibold text-gray-900">
+                          <p className="mt-1 font-semibold text-[#382B26]">
                             {formatPrice(space.perDay)}
                           </p>
                         </div>
@@ -382,12 +386,15 @@ export default function PublicSpaces() {
 
                       {space.perMonth !== null &&
                         space.perMonth !== undefined && (
-                          <div className="rounded-lg bg-gray-50 p-3">
-                            <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                              <CalendarDays size={14} />
+                          <div className="rounded-lg border border-[#F0E7DD] bg-[#FBF8F3] p-3">
+                            <div className="flex items-center gap-1.5 text-xs text-[#8F8175]">
+                              <CalendarDays
+                                size={14}
+                                className="text-[#A95643]"
+                              />
                               {perHead ? "Monthly / person" : "Monthly"}
                             </div>
-                            <p className="mt-1 font-semibold text-gray-900">
+                            <p className="mt-1 font-semibold text-[#382B26]">
                               {formatPrice(space.perMonth)}
                             </p>
                           </div>
@@ -395,7 +402,7 @@ export default function PublicSpaces() {
                     </div>
 
                     {perHead && (
-                      <p className="mt-3 text-xs text-gray-500">
+                      <p className="mt-3 text-xs text-[#8F8175]">
                         Billed per attendee. Pick your team members while
                         booking.
                       </p>
@@ -403,11 +410,13 @@ export default function PublicSpaces() {
 
                     {/* Starting price */}
                     {startingPrice && (
-                      <div className="mt-5 border-t border-gray-100 pt-4">
-                        <p className="text-xs text-gray-500">Starting from</p>
-                        <p className="mt-0.5 text-xl font-bold text-gray-900">
+                      <div className="mt-5 border-t border-[#E9DED0] pt-4">
+                        <p className="text-xs text-[#8F8175]">
+                          Starting from
+                        </p>
+                        <p className="mt-0.5 text-xl font-bold text-[#71392F]">
                           {formatPrice(startingPrice.value)}
-                          <span className="ml-1 text-sm font-normal text-gray-500">
+                          <span className="ml-1 text-sm font-normal text-[#8F8175]">
                             /{perHead ? "person / " : ""}
                             {startingPrice.label}
                           </span>
@@ -419,7 +428,7 @@ export default function PublicSpaces() {
                     <Link
                       to={`/book-space/${encodeURIComponent(space.space)}`}
                       state={{ space }}
-                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
+                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#A95643] px-4 py-3 font-semibold text-white shadow-sm transition hover:bg-[#71392F] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#A95643] focus:ring-offset-2"
                     >
                       Book This Space
                       <ArrowRight size={18} />
@@ -433,7 +442,7 @@ export default function PublicSpaces() {
 
         {/* Results count */}
         {!loading && !error && filteredSpaces.length > 0 && (
-          <p className="mt-8 text-center text-sm text-gray-500">
+          <p className="mt-8 text-center text-sm text-[#8F8175]">
             Showing {filteredSpaces.length} of {spaces.length} workspace types
           </p>
         )}

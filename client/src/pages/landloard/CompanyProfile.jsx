@@ -75,8 +75,16 @@ const CompanyProfile = () => {
     fetchCompanyProfile();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (preview?.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
   const handleLogoChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
 
     if (!file) return;
 
@@ -214,408 +222,452 @@ const CompanyProfile = () => {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 outline-none transition-all duration-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50";
+    "w-full rounded-xl border border-[#E9DED0] bg-[#FFFDFA] px-3.5 py-2.5 text-sm font-medium text-[#382B26] placeholder:font-normal placeholder:text-[#B5A79B] outline-none transition-all duration-200 hover:border-[#C9826C] focus:border-[#A95643] focus:ring-4 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:bg-[#FAF6EF]";
 
-  const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+  const labelClass = "mb-1.5 block text-xs font-semibold text-[#514239]";
 
-  const Required = () => <span className="ml-1 text-rose-500">*</span>;
+  const Required = () => <span className="ml-1 text-red-500">*</span>;
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#EAF4FF] px-4">
-        <div className="flex flex-col items-center rounded-2xl border border-blue-100 bg-white px-10 py-9 shadow-sm">
-          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-            <LoaderCircle className="h-7 w-7 animate-spin text-blue-600" />
+      <>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+          toastStyle={{
+            background: "#FFFDFA",
+            color: "#382B26",
+            border: "1px solid #E9DED0",
+          }}
+          progressStyle={{ background: "#A95643" }}
+        />
+
+        <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] px-4">
+          <div className="flex flex-col items-center rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] px-8 py-7 shadow-sm">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8EDE6]">
+              <LoaderCircle className="h-6 w-6 animate-spin text-[#A95643]" />
+            </div>
+
+            <h2 className="text-sm font-bold text-[#382B26]">
+              Loading company profile
+            </h2>
+
+            <p className="mt-1 text-xs text-[#8F8175]">
+              Please wait while we fetch your details...
+            </p>
           </div>
-
-          <h2 className="text-base font-semibold text-slate-800">
-            Loading company profile
-          </h2>
-
-          <p className="mt-1 text-sm text-slate-500">
-            Please wait while we fetch your details...
-          </p>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] px-4 py-6 sm:px-6 lg:px-8">
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="light"
+        toastStyle={{
+          background: "#FFFDFA",
+          color: "#382B26",
+          border: "1px solid #E9DED0",
+        }}
+        progressStyle={{ background: "#A95643" }}
+      />
 
-      <div className="mx-auto max-w-6xl">
-        {/* Page Header */}
-        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full bg-blue-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
-                Oorza Workspace
-              </span>
+      <div className="min-h-screen bg-[#FAF6EF] px-3 py-5 sm:px-5 lg:px-7">
+        <div className="mx-auto max-w-6xl">
+          {/* Page Header */}
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="mb-1.5 flex items-center gap-2">
+                <span className="rounded-full bg-[#F8EDE6] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#A95643]">
+                  Oorza Workspace
+                </span>
 
-              <span className="text-xs font-medium text-slate-400">
-                / Settings
-              </span>
-            </div>
-
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Company Profile
-            </h1>
-
-            <p className="mt-1.5 text-sm text-slate-500 sm:text-base">
-              Manage your business identity, contact details and company logo.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start rounded-xl border border-blue-100 bg-white px-4 py-2.5 shadow-sm sm:self-center">
-            <ShieldCheck className="h-5 w-5 text-blue-600" />
-            <span className="text-xs font-semibold text-slate-600">
-              Company Settings
-            </span>
-          </div>
-        </div>
-
-        {/* Hero Banner */}
-        <div className="relative mb-7 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 p-6 text-white shadow-lg shadow-blue-200/60 sm:p-8">
-          <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full border-[35px] border-white/10" />
-          <div className="absolute -bottom-24 right-36 h-52 w-52 rounded-full bg-white/5" />
-
-          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="max-w-xl">
-              <div className="mb-3 flex items-center gap-2 text-blue-100">
-                <Building2 className="h-5 w-5" />
-                <span className="text-xs font-bold uppercase tracking-[0.15em]">
-                  Business Information
+                <span className="text-xs font-medium text-[#A99B8E]">
+                  / Settings
                 </span>
               </div>
 
-              <h2 className="text-xl font-bold sm:text-2xl">
-                Make your workspace official.
-              </h2>
+              <h1 className="text-2xl font-extrabold tracking-tight text-[#382B26] sm:text-3xl">
+                Company Profile
+              </h1>
 
-              <p className="mt-2 text-sm leading-relaxed text-blue-100">
-                Keep your company details accurate and up to date for bookings,
-                invoices and business communication.
+              <p className="mt-1 text-xs text-[#8F8175] sm:text-sm">
+                Manage your business identity, contact details and company logo.
               </p>
             </div>
 
-            <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm sm:flex">
-              <Building2 className="h-10 w-10 text-white" />
+            <div className="flex w-fit items-center gap-2 self-start rounded-xl border border-[#E9DED0] bg-[#FFFDFA] px-3.5 py-2 shadow-sm sm:self-center">
+              <ShieldCheck className="h-4 w-4 text-[#A95643]" />
+
+              <span className="text-xs font-semibold text-[#514239]">
+                Company Settings
+              </span>
             </div>
           </div>
-        </div>
 
-        {/* Main Form Card */}
-        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-          {/* Card Heading */}
-          <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                <FileText className="h-5 w-5" />
-              </div>
+          {/* Hero Banner */}
+          <div className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] p-5 text-white shadow-lg shadow-[#71392F]/10 sm:p-6">
+            <div className="absolute -right-12 -top-20 h-56 w-56 rounded-full border-[30px] border-white/10" />
+            <div className="absolute -bottom-24 right-36 h-48 w-48 rounded-full bg-white/5" />
 
-              <div>
-                <h3 className="font-bold text-slate-800">Company Details</h3>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  Fields marked with * are required
+            <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="max-w-xl">
+                <div className="mb-2 flex items-center gap-2 text-[#F8EDE6]">
+                  <Building2 className="h-4 w-4" />
+
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
+                    Business Information
+                  </span>
+                </div>
+
+                <h2 className="text-xl font-bold sm:text-2xl">
+                  Make your workspace official.
+                </h2>
+
+                <p className="mt-1.5 text-xs leading-relaxed text-white/80 sm:text-sm">
+                  Keep your company details accurate and up to date for bookings,
+                  invoices and business communication.
                 </p>
               </div>
-            </div>
 
-            <span className="flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Profile Management
-            </span>
-          </div>
-
-          <form onSubmit={handleSubmit}>
-            <div className="space-y-8 p-5 sm:p-7">
-              {/* Logo Section */}
-              <section>
-                <div className="mb-4">
-                  <h4 className="font-bold text-slate-800">Company Branding</h4>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Upload a logo to represent your company.
-                  </p>
-                </div>
-
-                <div className="flex flex-col gap-5 rounded-2xl border border-dashed border-blue-200 bg-[#F5F9FF] p-5 sm:flex-row sm:items-center sm:p-6">
-                  {/* Logo Preview */}
-                  <div className="relative flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-                    {preview ? (
-                      <img
-                        src={preview}
-                        alt="Company Logo"
-                        className="h-full w-full object-contain p-2"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center text-blue-300">
-                        <Building2 className="mb-2 h-10 w-10" />
-                        <span className="text-xs font-medium">No Logo</span>
-                      </div>
-                    )}
-
-                    <div className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white shadow-md">
-                      <Camera className="h-3.5 w-3.5" />
-                    </div>
-                  </div>
-
-                  {/* Upload Controls */}
-                  <div className="min-w-0 flex-1">
-                    <h5 className="font-semibold text-slate-800">
-                      Company Logo
-                    </h5>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Choose an image that clearly represents your business.
-                    </p>
-
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <label
-                        htmlFor="company-logo"
-                        className={`inline-flex w-fit cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 ${
-                          saving ? "pointer-events-none opacity-50" : ""
-                        }`}
-                      >
-                        <ImagePlus className="h-4 w-4" />
-                        Upload Logo
-                      </label>
-
-                      <input
-                        id="company-logo"
-                        type="file"
-                        accept="image/png,image/jpeg,image/jpg"
-                        onChange={handleLogoChange}
-                        disabled={saving}
-                        className="hidden"
-                      />
-
-                      <span className="text-xs text-slate-400">
-                        PNG, JPG or JPEG · Max 2MB
-                      </span>
-                    </div>
-
-                    {logo && (
-                      <div className="mt-3 flex items-center gap-2 text-xs font-medium text-blue-700">
-                        <CheckCircle2 className="h-4 w-4 shrink-0" />
-                        <span className="break-all">Selected: {logo.name}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </section>
-
-              <div className="h-px bg-slate-100" />
-
-              {/* Basic Information */}
-              <section>
-                <div className="mb-5">
-                  <h4 className="font-bold text-slate-800">
-                    Basic Information
-                  </h4>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Enter your registered company name and GST details.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* Company Name */}
-                  <div>
-                    <label className={labelClass}>
-                      Company Name <Required />
-                    </label>
-
-                    <div className="relative">
-                      <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                      <input
-                        type="text"
-                        name="companyName"
-                        value={formData.companyName}
-                        onChange={handleChange}
-                        placeholder="Enter company name"
-                        disabled={saving}
-                        className={`${inputClass} pl-10`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* GST */}
-                  <div>
-                    <label className={labelClass}>
-                      GST Number <Required />
-                    </label>
-
-                    <div className="relative">
-                      <FileText className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                      <input
-                        type="text"
-                        name="gstNo"
-                        value={formData.gstNo}
-                        onChange={handleChange}
-                        placeholder="Enter GST number"
-                        disabled={saving}
-                        className={`${inputClass} pl-10 uppercase`}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <div className="h-px bg-slate-100" />
-
-              {/* Contact Information */}
-              <section>
-                <div className="mb-5">
-                  <h4 className="font-bold text-slate-800">
-                    Contact Information
-                  </h4>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Provide the contact details customers can use to reach your
-                    company.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {/* Email */}
-                  <div>
-                    <label className={labelClass}>
-                      Company Email <Required />
-                    </label>
-
-                    <div className="relative">
-                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="company@example.com"
-                        disabled={saving}
-                        className={`${inputClass} pl-10`}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Contact */}
-                  <div>
-                    <label className={labelClass}>
-                      Company Contact <Required />
-                    </label>
-
-                    <div className="relative">
-                      <Phone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-                      <input
-                        type="tel"
-                        name="contact"
-                        value={formData.contact}
-                        onChange={handleChange}
-                        placeholder="Enter contact number"
-                        disabled={saving}
-                        className={`${inputClass} pl-10`}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <div className="h-px bg-slate-100" />
-
-              {/* Address */}
-              <section>
-                <div className="mb-5">
-                  <h4 className="font-bold text-slate-800">Business Address</h4>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Add your company's registered or business address.
-                  </p>
-                </div>
-
-                <label className={labelClass}>
-                  Company Address <Required />
-                </label>
-
-                <div className="relative">
-                  <MapPin className="pointer-events-none absolute left-3.5 top-4 h-4 w-4 text-slate-400" />
-
-                  <textarea
-                    name="address"
-                    rows="4"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Enter complete company address"
-                    disabled={saving}
-                    className={`${inputClass} resize-none pl-10`}
-                    required
-                  />
-                </div>
-              </section>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-              <p className="hidden items-center gap-2 text-xs text-slate-400 sm:flex">
-                <ShieldCheck className="h-4 w-4 text-blue-500" />
-                Your company information is managed securely.
-              </p>
-
-              <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={handleClear}
-                  disabled={saving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Clear Form
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {saving ? (
-                    <>
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </>
-                  )}
-                </button>
+              <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 backdrop-blur-sm sm:flex">
+                <Building2 className="h-8 w-8 text-white" />
               </div>
             </div>
-          </form>
-        </div>
-
-        {/* Bottom Note */}
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-blue-100 bg-white/70 p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-            <RefreshCw className="h-4 w-4" />
           </div>
 
-          <div>
-            <p className="text-sm font-semibold text-slate-700">
-              Keep your information up to date
-            </p>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
-              Updated company details can be used across your workspace records
-              and billing information.
-            </p>
+          {/* Main Form Card */}
+          <div className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+            {/* Card Heading */}
+            <div className="flex flex-col gap-2.5 border-b border-[#F0E8DE] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <FileText className="h-4 w-4" />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-bold text-[#382B26]">
+                    Company Details
+                  </h3>
+
+                  <p className="mt-0.5 text-[11px] text-[#8F8175]">
+                    Fields marked with * are required
+                  </p>
+                </div>
+              </div>
+
+              <span className="flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Profile Management
+              </span>
+            </div>
+
+            <form onSubmit={handleSubmit}>
+              <div className="space-y-5 p-4 sm:p-6">
+                {/* Logo Section */}
+                <section>
+                  <div className="mb-3">
+                    <h4 className="text-sm font-bold text-[#382B26]">
+                      Company Branding
+                    </h4>
+
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
+                      Upload a logo to represent your company.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-4 rounded-xl border border-dashed border-[#DCC3B5] bg-[#FBF3ED] p-4 sm:flex-row sm:items-center">
+                    {/* Logo Preview */}
+                    <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#E9DED0] bg-white shadow-sm">
+                      {preview ? (
+                        <img
+                          src={preview}
+                          alt="Company Logo"
+                          className="h-full w-full object-contain p-2"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center text-[#C9826C]">
+                          <Building2 className="mb-1.5 h-8 w-8" />
+                          <span className="text-[10px] font-medium">
+                            No Logo
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#A95643] text-white shadow-sm">
+                        <Camera className="h-3 w-3" />
+                      </div>
+                    </div>
+
+                    {/* Upload Controls */}
+                    <div className="min-w-0 flex-1">
+                      <h5 className="text-sm font-semibold text-[#382B26]">
+                        Company Logo
+                      </h5>
+
+                      <p className="mt-0.5 text-xs text-[#8F8175]">
+                        Choose an image that clearly represents your business.
+                      </p>
+
+                      <div className="mt-3 flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                        <label
+                          htmlFor="company-logo"
+                          className={`inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg bg-[#A95643] px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#71392F] ${
+                            saving ? "pointer-events-none opacity-50" : ""
+                          }`}
+                        >
+                          <ImagePlus className="h-4 w-4" />
+                          Upload Logo
+                        </label>
+
+                        <input
+                          id="company-logo"
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg"
+                          onChange={handleLogoChange}
+                          disabled={saving}
+                          className="hidden"
+                        />
+
+                        <span className="text-[10px] text-[#A99B8E]">
+                          PNG, JPG or JPEG · Max 2MB
+                        </span>
+                      </div>
+
+                      {logo && (
+                        <div className="mt-2.5 flex items-center gap-2 text-xs font-medium text-[#A95643]">
+                          <CheckCircle2 className="h-4 w-4 shrink-0" />
+                          <span className="break-all">
+                            Selected: {logo.name}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <div className="h-px bg-[#F0E8DE]" />
+
+                {/* Basic Information */}
+                <section>
+                  <div className="mb-3">
+                    <h4 className="text-sm font-bold text-[#382B26]">
+                      Basic Information
+                    </h4>
+
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
+                      Enter your registered company name and GST details.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Company Name */}
+                    <div>
+                      <label className={labelClass}>
+                        Company Name <Required />
+                      </label>
+
+                      <div className="relative">
+                        <Building2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A99B8E]" />
+
+                        <input
+                          type="text"
+                          name="companyName"
+                          value={formData.companyName}
+                          onChange={handleChange}
+                          placeholder="Enter company name"
+                          disabled={saving}
+                          className={`${inputClass} pl-9`}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* GST */}
+                    <div>
+                      <label className={labelClass}>
+                        GST Number <Required />
+                      </label>
+
+                      <div className="relative">
+                        <FileText className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A99B8E]" />
+
+                        <input
+                          type="text"
+                          name="gstNo"
+                          value={formData.gstNo}
+                          onChange={handleChange}
+                          placeholder="Enter GST number"
+                          disabled={saving}
+                          className={`${inputClass} pl-9 uppercase`}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="h-px bg-[#F0E8DE]" />
+
+                {/* Contact Information */}
+                <section>
+                  <div className="mb-3">
+                    <h4 className="text-sm font-bold text-[#382B26]">
+                      Contact Information
+                    </h4>
+
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
+                      Provide the contact details customers can use to reach
+                      your company.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {/* Email */}
+                    <div>
+                      <label className={labelClass}>
+                        Company Email <Required />
+                      </label>
+
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A99B8E]" />
+
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          placeholder="company@example.com"
+                          disabled={saving}
+                          className={`${inputClass} pl-9`}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* Contact */}
+                    <div>
+                      <label className={labelClass}>
+                        Company Contact <Required />
+                      </label>
+
+                      <div className="relative">
+                        <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#A99B8E]" />
+
+                        <input
+                          type="tel"
+                          name="contact"
+                          value={formData.contact}
+                          onChange={handleChange}
+                          placeholder="Enter contact number"
+                          disabled={saving}
+                          className={`${inputClass} pl-9`}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                <div className="h-px bg-[#F0E8DE]" />
+
+                {/* Address */}
+                <section>
+                  <div className="mb-3">
+                    <h4 className="text-sm font-bold text-[#382B26]">
+                      Business Address
+                    </h4>
+
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
+                      Add your company's registered or business address.
+                    </p>
+                  </div>
+
+                  <label className={labelClass}>
+                    Company Address <Required />
+                  </label>
+
+                  <div className="relative">
+                    <MapPin className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-[#A99B8E]" />
+
+                    <textarea
+                      name="address"
+                      rows="3"
+                      value={formData.address}
+                      onChange={handleChange}
+                      placeholder="Enter complete company address"
+                      disabled={saving}
+                      className={`${inputClass} resize-none pl-9`}
+                      required
+                    />
+                  </div>
+                </section>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="flex flex-col-reverse gap-3 border-t border-[#F0E8DE] bg-[#FBF8F3] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                <p className="hidden items-center gap-2 text-[11px] text-[#8F8175] sm:flex">
+                  <ShieldCheck className="h-4 w-4 text-[#A95643]" />
+                  Your company information is managed securely.
+                </p>
+
+                <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={handleClear}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#E9DED0] bg-white px-4 py-2.5 text-xs font-semibold text-[#8F8175] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Clear Form
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#A95643] to-[#71392F] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-[#71392F]/15 transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  >
+                    {saving ? (
+                      <>
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4" />
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Bottom Note */}
+          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-[#E9DED0] bg-[#FFFDFA] p-3.5">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+              <RefreshCw className="h-4 w-4" />
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-[#382B26]">
+                Keep your information up to date
+              </p>
+
+              <p className="mt-1 text-[11px] leading-relaxed text-[#8F8175]">
+                Updated company details can be used across your workspace
+                records and billing information.
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

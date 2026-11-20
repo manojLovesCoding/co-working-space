@@ -24,14 +24,24 @@ const GST_RATE = 18;
 // Spaces billed per person (one room, many attendees).
 // Must match PER_HEAD_SPACES in bookingController.js.
 const PER_HEAD_SPACES = ["Video Conferencing"];
-const MAX_HEADS = 20; // must match MAX_HEADS_PER_ROOM on the server
+const MAX_HEADS = 20;
+
+// Oorza theme colors
+const COLORS = {
+  primary: "#A95643",
+  primaryDark: "#71392F",
+  primarySoft: "#C9826C",
+  ivory: "#FAF6EF",
+  pale: "#F8EDE6",
+  brown: "#382B26",
+  muted: "#8F8175",
+  border: "#E9DED0",
+};
 
 const round2 = (n) => Math.round((n + Number.EPSILON) * 100) / 100;
 
 // ---------------------------------------------
-// Office hours (minutes from midnight)
-// Mon-Fri: 08:00 - 19:00 | Sat: 09:00 - 19:00 | Sun: closed
-// The backend enforces the same rules; this is for UX only.
+// Office hours
 // ---------------------------------------------
 
 const OFFICE_HOURS = {
@@ -46,7 +56,6 @@ const OFFICE_HOURS_TEXT =
 // Helpers
 // ---------------------------------------------
 
-// Shows up to 2 decimals so GST paise are displayed correctly.
 const formatPrice = (price) => {
   if (price === null || price === undefined || price === "") {
     return "₹0";
@@ -79,7 +88,6 @@ const formatDate = (dateString) => {
   });
 };
 
-// 0 = Sunday ... 6 = Saturday (calendar weekday of a YYYY-MM-DD string)
 const getWeekday = (dateString) =>
   new Date(`${dateString}T00:00:00Z`).getUTCDay();
 
@@ -128,7 +136,6 @@ const formatTime = (time) => {
 const getEndTime = (startTime, durationHours) =>
   minutesToTime(timeToMinutes(startTime) + durationHours * 60);
 
-// Daily bookings skip Sundays. Returns the last working day covered.
 const getDailyEndDate = (startDate, duration) => {
   let cursor = startDate;
   let counted = 0;
@@ -182,8 +189,6 @@ const getPricingOptions = (space) => {
   return options;
 };
 
-// For hourly plans the maximum is also limited by closing time,
-// based on the selected date and start time.
 const getDurationLimits = (space, plan, dateString, startTime) => {
   const min = Math.max(1, Number(space?.minDuration) || 1);
 
@@ -206,10 +211,8 @@ const getDurationLimits = (space, plan, dateString, startTime) => {
   return { min, max: Math.max(min, max) };
 };
 
-// True when two [start, end) ranges overlap.
 const overlaps = (aStart, aEnd, bStart, bEnd) => aStart < bEnd && bStart < aEnd;
 
-// Start times where [start, start + duration] doesn't clash with any booked slot.
 const getFreeStartTimes = (
   bookedSlots,
   hours,
@@ -250,8 +253,6 @@ export default function BookSpace() {
 
   const space = location.state?.space;
 
-  // Per-head rooms (Video Conferencing): one room, many attendees,
-  // billed per person.
   const isPerHead = PER_HEAD_SPACES.includes(space?.space);
 
   const pricingOptions = useMemo(() => getPricingOptions(space), [space]);
@@ -262,7 +263,6 @@ export default function BookSpace() {
     pricingOptions[0]?.id || "daily",
   );
 
-  // If today is Sunday, start from Monday.
   const [selectedDate, setSelectedDate] = useState(getNextOpenDate(getToday()));
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedSpaces, setSelectedSpaces] = useState([]);
@@ -272,26 +272,21 @@ export default function BookSpace() {
   const [unavailableSpaces, setUnavailableSpaces] = useState([]);
   const [availabilityError, setAvailabilityError] = useState("");
 
-  // Already-booked info per seat, fetched from the server:
-  // { [spaceCode]: { fullDay: boolean, bookedSlots: [{ startTime, endTime }] } }
   const [seatStatus, setSeatStatus] = useState({});
   const [toast, setToast] = useState(null);
 
-  // Team members and who each seat is booked for
   const [teamMembers, setTeamMembers] = useState([]);
   const [teamLoading, setTeamLoading] = useState(true);
-  const [assignments, setAssignments] = useState({}); // { [spaceCode]: "self" | teamMemberId }
+  const [assignments, setAssignments] = useState({});
 
-  // Attendees for per-head rooms: [SELF | teamMemberId, ...]
   const [attendees, setAttendees] = useState([]);
 
-  // Coupon state
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState("");
 
-  // Load the logged-in customer's team (read only)
+  // Load team members
   useEffect(() => {
     let active = true;
 
@@ -316,6 +311,7 @@ export default function BookSpace() {
 
   const isHourly = selectedPlan === "hourly";
   const isClosedDay = isSunday(selectedDate);
+
   const officeHours = useMemo(
     () => getOfficeHours(selectedDate),
     [selectedDate],
@@ -335,7 +331,6 @@ export default function BookSpace() {
 
   const baseMinDuration = Math.max(1, Number(space?.minDuration) || 1);
 
-  // Hourly start-time slots for the selected date.
   const timeSlots = useMemo(() => {
     if (!isHourly || !officeHours) return [];
 
@@ -370,27 +365,20 @@ export default function BookSpace() {
       ? getDailyEndDate(selectedDate, duration)
       : "";
 
-  // Billable units: attendees for per-head rooms, seats otherwise.
   const billableQty = isPerHead ? attendees.length : selectedSpaces.length;
 
-  // Subtotal before coupon and GST
   const totalAmount = useMemo(() => {
     if (!selectedPricing) return 0;
 
     return selectedPricing.price * duration * billableQty;
   }, [selectedPricing, duration, billableQty]);
 
-  // Taxable amount = after coupon, before GST (display only; the server recalculates it)
   const taxableAmount = appliedCoupon ? appliedCoupon.finalAmount : totalAmount;
 
-  // GST is charged on the taxable amount
   const gstAmount = round2((taxableAmount * GST_RATE) / 100);
 
-  // Final payable amount including GST
   const payableAmount = round2(taxableAmount + gstAmount);
 
-  // A seat is unavailable for the whole selection when it is booked
-  // on a daily/monthly plan for the chosen date range.
   const availableSpaceCount = useMemo(
     () =>
       availableSpaces.filter(
@@ -402,15 +390,11 @@ export default function BookSpace() {
     [availableSpaces, unavailableSpaces, seatStatus],
   );
 
-  // Normal spaces: every selected seat must be assigned to the customer
-  // or a team member.
-  // Per-head rooms: one room and at least one attendee.
   const assignmentsComplete = isPerHead
     ? selectedSpaces.length === 1 && attendees.length > 0
     : selectedSpaces.length > 0 &&
       selectedSpaces.every((code) => Boolean(assignments[code]));
 
-  // People who already hold a seat (each person can take only one).
   const takenAssignees = new Set(Object.values(assignments));
 
   const getAssigneeName = (value) => {
@@ -420,8 +404,6 @@ export default function BookSpace() {
     return teamMembers.find((member) => member._id === value)?.name || "";
   };
 
-  // Builds the seatAssignments payload sent to the server.
-  // Per-head rooms: one entry per attendee, all with the room's code.
   const buildSeatAssignments = () => {
     const toEntry = (code, value) => {
       const member = teamMembers.find((item) => item._id === value);
@@ -441,8 +423,6 @@ export default function BookSpace() {
       : selectedSpaces.map((code) => toEntry(code, assignments[code]));
   };
 
-  // A coupon depends on the subtotal, space, plan and date, so any
-  // change to the booking invalidates it.
   const removeCoupon = (message = "") => {
     setAppliedCoupon(null);
     setCouponError(message);
@@ -474,8 +454,7 @@ export default function BookSpace() {
   }, [toast]);
 
   // ---------------------------------------------
-  // Seat status (already booked seats)
-  // POST /api/booking/seat_status
+  // Seat status
   // ---------------------------------------------
 
   const refreshSeatStatus = useCallback(async () => {
@@ -506,8 +485,6 @@ export default function BookSpace() {
     refreshSeatStatus();
   }, [refreshSeatStatus]);
 
-  // null = free, "full" = booked on a daily/monthly plan,
-  // "time" = hourly clash with the selected time
   const getSeatBlock = (code, status = seatStatus) => {
     const info = status[code];
 
@@ -561,8 +538,6 @@ export default function BookSpace() {
     );
   };
 
-  // If a change in time, duration or date makes selected seats
-  // unavailable, drop them and tell the customer.
   useEffect(() => {
     const conflicts = selectedSpaces.filter((code) => getSeatBlock(code));
 
@@ -598,7 +573,6 @@ export default function BookSpace() {
   };
 
   const toggleSpace = (spaceCode) => {
-    // Seat is booked for the chosen time: explain instead of selecting.
     if (!selectedSpaces.includes(spaceCode) && getSeatBlock(spaceCode)) {
       notifySeatBooked(spaceCode);
       return;
@@ -606,7 +580,6 @@ export default function BookSpace() {
 
     clearAvailabilityResult();
 
-    // Deselecting a seat also removes its assignment.
     if (selectedSpaces.includes(spaceCode)) {
       setAssignments((previous) => {
         const next = { ...previous };
@@ -619,7 +592,7 @@ export default function BookSpace() {
       previous.includes(spaceCode)
         ? previous.filter((code) => code !== spaceCode)
         : isPerHead
-          ? [spaceCode] // only one conference room per booking
+          ? [spaceCode]
           : [...previous, spaceCode],
     );
   };
@@ -637,7 +610,6 @@ export default function BookSpace() {
     setAvailabilityError("");
   };
 
-  // Add or remove an attendee (per-head rooms).
   const toggleAttendee = (value) => {
     setAttendees((previous) =>
       previous.includes(value)
@@ -647,14 +619,11 @@ export default function BookSpace() {
           : [...previous, value],
     );
 
-    // The price changes with the head count, so the coupon is stale.
     clearAvailabilityResult();
   };
 
   const handlePlanChange = (planId) => {
     setSelectedPlan(planId);
-
-    // Old status belongs to the previous plan; clear until the refetch lands.
     setSeatStatus({});
 
     const limits = getDurationLimits(space, planId, selectedDate, selectedTime);
@@ -668,12 +637,8 @@ export default function BookSpace() {
 
   const handleDateChange = (value) => {
     setSelectedDate(value);
-
-    // Old status belongs to the previous date; clear until the refetch lands.
     setSeatStatus({});
 
-    // Reset the time if it is not valid for the new date
-    // (e.g. 08:00 AM is not available on Saturday).
     const hours = getOfficeHours(value);
     let nextTime = selectedTime;
 
@@ -705,7 +670,6 @@ export default function BookSpace() {
 
   // ---------------------------------------------
   // Apply coupon
-  // POST /api/booking/validate_coupon
   // ---------------------------------------------
 
   const handleApplyCoupon = async () => {
@@ -749,13 +713,11 @@ export default function BookSpace() {
         plan: selectedPlan,
         duration,
         selectedSpaces,
-        // The server needs the attendees to price per-head rooms.
         ...(isPerHead ? { seatAssignments: buildSeatAssignments() } : {}),
         ...(isHourly ? { startTime: selectedTime } : {}),
       });
 
       if (response.data?.success) {
-        // finalAmount = after coupon, before GST
         setAppliedCoupon({
           couponCode: response.data.couponCode,
           discountPercent: response.data.discountPercent,
@@ -781,7 +743,6 @@ export default function BookSpace() {
 
   // ---------------------------------------------
   // Check availability and navigate to checkout
-  // POST /api/booking/check_workspace_availability
   // ---------------------------------------------
 
   const handleContinue = async () => {
@@ -941,17 +902,14 @@ export default function BookSpace() {
           previous.filter((code) => !unavailable.includes(code)),
         );
 
-        // Drop assignments for the seats that were removed.
         setAssignments((previous) => {
           const next = { ...previous };
           unavailable.forEach((code) => delete next[code]);
           return next;
         });
 
-        // Removing seats changes the subtotal, so the coupon is stale.
         removeCoupon();
 
-        // Refresh booked info and explain with a toast (incl. free times).
         const latest = await refreshSeatStatus();
         if (unavailable[0]) notifySeatBooked(unavailable[0], latest);
 
@@ -964,17 +922,12 @@ export default function BookSpace() {
         return;
       }
 
-      // The frontend amounts are for display only.
-      // The backend recalculates the subtotal, applies the coupon,
-      // adds GST and computes the final amount when creating the
-      // Razorpay order.
       const bookingData = {
         spaceName: space.space,
         bookingDate: selectedDate,
         plan: selectedPlan,
         duration: Number(duration),
         selectedSpaces: [...selectedSpaces],
-        // Seats (normal spaces) or attendees (per-head rooms)
         seatAssignments: buildSeatAssignments(),
         headCount: billableQty,
         pricePerUnit: selectedPricing.price,
@@ -984,7 +937,7 @@ export default function BookSpace() {
         taxableAmount,
         gstRate: GST_RATE,
         gstAmount,
-        totalAmount: payableAmount, // final amount including GST
+        totalAmount: payableAmount,
         ...(isHourly
           ? {
               startTime: selectedTime,
@@ -1029,24 +982,24 @@ export default function BookSpace() {
 
   if (!space) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-        <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100">
-            <Home size={28} className="text-gray-500" />
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] px-4">
+        <div className="w-full max-w-md rounded-2xl border border-[#E9DED0] bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#F8EDE6]">
+            <Home size={28} className="text-[#A95643]" />
           </div>
 
-          <h2 className="mt-5 text-xl font-bold text-gray-900">
+          <h2 className="mt-5 text-xl font-bold text-[#382B26]">
             Space information not found
           </h2>
 
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-[#8F8175]">
             Please return to the homepage and select a space again.
           </p>
 
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#A95643] px-5 py-3 font-semibold text-white transition hover:bg-[#71392F]"
           >
             <ArrowLeft size={18} />
             Back to Home
@@ -1056,7 +1009,6 @@ export default function BookSpace() {
     );
   }
 
-  // People shown in the attendee picker (per-head rooms)
   const attendeeOptions = [
     { id: SELF, name: "Myself", designation: "" },
     ...teamMembers.map((member) => ({
@@ -1071,41 +1023,46 @@ export default function BookSpace() {
   // ---------------------------------------------
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#FAF6EF]">
       {/* Toast notification */}
       {toast && (
         <div
           key={toast.id}
           role="alert"
-          className="fixed right-4 top-4 z-50 flex max-w-sm items-start gap-3 rounded-xl border border-red-200 bg-white p-4 text-sm text-gray-800 shadow-lg"
+          className="fixed right-4 top-4 z-50 flex max-w-sm items-start gap-3 rounded-xl border border-[#E9DED0] bg-white p-4 text-sm text-[#382B26] shadow-xl"
         >
-          <AlertCircle size={20} className="mt-0.5 shrink-0 text-red-500" />
+          <AlertCircle size={20} className="mt-0.5 shrink-0 text-[#A95643]" />
           <p className="flex-1">{toast.message}</p>
           <button
             type="button"
             onClick={() => setToast(null)}
             aria-label="Close notification"
-            className="text-xs font-semibold text-gray-400 hover:text-gray-700"
+            className="text-xs font-semibold text-[#A99A8D] hover:text-[#382B26]"
           >
             ✕
           </button>
         </div>
       )}
 
-      <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-[#E9DED0] bg-[#FFFDFA]/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-900"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[#76675D] transition hover:text-[#A95643]"
           >
             <ArrowLeft size={18} />
             Back
           </button>
 
           <div className="text-center">
-            <h1 className="text-lg font-bold text-gray-900">Book Your Space</h1>
-            <p className="text-xs text-gray-500">Select your preferred space</p>
+            <h1 className="text-lg font-bold text-[#382B26]">
+              Book Your Space
+            </h1>
+            <p className="text-xs text-[#8F8175]">
+              Select your preferred space
+            </p>
           </div>
 
           <div className="w-12" />
@@ -1116,9 +1073,9 @@ export default function BookSpace() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
           <div className="space-y-6">
             {/* Workspace information */}
-            <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <section className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-white shadow-sm">
               <div className="grid grid-cols-1 md:grid-cols-[280px_1fr]">
-                <div className="h-60 bg-gray-100 md:h-full">
+                <div className="h-60 bg-[#F8EDE6] md:h-full">
                   {space.image ? (
                     <img
                       src={space.image}
@@ -1127,7 +1084,7 @@ export default function BookSpace() {
                     />
                   ) : (
                     <div className="flex h-full items-center justify-center">
-                      <Home size={60} className="text-gray-300" />
+                      <Home size={60} className="text-[#C9B8A9]" />
                     </div>
                   )}
                 </div>
@@ -1135,23 +1092,23 @@ export default function BookSpace() {
                 <div className="p-6">
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
-                      <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-600">
-                        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#F0F5ED] px-3 py-1.5 text-xs font-semibold text-[#527C61]">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#527C61]" />
                         Active Workspace
                       </div>
 
-                      <h2 className="text-2xl font-bold text-gray-900">
+                      <h2 className="text-2xl font-bold text-[#382B26]">
                         {space.space}
                       </h2>
 
-                      <p className="mt-1 text-sm text-gray-500">
+                      <p className="mt-1 text-sm text-[#8F8175]">
                         {availableSpaceCount}{" "}
                         {availableSpaceCount === 1 ? "space" : "spaces"}{" "}
                         available
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 rounded-lg bg-[#F8EDE6] px-3 py-2 text-sm text-[#71392F]">
                       <Users size={17} />
                       {getSpaceCapacity(space.space)}
                     </div>
@@ -1159,40 +1116,40 @@ export default function BookSpace() {
 
                   <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {space.perHour != null && (
-                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
+                      <div className="rounded-xl border border-[#E9DED0] bg-[#FBF8F3] p-3">
+                        <p className="text-xs text-[#8F8175]">
                           Hourly{isPerHead ? " (per person)" : ""}
                         </p>
-                        <p className="mt-1 font-bold text-gray-900">
+                        <p className="mt-1 font-bold text-[#382B26]">
                           {formatPrice(space.perHour)}
                         </p>
                       </div>
                     )}
 
                     {space.perDay != null && (
-                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
+                      <div className="rounded-xl border border-[#E9DED0] bg-[#FBF8F3] p-3">
+                        <p className="text-xs text-[#8F8175]">
                           Daily{isPerHead ? " (per person)" : ""}
                         </p>
-                        <p className="mt-1 font-bold text-gray-900">
+                        <p className="mt-1 font-bold text-[#382B26]">
                           {formatPrice(space.perDay)}
                         </p>
                       </div>
                     )}
 
                     {space.perMonth != null && (
-                      <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                        <p className="text-xs text-gray-500">
+                      <div className="rounded-xl border border-[#E9DED0] bg-[#FBF8F3] p-3">
+                        <p className="text-xs text-[#8F8175]">
                           Monthly{isPerHead ? " (per person)" : ""}
                         </p>
-                        <p className="mt-1 font-bold text-gray-900">
+                        <p className="mt-1 font-bold text-[#382B26]">
                           {formatPrice(space.perMonth)}
                         </p>
                       </div>
                     )}
                   </div>
 
-                  <p className="mt-3 text-xs text-gray-400">
+                  <p className="mt-3 text-xs text-[#A99A8D]">
                     Prices are exclusive of GST. {GST_RATE}% GST is added at
                     checkout.
                   </p>
@@ -1201,12 +1158,12 @@ export default function BookSpace() {
             </section>
 
             {/* Step 1: Booking plan */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-[#E9DED0] bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5">
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-[#382B26]">
                   1. Select Booking Plan
                 </h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-[#8F8175]">
                   Choose how you want to book your space.
                 </p>
               </div>
@@ -1224,12 +1181,12 @@ export default function BookSpace() {
                         onClick={() => handlePlanChange(option.id)}
                         className={`relative rounded-xl border-2 p-4 text-left transition ${
                           isSelected
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
+                            ? "border-[#A95643] bg-[#F8EDE6]"
+                            : "border-[#E9DED0] bg-white hover:border-[#C9826C] hover:bg-[#FBF8F3]"
                         }`}
                       >
                         {isSelected && (
-                          <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white">
+                          <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-[#A95643] text-white">
                             <Check size={13} />
                           </div>
                         )}
@@ -1237,19 +1194,19 @@ export default function BookSpace() {
                         <Icon
                           size={22}
                           className={
-                            isSelected ? "text-blue-600" : "text-gray-500"
+                            isSelected ? "text-[#A95643]" : "text-[#8F8175]"
                           }
                         />
 
-                        <p className="mt-3 font-semibold text-gray-900">
+                        <p className="mt-3 font-semibold text-[#382B26]">
                           {option.label}
                         </p>
 
-                        <p className="mt-1 text-xl font-bold text-gray-900">
+                        <p className="mt-1 text-xl font-bold text-[#71392F]">
                           {formatPrice(option.price)}
                         </p>
 
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-[#8F8175]">
                           per {isPerHead ? "person per " : ""}
                           {option.shortLabel.toLowerCase()}
                         </p>
@@ -1265,31 +1222,31 @@ export default function BookSpace() {
             </section>
 
             {/* Step 2: Date, time and duration */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-[#E9DED0] bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-5">
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-[#382B26]">
                   2. Select Date{isHourly ? ", Time" : ""} &amp; Duration
                 </h2>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-[#8F8175]">
                   Select when and how long you need the space.
                 </p>
               </div>
 
-              <div className="mb-5 flex items-start gap-2 rounded-xl bg-blue-50 px-4 py-3 text-xs text-blue-700">
+              <div className="mb-5 flex items-start gap-2 rounded-xl border border-[#E9DED0] bg-[#F8EDE6] px-4 py-3 text-xs text-[#71392F]">
                 <Clock3 size={15} className="mt-0.5 shrink-0" />
                 <p>Office hours: {OFFICE_HOURS_TEXT}</p>
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  <label className="mb-2 block text-sm font-semibold text-[#55443B]">
                     Booking Date
                   </label>
 
                   <div className="relative">
                     <CalendarDays
                       size={19}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A95643]"
                     />
 
                     <input
@@ -1297,18 +1254,18 @@ export default function BookSpace() {
                       min={getToday()}
                       value={selectedDate}
                       onChange={(event) => handleDateChange(event.target.value)}
-                      className={`w-full rounded-xl border bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition focus:ring-2 ${
+                      className={`w-full rounded-xl border bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-[#382B26] outline-none transition focus:ring-2 ${
                         isClosedDay
                           ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-                          : "border-gray-200 focus:border-blue-500 focus:ring-blue-100"
+                          : "border-[#E9DED0] focus:border-[#A95643] focus:ring-[#A95643]/15"
                       }`}
                     />
                   </div>
 
                   {selectedDate && !isClosedDay && (
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-[#8F8175]">
                       Selected:{" "}
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-[#382B26]">
                         {formatDate(selectedDate)}
                       </span>
                     </p>
@@ -1323,23 +1280,23 @@ export default function BookSpace() {
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  <label className="mb-2 block text-sm font-semibold text-[#55443B]">
                     Duration
                   </label>
 
-                  <div className="flex h-[52px] items-center justify-between rounded-xl border border-gray-200 px-3">
+                  <div className="flex h-[52px] items-center justify-between rounded-xl border border-[#E9DED0] px-3">
                     <button
                       type="button"
                       onClick={decrementDuration}
                       disabled={duration <= minDuration || checkingAvailability}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#71392F] transition hover:bg-[#EEDDD2] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Minus size={17} />
                     </button>
 
                     <div className="text-center">
-                      <p className="font-bold text-gray-900">{duration}</p>
-                      <p className="text-[11px] text-gray-500">
+                      <p className="font-bold text-[#382B26]">{duration}</p>
+                      <p className="text-[11px] text-[#8F8175]">
                         {selectedPricing?.shortLabel || "unit"}
                         {duration > 1 ? "s" : ""}
                       </p>
@@ -1349,20 +1306,20 @@ export default function BookSpace() {
                       type="button"
                       onClick={incrementDuration}
                       disabled={duration >= maxDuration || checkingAvailability}
-                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#71392F] transition hover:bg-[#EEDDD2] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <Plus size={17} />
                     </button>
                   </div>
 
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-[#8F8175]">
                     {minDuration} - {maxDuration}{" "}
                     {selectedPricing?.shortLabel?.toLowerCase() || "units"}{" "}
                     available.
                   </p>
 
                   {selectedPlan === "daily" && (
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-[#A99A8D]">
                       Sundays are not counted in daily bookings.
                     </p>
                   )}
@@ -1372,7 +1329,7 @@ export default function BookSpace() {
               {/* Hourly: start time selection */}
               {isHourly && !isClosedDay && (
                 <div className="mt-6">
-                  <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  <label className="mb-2 block text-sm font-semibold text-[#55443B]">
                     Start Time
                   </label>
 
@@ -1390,10 +1347,10 @@ export default function BookSpace() {
                             aria-pressed={isSelected}
                             className={`rounded-xl border-2 px-2 py-2.5 text-xs font-semibold transition ${
                               slot.disabled
-                                ? "cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400"
+                                ? "cursor-not-allowed border-[#E9DED0] bg-[#F5F0E9] text-[#B8AA9D]"
                                 : isSelected
-                                  ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
-                                  : "border-gray-200 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50"
+                                  ? "border-[#A95643] bg-[#A95643] text-white shadow-md shadow-[#71392F]/15"
+                                  : "border-[#E9DED0] bg-white text-[#55443B] hover:border-[#C9826C] hover:bg-[#F8EDE6]"
                             }`}
                           >
                             {slot.label}
@@ -1408,14 +1365,14 @@ export default function BookSpace() {
                   )}
 
                   {selectedTime ? (
-                    <p className="mt-3 text-xs text-gray-500">
+                    <p className="mt-3 text-xs text-[#8F8175]">
                       Your booking:{" "}
-                      <span className="font-medium text-gray-700">
+                      <span className="font-medium text-[#382B26]">
                         {formatTime(selectedTime)} - {formatTime(endTime)}
                       </span>
                     </p>
                   ) : (
-                    <p className="mt-3 text-xs text-gray-400">
+                    <p className="mt-3 text-xs text-[#A99A8D]">
                       Select a start time to continue.
                     </p>
                   )}
@@ -1424,46 +1381,46 @@ export default function BookSpace() {
             </section>
 
             {/* Step 3: Space selection */}
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-[#E9DED0] bg-white p-5 shadow-sm sm:p-6">
               <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">
+                  <h2 className="text-lg font-bold text-[#382B26]">
                     3. Select Your Space
                   </h2>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-[#8F8175]">
                     {isPerHead
                       ? "Choose the room, then pick who is attending."
                       : "Choose the space you want to book."}
                   </p>
                 </div>
 
-                <div className="rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-600">
+                <div className="rounded-full bg-[#F8EDE6] px-4 py-2 text-sm font-semibold text-[#A95643]">
                   {selectedSpaces.length} Selected
                 </div>
               </div>
 
-              <div className="mb-6 flex flex-wrap items-center gap-5 text-xs text-gray-500">
+              <div className="mb-6 flex flex-wrap items-center gap-5 text-xs text-[#8F8175]">
                 <div className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-md border border-gray-300 bg-white" />
+                  <span className="h-4 w-4 rounded-md border border-[#D8CBBE] bg-white" />
                   Available
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-md bg-blue-600" />
+                  <span className="h-4 w-4 rounded-md bg-[#A95643]" />
                   Selected
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-md bg-gray-300" />
+                  <span className="h-4 w-4 rounded-md bg-[#D6CEC5]" />
                   Booked / Unavailable
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-gray-50 p-5 sm:p-8">
+              <div className="rounded-2xl border border-[#E9DED0] bg-[#FBF8F3] p-5 sm:p-8">
                 <div className="mb-8 flex justify-center">
                   <div className="w-full max-w-md">
-                    <div className="mb-2 h-2 rounded-full bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
-                    <p className="text-center text-[10px] uppercase tracking-[0.25em] text-gray-400">
+                    <div className="mb-2 h-2 rounded-full bg-gradient-to-r from-transparent via-[#C9B8A9] to-transparent" />
+                    <p className="text-center text-[10px] uppercase tracking-[0.25em] text-[#A99A8D]">
                       Workspace Front
                     </p>
                   </div>
@@ -1479,10 +1436,8 @@ export default function BookSpace() {
                       const isAvailable =
                         spaceItem.status === "Active" &&
                         !unavailableSpaces.includes(seatCode) &&
-                        block !== "full"; // daily/monthly booked -> gray + disabled
+                        block !== "full";
 
-                      // Hourly clash stays clickable so the toast can
-                      // explain and list the free times.
                       const hourlyClash = block === "time";
 
                       return (
@@ -1494,14 +1449,14 @@ export default function BookSpace() {
                           aria-pressed={isSelected}
                           className={`relative flex aspect-square min-h-[58px] flex-col items-center justify-center rounded-xl border-2 text-xs font-semibold transition sm:min-h-[64px] ${
                             !isAvailable || hourlyClash
-                              ? `border-gray-200 bg-gray-300 text-gray-500 ${
+                              ? `border-[#E2DAD1] bg-[#D6CEC5] text-[#8F8175] ${
                                   !isAvailable
                                     ? "cursor-not-allowed"
                                     : "cursor-pointer"
                                 }`
                               : isSelected
-                                ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-200"
-                                : "border-gray-300 bg-white text-gray-700 hover:border-blue-400 hover:bg-blue-50"
+                                ? "border-[#A95643] bg-[#A95643] text-white shadow-md shadow-[#71392F]/20"
+                                : "border-[#D8CBBE] bg-white text-[#55443B] hover:border-[#C9826C] hover:bg-[#F8EDE6]"
                           }`}
                         >
                           {isSelected ? (
@@ -1523,8 +1478,8 @@ export default function BookSpace() {
                   </div>
                 ) : (
                   <div className="py-12 text-center">
-                    <Home size={40} className="mx-auto text-gray-300" />
-                    <p className="mt-4 text-sm font-medium text-gray-600">
+                    <Home size={40} className="mx-auto text-[#C9B8A9]" />
+                    <p className="mt-4 text-sm font-medium text-[#76675D]">
                       No spaces available.
                     </p>
                   </div>
@@ -1532,7 +1487,7 @@ export default function BookSpace() {
 
                 {availableSpaces.length > 0 && (
                   <div className="mt-8 flex justify-center">
-                    <div className="rounded-lg bg-gray-200 px-12 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
+                    <div className="rounded-lg bg-[#E9DED0] px-12 py-2 text-[10px] font-semibold uppercase tracking-widest text-[#8F8175]">
                       Back
                     </div>
                   </div>
@@ -1540,8 +1495,8 @@ export default function BookSpace() {
               </div>
 
               {selectedSpaces.length > 0 && (
-                <div className="mt-5 rounded-xl bg-blue-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                <div className="mt-5 rounded-xl border border-[#E9DED0] bg-[#F8EDE6] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#A95643]">
                     Selected Spaces
                   </p>
 
@@ -1549,7 +1504,7 @@ export default function BookSpace() {
                     {selectedSpaces.map((spaceCode) => (
                       <span
                         key={spaceCode}
-                        className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white"
+                        className="rounded-lg bg-[#A95643] px-3 py-1.5 text-xs font-semibold text-white"
                       >
                         {spaceCode}
                       </span>
@@ -1558,14 +1513,14 @@ export default function BookSpace() {
                 </div>
               )}
 
-              {/* Normal spaces: assign each selected seat to the customer or a team member */}
+              {/* Normal spaces: assign seats */}
               {!isPerHead && selectedSpaces.length > 0 && (
-                <div className="mt-5 rounded-xl border border-gray-200 p-4">
-                  <p className="text-sm font-semibold text-gray-900">
+                <div className="mt-5 rounded-xl border border-[#E9DED0] p-4">
+                  <p className="text-sm font-semibold text-[#382B26]">
                     Who is each seat for?{" "}
                     <span className="text-red-500">*</span>
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-[#8F8175]">
                     Assign every seat to yourself or a team member. Each person
                     can take one seat.
                   </p>
@@ -1584,9 +1539,9 @@ export default function BookSpace() {
                       return (
                         <div
                           key={code}
-                          className="flex items-center justify-between gap-3 rounded-lg bg-gray-50 px-3 py-2"
+                          className="flex items-center justify-between gap-3 rounded-lg bg-[#FBF8F3] px-3 py-2"
                         >
-                          <span className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">
+                          <span className="rounded-md bg-[#A95643] px-2.5 py-1 text-xs font-semibold text-white">
                             {code}
                           </span>
 
@@ -1597,9 +1552,9 @@ export default function BookSpace() {
                             }
                             disabled={checkingAvailability || teamLoading}
                             aria-label={`Assign seat ${code}`}
-                            className={`min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none focus:ring-2 ${
+                            className={`min-w-0 flex-1 rounded-lg border bg-white px-3 py-2 text-sm text-[#382B26] outline-none focus:ring-2 ${
                               current
-                                ? "border-gray-200 focus:border-blue-500 focus:ring-blue-100"
+                                ? "border-[#E9DED0] focus:border-[#A95643] focus:ring-[#A95643]/15"
                                 : "border-red-300 focus:border-red-400 focus:ring-red-100"
                             }`}
                           >
@@ -1637,13 +1592,13 @@ export default function BookSpace() {
                 </div>
               )}
 
-              {/* Per-head rooms: pick the attendees from the customer's team */}
+              {/* Per-head rooms: attendees */}
               {isPerHead && selectedSpaces.length > 0 && (
-                <div className="mt-5 rounded-xl border border-gray-200 p-4">
-                  <p className="text-sm font-semibold text-gray-900">
+                <div className="mt-5 rounded-xl border border-[#E9DED0] p-4">
+                  <p className="text-sm font-semibold text-[#382B26]">
                     Who is attending? <span className="text-red-500">*</span>
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-[#8F8175]">
                     {formatPrice(selectedPricing?.price)} per person per{" "}
                     {selectedPricing?.shortLabel?.toLowerCase() || "unit"}.
                     Maximum {MAX_HEADS} people.
@@ -1667,8 +1622,8 @@ export default function BookSpace() {
                           key={person.id}
                           className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition ${
                             checked
-                              ? "bg-blue-50 ring-1 ring-blue-300"
-                              : "bg-gray-50"
+                              ? "bg-[#F8EDE6] ring-1 ring-[#C9826C]"
+                              : "bg-[#FBF8F3]"
                           } ${limitReached ? "cursor-not-allowed opacity-50" : ""}`}
                         >
                           <input
@@ -1680,15 +1635,15 @@ export default function BookSpace() {
                               teamLoading ||
                               limitReached
                             }
-                            className="h-4 w-4 accent-blue-600"
+                            className="h-4 w-4 accent-[#A95643]"
                           />
 
-                          <span className="font-medium text-gray-800">
+                          <span className="font-medium text-[#382B26]">
                             {person.name}
                           </span>
 
                           {person.designation && (
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-[#8F8175]">
                               ({person.designation})
                             </span>
                           )}
@@ -1697,7 +1652,7 @@ export default function BookSpace() {
                     })}
                   </div>
 
-                  <p className="mt-3 text-xs font-semibold text-blue-600">
+                  <p className="mt-3 text-xs font-semibold text-[#A95643]">
                     {attendees.length}{" "}
                     {attendees.length === 1 ? "person" : "people"} attending
                   </p>
@@ -1718,80 +1673,80 @@ export default function BookSpace() {
 
           {/* RIGHT COLUMN: SUMMARY */}
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="border-b border-gray-100 bg-gray-900 p-5 text-white">
-                <p className="text-xs font-medium uppercase tracking-wider text-gray-400">
+            <div className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-white shadow-sm">
+              <div className="border-b border-[#60473D] bg-[#382B26] p-5 text-white">
+                <p className="text-xs font-medium uppercase tracking-wider text-[#D8B8A8]">
                   Booking Summary
                 </p>
 
                 <h2 className="mt-1 text-xl font-bold">{space.space}</h2>
 
-                <p className="mt-1 text-sm text-gray-400">
+                <p className="mt-1 text-sm text-[#D0BEB2]">
                   {availableSpaceCount}{" "}
                   {availableSpaceCount === 1 ? "space" : "spaces"} available
                 </p>
               </div>
 
               <div className="p-5">
-                <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
+                <div className="flex items-start justify-between gap-4 border-b border-[#F0E7DD] pb-4">
                   <div>
-                    <p className="text-xs text-gray-500">Date</p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-[#8F8175]">Date</p>
+                    <p className="mt-1 text-sm font-semibold text-[#382B26]">
                       {formatDate(selectedDate)}
                     </p>
                     {dailyEndDate && (
-                      <p className="mt-1 text-xs text-gray-500">
+                      <p className="mt-1 text-xs text-[#8F8175]">
                         till {formatDate(dailyEndDate)} (Sundays excluded)
                       </p>
                     )}
                   </div>
-                  <CalendarDays size={19} className="text-gray-400" />
+                  <CalendarDays size={19} className="text-[#A95643]" />
                 </div>
 
                 {isHourly && (
-                  <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-4">
+                  <div className="flex items-start justify-between gap-4 border-b border-[#F0E7DD] py-4">
                     <div>
-                      <p className="text-xs text-gray-500">Time</p>
-                      <p className="mt-1 text-sm font-semibold text-gray-900">
+                      <p className="text-xs text-[#8F8175]">Time</p>
+                      <p className="mt-1 text-sm font-semibold text-[#382B26]">
                         {selectedTime
                           ? `${formatTime(selectedTime)} - ${formatTime(endTime)}`
                           : "Not selected"}
                       </p>
                     </div>
-                    <Clock3 size={19} className="text-gray-400" />
+                    <Clock3 size={19} className="text-[#A95643]" />
                   </div>
                 )}
 
-                <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-4">
+                <div className="flex items-start justify-between gap-4 border-b border-[#F0E7DD] py-4">
                   <div>
-                    <p className="text-xs text-gray-500">Plan</p>
-                    <p className="mt-1 text-sm font-semibold capitalize text-gray-900">
+                    <p className="text-xs text-[#8F8175]">Plan</p>
+                    <p className="mt-1 text-sm font-semibold capitalize text-[#382B26]">
                       {selectedPricing?.label || "-"}
                     </p>
                   </div>
-                  <Clock3 size={19} className="text-gray-400" />
+                  <Clock3 size={19} className="text-[#A95643]" />
                 </div>
 
-                <div className="flex items-start justify-between gap-4 border-b border-gray-100 py-4">
+                <div className="flex items-start justify-between gap-4 border-b border-[#F0E7DD] py-4">
                   <div>
-                    <p className="text-xs text-gray-500">Duration</p>
-                    <p className="mt-1 text-sm font-semibold text-gray-900">
+                    <p className="text-xs text-[#8F8175]">Duration</p>
+                    <p className="mt-1 text-sm font-semibold text-[#382B26]">
                       {duration} {selectedPricing?.shortLabel || "unit"}
                       {duration > 1 ? "s" : ""}
                     </p>
                   </div>
 
-                  <div className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                  <div className="rounded-lg bg-[#F8EDE6] px-2.5 py-1 text-xs font-semibold text-[#A95643]">
                     × {duration}
                   </div>
                 </div>
 
-                <div className="border-b border-gray-100 py-4">
+                <div className="border-b border-[#F0E7DD] py-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[#8F8175]">
                       {isPerHead ? "Attendees" : "Spaces"}
                     </p>
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-[#382B26]">
                       {isPerHead ? attendees.length : selectedSpaces.length}
                     </p>
                   </div>
@@ -1802,14 +1757,14 @@ export default function BookSpace() {
                         {attendees.map((value) => (
                           <span
                             key={value}
-                            className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700"
+                            className="rounded-md bg-[#F8EDE6] px-2 py-1 text-[11px] font-semibold text-[#71392F]"
                           >
                             {getAssigneeName(value) || "Team member"}
                           </span>
                         ))}
                       </div>
                     ) : (
-                      <p className="mt-2 text-xs text-gray-400">
+                      <p className="mt-2 text-xs text-[#A99A8D]">
                         No attendees selected
                       </p>
                     )
@@ -1823,7 +1778,7 @@ export default function BookSpace() {
                         return (
                           <span
                             key={spaceCode}
-                            className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-semibold text-gray-700"
+                            className="rounded-md bg-[#F8EDE6] px-2 py-1 text-[11px] font-semibold text-[#71392F]"
                           >
                             {spaceCode}
                             {assigneeName && ` · ${assigneeName}`}
@@ -1832,13 +1787,13 @@ export default function BookSpace() {
                       })}
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-gray-400">
+                    <p className="mt-2 text-xs text-[#A99A8D]">
                       No space selected
                     </p>
                   )}
 
                   {isPerHead && selectedSpaces.length > 0 && (
-                    <p className="mt-3 text-xs text-gray-500">
+                    <p className="mt-3 text-xs text-[#8F8175]">
                       Room: {selectedSpaces[0]}
                     </p>
                   )}
@@ -1847,47 +1802,47 @@ export default function BookSpace() {
                 {/* Price breakdown, coupon, GST and total */}
                 <div className="py-5">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">
+                    <span className="text-[#8F8175]">
                       Price {isPerHead ? "/ person" : ""} /{" "}
                       {selectedPricing?.shortLabel?.toLowerCase() || "unit"}
                     </span>
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-[#382B26]">
                       {formatPrice(selectedPricing?.price)}
                     </span>
                   </div>
 
                   <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Duration</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-[#8F8175]">Duration</span>
+                    <span className="font-medium text-[#382B26]">
                       × {duration}
                     </span>
                   </div>
 
                   <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">
+                    <span className="text-[#8F8175]">
                       {isPerHead ? "People" : "Spaces"}
                     </span>
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-[#382B26]">
                       × {billableQty}
                     </span>
                   </div>
 
                   <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Subtotal</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-[#8F8175]">Subtotal</span>
+                    <span className="font-medium text-[#382B26]">
                       {formatPrice(totalAmount)}
                     </span>
                   </div>
 
                   {/* Coupon */}
-                  <div className="mt-4 border-t border-gray-100 pt-4">
+                  <div className="mt-4 border-t border-[#F0E7DD] pt-4">
                     {appliedCoupon ? (
-                      <div className="flex items-center justify-between rounded-xl bg-green-50 px-3 py-2.5">
+                      <div className="flex items-center justify-between rounded-xl border border-[#DCE8D9] bg-[#F0F5ED] px-3 py-2.5">
                         <div>
-                          <p className="text-sm font-semibold text-green-700">
+                          <p className="text-sm font-semibold text-[#42664C]">
                             {appliedCoupon.couponCode} applied
                           </p>
-                          <p className="text-xs text-green-600">
+                          <p className="text-xs text-[#527C61]">
                             {appliedCoupon.discountPercent}% off
                           </p>
                         </div>
@@ -1895,7 +1850,7 @@ export default function BookSpace() {
                         <button
                           type="button"
                           onClick={() => removeCoupon()}
-                          className="text-xs font-semibold text-red-600 hover:underline"
+                          className="text-xs font-semibold text-[#A95643] hover:underline"
                         >
                           Remove
                         </button>
@@ -1904,7 +1859,7 @@ export default function BookSpace() {
                       <>
                         <label
                           htmlFor="coupon-code"
-                          className="mb-2 block text-xs font-semibold text-gray-700"
+                          className="mb-2 block text-xs font-semibold text-[#55443B]"
                         >
                           Have a coupon?
                         </label>
@@ -1926,14 +1881,14 @@ export default function BookSpace() {
                             }}
                             placeholder="Enter code"
                             maxLength={30}
-                            className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                            className="min-w-0 flex-1 rounded-lg border border-[#E9DED0] bg-white px-3 py-2.5 text-sm uppercase text-[#382B26] outline-none placeholder:text-[#A99A8D] focus:border-[#A95643] focus:ring-2 focus:ring-[#A95643]/15"
                           />
 
                           <button
                             type="button"
                             onClick={handleApplyCoupon}
                             disabled={couponLoading || !couponInput.trim()}
-                            className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
+                            className="rounded-lg bg-[#382B26] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#71392F] disabled:cursor-not-allowed disabled:bg-[#D6CEC5]"
                           >
                             {couponLoading ? "..." : "Apply"}
                           </button>
@@ -1950,28 +1905,28 @@ export default function BookSpace() {
 
                   {appliedCoupon && (
                     <div className="mt-4 flex items-center justify-between text-sm">
-                      <span className="text-green-600">Coupon discount</span>
-                      <span className="font-semibold text-green-600">
+                      <span className="text-[#527C61]">Coupon discount</span>
+                      <span className="font-semibold text-[#527C61]">
                         − {formatPrice(appliedCoupon.discountAmount)}
                       </span>
                     </div>
                   )}
 
                   <div className="mt-4 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">GST ({GST_RATE}%)</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-[#8F8175]">GST ({GST_RATE}%)</span>
+                    <span className="font-medium text-[#382B26]">
                       {formatPrice(gstAmount)}
                     </span>
                   </div>
 
-                  <div className="mt-5 flex items-end justify-between border-t border-gray-100 pt-5">
+                  <div className="mt-5 flex items-end justify-between border-t border-[#E9DED0] pt-5">
                     <div>
-                      <p className="text-xs text-gray-500">Estimated Total</p>
-                      <p className="mt-1 text-2xl font-bold text-gray-900">
+                      <p className="text-xs text-[#8F8175]">Estimated Total</p>
+                      <p className="mt-1 text-2xl font-bold text-[#71392F]">
                         {formatPrice(payableAmount)}
                       </p>
                       {appliedCoupon && (
-                        <p className="text-xs text-gray-400 line-through">
+                        <p className="text-xs text-[#A99A8D] line-through">
                           {formatPrice(
                             round2(totalAmount * (1 + GST_RATE / 100)),
                           )}
@@ -1979,7 +1934,7 @@ export default function BookSpace() {
                       )}
                     </div>
 
-                    <span className="rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-semibold text-green-600">
+                    <span className="rounded-full bg-[#F0F5ED] px-2.5 py-1 text-[10px] font-semibold text-[#527C61]">
                       Incl. GST
                     </span>
                   </div>
@@ -1989,7 +1944,7 @@ export default function BookSpace() {
                   type="button"
                   onClick={handleContinue}
                   disabled={continueDisabled}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A95643] px-5 py-3.5 font-semibold text-white shadow-sm transition hover:bg-[#71392F] hover:shadow-md focus:outline-none focus:ring-2 focus:ring-[#A95643] focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-[#D6CEC5] disabled:text-[#8F8175] disabled:shadow-none"
                 >
                   {checkingAvailability ? (
                     <>
@@ -2009,16 +1964,16 @@ export default function BookSpace() {
                     Office is closed on Sundays. Select another date.
                   </p>
                 ) : isHourly && !selectedTime ? (
-                  <p className="mt-3 text-center text-xs text-gray-400">
+                  <p className="mt-3 text-center text-xs text-[#8F8175]">
                     Select a start time to continue.
                   </p>
                 ) : !selectedSpaces.length ? (
-                  <p className="mt-3 text-center text-xs text-gray-400">
+                  <p className="mt-3 text-center text-xs text-[#8F8175]">
                     Select at least one space to continue.
                   </p>
                 ) : (
                   !assignmentsComplete && (
-                    <p className="mt-3 text-center text-xs text-gray-400">
+                    <p className="mt-3 text-center text-xs text-[#8F8175]">
                       {isPerHead
                         ? "Select at least one attendee to continue."
                         : "Assign each seat to a person to continue."}
@@ -2028,18 +1983,19 @@ export default function BookSpace() {
               </div>
             </div>
 
-            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-4">
+            {/* Secure booking information */}
+            <div className="mt-4 rounded-xl border border-[#E9DED0] bg-white p-4">
               <div className="flex gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-50">
-                  <Check size={18} className="text-green-600" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F0F5ED]">
+                  <Check size={18} className="text-[#527C61]" />
                 </div>
 
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[#382B26]">
                     Secure Booking
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-gray-500">
+                  <p className="mt-1 text-xs leading-5 text-[#8F8175]">
                     Your booking is confirmed only after successful payment
                     verification by the server.
                   </p>

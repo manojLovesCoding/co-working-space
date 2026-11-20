@@ -8,16 +8,10 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  Building2,
   ArrowRight,
-  Sparkles,
-  LayoutDashboard,
   CheckCircle2,
   AlertCircle,
-  Users,
-  BriefcaseBusiness,
   ArrowLeft,
-  ShieldCheckIcon,
 } from "lucide-react";
 import api from "../api/axios.js";
 
@@ -47,9 +41,7 @@ const Register = () => {
   const [resendTimer, setResendTimer] = useState(0);
   const [otpExpiryTimer, setOtpExpiryTimer] = useState(0);
 
-  // ==========================================
   // OTP COUNTDOWN
-  // ==========================================
   useEffect(() => {
     if (resendTimer <= 0 && otpExpiryTimer <= 0) return;
 
@@ -61,9 +53,7 @@ const Register = () => {
     return () => clearInterval(timer);
   }, [resendTimer > 0, otpExpiryTimer > 0]);
 
-  // ==========================================
   // INPUT CHANGE
-  // ==========================================
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -74,9 +64,7 @@ const Register = () => {
     setSuccess("");
   };
 
-  // ==========================================
   // FORMAT TIMER
-  // ==========================================
   const formatTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -86,9 +74,7 @@ const Register = () => {
     ).padStart(2, "0")}`;
   };
 
-  // ==========================================
   // STEP 1: SEND REGISTRATION OTP
-  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -152,9 +138,7 @@ const Register = () => {
     }
   };
 
-  // ==========================================
   // STEP 2: VERIFY OTP
-  // ==========================================
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
 
@@ -179,7 +163,9 @@ const Register = () => {
         otp,
       });
 
-      setSuccess(data.message || "Email verified and registration completed!");
+      setSuccess(
+        data.message || "Email verified and registration completed!",
+      );
 
       setFormData({
         name: "",
@@ -204,9 +190,7 @@ const Register = () => {
     }
   };
 
-  // ==========================================
   // RESEND OTP
-  // ==========================================
   const handleResendOTP = async () => {
     setError("");
     setSuccess("");
@@ -243,9 +227,7 @@ const Register = () => {
     }
   };
 
-  // ==========================================
   // BACK TO REGISTRATION
-  // ==========================================
   const handleBack = () => {
     setStep("register");
     setOtp("");
@@ -253,636 +235,494 @@ const Register = () => {
     setSuccess("");
   };
 
+  // INPUT STYLING
   const inputClass =
-    "w-full rounded-lg border border-slate-200 bg-slate-50/80 py-3 pl-10 pr-3 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-blue-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60";
+    "w-full rounded-lg border border-[#E9DED0] bg-[#FAF8F4] py-2.5 pl-9 pr-3 text-xs text-[#382B26] outline-none transition placeholder:text-[#A99A8D] hover:border-[#D5A08D] focus:border-[#A95643] focus:bg-white focus:ring-2 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:opacity-60";
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF]">
-      <div className="flex min-h-screen flex-col lg:flex-row">
-        {/* LEFT BRANDING SECTION */}
-        <section className="relative hidden overflow-hidden bg-gradient-to-br from-[#123C78] via-[#174EA6] to-[#4338A8] lg:flex lg:w-[46%] xl:w-1/2">
-          <div className="absolute -left-32 -top-32 h-[380px] w-[380px] rounded-full bg-blue-400/20 blur-[90px]" />
-          <div className="absolute -bottom-40 -right-32 h-[380px] w-[380px] rounded-full bg-indigo-300/20 blur-[90px]" />
+    <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] px-3 py-6 sm:px-5">
+      <div className="w-full max-w-[420px]">
+        {/* Brand Logo */}
+<div className=" flex justify-center">
+  <Link to="/" className="inline-flex items-center justify-center">
+    <img
+      src="/oorza-logo.png"
+      alt="Oorza"
+      className="h-28 w-auto max-w-[300px] object-contain sm:h-32 sm:max-w-[340px]"
+    />
+  </Link>
+</div>
 
-          <div className="absolute right-12 top-20 h-36 w-36 rounded-full border border-white/10 bg-white/[0.04]" />
-          <div className="absolute bottom-24 left-10 h-20 w-20 rounded-full border border-white/10 bg-white/[0.04]" />
+        {/* REGISTRATION CARD */}
+        <div className="overflow-hidden rounded-xl border border-[#E9DED0] bg-white shadow-lg shadow-[#71392F]/[0.06]">
+          {/* TOP ACCENT */}
+          <div className="h-1 w-full bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#D58B70]" />
 
-          <div className="relative z-10 flex h-full w-full flex-col justify-between p-7 xl:p-10">
-            {/* Brand */}
-            <Link to="/" className="inline-flex w-fit items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-lg font-extrabold text-blue-700 shadow-xl">
-                O
+          <div className="p-4 sm:p-5">
+            {/* HEADING */}
+            <div className="mb-4">
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643] ring-1 ring-[#EBD5C9]">
+                {step === "register" ? (
+                  <UserRound size={17} />
+                ) : (
+                  <ShieldCheck size={17} />
+                )}
               </div>
 
-              <div>
-                <p className="text-lg font-extrabold tracking-tight text-white">
-                  Oorza
-                </p>
-
-                <p className="text-[9px] font-medium tracking-wide text-blue-100/75">
-                  YOUR SPACE. YOUR PEOPLE. YOUR WORK.
-                </p>
-              </div>
-            </Link>
-
-            {/* Main content */}
-            <div className="my-auto max-w-xl py-8">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-medium text-blue-50 backdrop-blur-lg">
-                <Sparkles size={13} className="text-yellow-300" />
-                Your workspace journey starts here
-              </div>
-
-              <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight text-white xl:text-4xl">
-                Work better.
-                <span className="mt-1.5 block text-blue-200">
-                  Connect smarter.
-                </span>
-              </h1>
-
-              <p className="mt-4 max-w-md text-xs leading-6 text-blue-100/80 xl:text-sm">
-                Discover a smarter way to work. Create your Oorza account to
-                explore flexible workspaces, manage your bookings, and connect
-                with a community built for productivity.
+              <p className="mb-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#A95643]">
+                {step === "register"
+                  ? "Get started with Oorza"
+                  : "Email verification"}
               </p>
 
-              {/* Feature cards */}
-              <div className="mt-7 grid max-w-lg grid-cols-2 gap-3">
-                <div className="rounded-xl border border-white/10 bg-white/[0.09] p-3.5 backdrop-blur-xl">
-                  <div className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-blue-100">
-                    <Building2 size={17} />
-                  </div>
+              <h2 className="text-xl font-extrabold tracking-tight text-[#382B26]">
+                {step === "register"
+                  ? "Create your account"
+                  : "Verify your email"}
+              </h2>
 
-                  <h3 className="text-xs font-bold text-white">
-                    Flexible Workspaces
-                  </h3>
-
-                  <p className="mt-1 text-[10px] leading-4 text-blue-100/65">
-                    Find the right space for your work and business.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/[0.09] p-3.5 backdrop-blur-xl">
-                  <div className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-blue-100">
-                    <LayoutDashboard size={17} />
-                  </div>
-
-                  <h3 className="text-xs font-bold text-white">
-                    Easy Management
-                  </h3>
-
-                  <p className="mt-1 text-[10px] leading-4 text-blue-100/65">
-                    Manage your bookings and services effortlessly.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/[0.09] p-3.5 backdrop-blur-xl">
-                  <div className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-blue-100">
-                    <Users size={17} />
-                  </div>
-
-                  <h3 className="text-xs font-bold text-white">
-                    Professional Community
-                  </h3>
-
-                  <p className="mt-1 text-[10px] leading-4 text-blue-100/65">
-                    Connect, collaborate, and grow together.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-white/10 bg-white/[0.09] p-3.5 backdrop-blur-xl">
-                  <div className="mb-2.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-blue-100">
-                    <BriefcaseBusiness size={17} />
-                  </div>
-
-                  <h3 className="text-xs font-bold text-white">
-                    Built for Productivity
-                  </h3>
-
-                  <p className="mt-1 text-[10px] leading-4 text-blue-100/65">
-                    Everything you need in one convenient place.
-                  </p>
-                </div>
-              </div>
-
-              {/* Trust indicators */}
-              <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-medium text-blue-100/75">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 size={12} className="text-emerald-300" />
-                  Easy to use
-                </span>
-
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 size={12} className="text-emerald-300" />
-                  Secure access
-                </span>
-
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 size={12} className="text-emerald-300" />
-                  All in one place
-                </span>
-              </div>
+              <p className="mt-1 text-[11px] leading-5 text-[#8F8175]">
+                {step === "register"
+                  ? "Join Oorza and discover a better way to work."
+                  : `We've sent a 6-digit verification code to ${formData.email}`}
+              </p>
             </div>
 
-            {/* Footer */}
-            <p className="text-[10px] text-blue-100/50">
-              © 2026 Oorza. All rights reserved.
-            </p>
-          </div>
-        </section>
+            {/* PROGRESS INDICATOR */}
+            <div className="mb-4 flex items-center gap-1.5">
+              <div
+                className={`h-1 flex-1 rounded-full ${
+                  step === "register" ? "bg-[#A95643]" : "bg-emerald-500"
+                }`}
+              />
 
-        {/* RIGHT REGISTRATION SECTION */}
-        <section className="flex min-h-screen flex-1 items-center justify-center px-4 py-6 sm:px-7 lg:px-8 lg:py-8 xl:px-10">
-          <div className="w-full max-w-[440px]">
-            {/* Mobile brand */}
-            <div className="mb-5 text-center lg:hidden">
-              <Link to="/" className="inline-flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-base font-extrabold text-white shadow-lg">
-                  O
-                </div>
-
-                <div className="text-left">
-                  <p className="text-base font-extrabold tracking-tight text-slate-900">
-                    Oorza
-                  </p>
-
-                  <p className="text-[8px] font-semibold tracking-wide text-slate-500">
-                    YOUR SPACE. YOUR PEOPLE. YOUR WORK.
-                  </p>
-                </div>
-              </Link>
+              <div
+                className={`h-1 flex-1 rounded-full ${
+                  step === "verify" ? "bg-[#A95643]" : "bg-[#E9DED0]"
+                }`}
+              />
             </div>
 
-            {/* Registration card */}
-            <div className="overflow-hidden rounded-2xl border border-blue-100/80 bg-white shadow-xl shadow-blue-900/[0.07]">
-              <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-500" />
+            {/* ERROR MESSAGE */}
+            {error && (
+              <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-[10px] text-red-700">
+                <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                <p className="leading-4">{error}</p>
+              </div>
+            )}
 
-              <div className="p-4 sm:p-6">
-                {/* Heading */}
-                <div className="mb-4">
-                  <div className="mb-2.5 flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                    {step === "register" ? (
-                      <UserRound size={18} />
-                    ) : (
-                      <ShieldCheck size={18} />
-                    )}
-                  </div>
+            {/* SUCCESS MESSAGE */}
+            {success && (
+              <div className="mb-3 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-[10px] text-emerald-700">
+                <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
+                <p className="leading-4">{success}</p>
+              </div>
+            )}
 
-                  <p className="mb-1 text-[9px] font-bold uppercase tracking-[0.18em] text-blue-600">
-                    {step === "register"
-                      ? "Get started with Oorza"
-                      : "Email verification"}
-                  </p>
+            {/* =====================================
+                STEP 1: REGISTRATION FORM
+            ===================================== */}
+            {step === "register" && (
+              <form onSubmit={handleSubmit} className="space-y-3">
+                {/* FULL NAME */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold text-[#55443B]">
+                    Full Name
+                  </label>
 
-                  <h2 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
-                    {step === "register"
-                      ? "Create your account"
-                      : "Verify your email"}
-                  </h2>
+                  <div className="group relative">
+                    <UserRound
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition group-focus-within:text-[#A95643]"
+                    />
 
-                  <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                    {step === "register"
-                      ? "Join Oorza and discover a better way to work."
-                      : `We've sent a 6-digit verification code to ${formData.email}`}
-                  </p>
-                </div>
-
-                {/* Progress indicator */}
-                <div className="mb-4 flex items-center gap-2">
-                  <div
-                    className={`h-1 flex-1 rounded-full ${
-                      step === "register" ? "bg-blue-600" : "bg-emerald-500"
-                    }`}
-                  />
-
-                  <div
-                    className={`h-1 flex-1 rounded-full ${
-                      step === "verify" ? "bg-blue-600" : "bg-slate-100"
-                    }`}
-                  />
-                </div>
-
-                {/* Error message */}
-                {error && (
-                  <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-2.5 text-[11px] text-red-700">
-                    <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                    <p className="leading-4">{error}</p>
-                  </div>
-                )}
-
-                {/* Success message */}
-                {success && (
-                  <div className="mb-3 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-2.5 text-[11px] text-emerald-700">
-                    <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
-                    <p className="leading-4">{success}</p>
-                  </div>
-                )}
-
-                {/* =====================================
-                    STEP 1: REGISTRATION FORM
-                ===================================== */}
-                {step === "register" && (
-                  <form onSubmit={handleSubmit} className="space-y-3">
-                    {/* Full name */}
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Full Name
-                      </label>
-
-                      <div className="group relative">
-                        <UserRound
-                          size={15}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
-                        />
-
-                        <input
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          placeholder="Enter your full name"
-                          autoComplete="name"
-                          disabled={loading}
-                          className={inputClass}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Email and phone */}
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                          Email Address
-                        </label>
-
-                        <div className="group relative">
-                          <Mail
-                            size={15}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
-                          />
-
-                          <input
-                            name="email"
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="you@example.com"
-                            autoComplete="email"
-                            disabled={loading}
-                            className={inputClass}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                          Phone Number
-                        </label>
-
-                        <div className="group relative">
-                          <Phone
-                            size={15}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
-                          />
-
-                          <input
-                            name="phone"
-                            type="tel"
-                            value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="Phone number"
-                            autoComplete="tel"
-                            disabled={loading}
-                            className={inputClass}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Password */}
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Password
-                      </label>
-
-                      <div className="group relative">
-                        <LockKeyhole
-                          size={15}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
-                        />
-
-                        <input
-                          name="password"
-                          value={formData.password}
-                          onChange={handleChange}
-                          placeholder="Create a password"
-                          type={showPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          disabled={loading}
-                          className={`${inputClass} pr-10`}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          disabled={loading}
-                          aria-label={
-                            showPassword ? "Hide password" : "Show password"
-                          }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-blue-600"
-                        >
-                          {showPassword ? (
-                            <EyeOff size={15} />
-                          ) : (
-                            <Eye size={15} />
-                          )}
-                        </button>
-                      </div>
-
-                      <p className="mt-1 text-[9px] text-slate-400">
-                        Password must contain at least 6 characters.
-                      </p>
-                    </div>
-
-                    {/* Confirm password */}
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-slate-700">
-                        Confirm Password
-                      </label>
-
-                      <div className="group relative">
-                        <LockKeyhole
-                          size={15}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition group-focus-within:text-blue-600"
-                        />
-
-                        <input
-                          name="confirmPassword"
-                          value={formData.confirmPassword}
-                          onChange={handleChange}
-                          placeholder="Confirm your password"
-                          type={showConfirmPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          disabled={loading}
-                          className={`${inputClass} pr-10 ${
-                            formData.confirmPassword &&
-                            formData.password !== formData.confirmPassword
-                              ? "border-red-300"
-                              : ""
-                          }`}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setShowConfirmPassword((prev) => !prev)
-                          }
-                          disabled={loading}
-                          aria-label={
-                            showConfirmPassword
-                              ? "Hide password"
-                              : "Show password"
-                          }
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-blue-600"
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff size={15} />
-                          ) : (
-                            <Eye size={15} />
-                          )}
-                        </button>
-                      </div>
-
-                      {formData.confirmPassword &&
-                        formData.password !== formData.confirmPassword && (
-                          <p className="mt-1 text-[10px] text-red-500">
-                            Passwords do not match
-                          </p>
-                        )}
-                    </div>
-
-                    {/* Account information */}
-                    <div className="flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50/70 p-2.5">
-                      <ShieldCheck
-                        size={16}
-                        className="mt-0.5 shrink-0 text-blue-600"
-                      />
-
-                      <p className="text-[10px] leading-4 text-blue-700">
-                        Your account will be registered as a customer. Verify
-                        your email address to complete registration.
-                      </p>
-                    </div>
-
-                    {/* Terms */}
-                    <div className="flex items-start gap-2">
-                      <input
-                        type="checkbox"
-                        required
-                        disabled={loading}
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 text-blue-600 accent-blue-600 focus:ring-blue-500"
-                      />
-
-                      <p className="text-[10px] leading-4 text-slate-500">
-                        I agree to the{" "}
-                        <Link
-                          to="/terms"
-                          className="font-semibold text-blue-600 hover:text-indigo-700"
-                        >
-                          Terms of Service
-                        </Link>{" "}
-                        and{" "}
-                        <Link
-                          to="/privacy"
-                          className="font-semibold text-blue-600 hover:text-indigo-700"
-                        >
-                          Privacy Policy
-                        </Link>
-                        .
-                      </p>
-                    </div>
-
-                    {/* Submit */}
-                    <button
-                      type="submit"
+                    <input
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      placeholder="Enter your full name"
+                      autoComplete="name"
                       disabled={loading}
-                      className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                    >
-                      {loading ? (
-                        <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          Sending verification code...
-                        </>
-                      ) : (
-                        <>
-                          Continue with Email Verification
-                          <ArrowRight
-                            size={15}
-                            className="transition-transform group-hover:translate-x-1"
-                          />
-                        </>
-                      )}
-                    </button>
-                  </form>
-                )}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
-                {/* =====================================
-                    STEP 2: OTP VERIFICATION
-                ===================================== */}
-                {step === "verify" && (
-                  <form onSubmit={handleVerifyOTP} className="space-y-4">
-                    <div className="rounded-xl border border-blue-100 bg-blue-50/70 p-4 text-center">
-                      <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white text-blue-600 shadow-sm">
-                        <Mail size={22} />
-                      </div>
+                {/* EMAIL */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold text-[#55443B]">
+                    Email Address
+                  </label>
 
-                      <h3 className="text-sm font-bold text-slate-800">
-                        Check your inbox
-                      </h3>
+                  <div className="group relative">
+                    <Mail
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition group-focus-within:text-[#A95643]"
+                    />
 
-                      <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                        Enter the verification code sent to your registered
-                        email address.
-                      </p>
+                    <input
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="you@example.com"
+                      autoComplete="email"
+                      disabled={loading}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
-                      <p className="mt-2 break-all text-xs font-bold text-blue-700">
-                        {formData.email}
-                      </p>
-                    </div>
+                {/* PHONE */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold text-[#55443B]">
+                    Phone Number
+                  </label>
 
-                    {/* OTP input */}
-                    <div>
-                      <label className="mb-2 block text-center text-[11px] font-semibold text-slate-700">
-                        Enter 6-digit verification code
-                      </label>
+                  <div className="group relative">
+                    <Phone
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition group-focus-within:text-[#A95643]"
+                    />
 
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        value={otp}
-                        onChange={(e) => {
-                          setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
-                          setError("");
-                          setSuccess("");
-                        }}
-                        placeholder="000000"
-                        disabled={loading}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-4 text-center text-2xl font-extrabold tracking-[0.6em] text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 disabled:opacity-60"
-                      />
+                    <input
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="Phone number"
+                      autoComplete="tel"
+                      disabled={loading}
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
-                      <p className="mt-2 text-center text-[10px] text-slate-400">
-                        Enter the OTP exactly as received in your email.
-                      </p>
-                    </div>
+                {/* PASSWORD */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold text-[#55443B]">
+                    Password
+                  </label>
 
-                    {/* OTP expiry */}
-                    <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5">
-                      <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                        <ShieldCheck size={14} className="text-blue-600" />
-                        OTP validity
-                      </div>
+                  <div className="group relative">
+                    <LockKeyhole
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition group-focus-within:text-[#A95643]"
+                    />
 
-                      <span
-                        className={`text-xs font-bold tabular-nums ${
-                          otpExpiryTimer === 0
-                            ? "text-red-600"
-                            : "text-slate-700"
-                        }`}
-                      >
-                        {formatTime(otpExpiryTimer)}
-                      </span>
-                    </div>
+                    <input
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      placeholder="Create a password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      disabled={loading}
+                      className={`${inputClass} pr-9`}
+                    />
 
-                    {/* Verify button */}
-                    <button
-                      type="submit"
-                      disabled={loading || otp.length !== 6}
-                      className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-xs font-bold text-white shadow-md shadow-blue-600/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-500 hover:to-indigo-500 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                    >
-                      {loading ? (
-                        <>
-                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                          Verifying OTP...
-                        </>
-                      ) : (
-                        <>
-                          Verify Email & Create Account
-                          <ArrowRight
-                            size={15}
-                            className="transition-transform group-hover:translate-x-1"
-                          />
-                        </>
-                      )}
-                    </button>
-
-                    {/* Resend OTP */}
-                    <div className="text-center">
-                      <p className="text-[10px] text-slate-500">
-                        Didn't receive the verification code?
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={handleResendOTP}
-                        disabled={resendTimer > 0 || resending || loading}
-                        className="mt-2 text-[11px] font-bold text-blue-600 transition hover:text-indigo-700 disabled:cursor-not-allowed disabled:text-slate-400"
-                      >
-                        {resending
-                          ? "Sending new OTP..."
-                          : resendTimer > 0
-                            ? `Resend OTP in ${formatTime(resendTimer)}`
-                            : "Resend Verification Code"}
-                      </button>
-                    </div>
-
-                    {/* Back button */}
                     <button
                       type="button"
-                      onClick={handleBack}
-                      disabled={loading || resending}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-50"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      disabled={loading}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition hover:text-[#A95643]"
                     >
-                      <ArrowLeft size={14} />
-                      Back to Registration
+                      {showPassword ? (
+                        <EyeOff size={14} />
+                      ) : (
+                        <Eye size={14} />
+                      )}
                     </button>
-                  </form>
-                )}
+                  </div>
 
-                {/* Login section */}
-                <div className="my-3 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-slate-100" />
-
-                  <span className="text-[9px] font-medium text-slate-400">
-                    Already part of Oorza?
-                  </span>
-
-                  <div className="h-px flex-1 bg-slate-100" />
+                  <p className="mt-1 text-[9px] text-[#A99A8D]">
+                    Password must contain at least 6 characters.
+                  </p>
                 </div>
 
-                <Link
-                  to="/login"
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-blue-100 bg-blue-50/50 py-2 text-[11px] font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+                {/* CONFIRM PASSWORD */}
+                <div>
+                  <label className="mb-1 block text-[10px] font-semibold text-[#55443B]">
+                    Confirm Password
+                  </label>
+
+                  <div className="group relative">
+                    <LockKeyhole
+                      size={14}
+                      className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition group-focus-within:text-[#A95643]"
+                    />
+
+                    <input
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      placeholder="Confirm your password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      autoComplete="new-password"
+                      disabled={loading}
+                      className={`${inputClass} pr-9 ${
+                        formData.confirmPassword &&
+                        formData.password !== formData.confirmPassword
+                          ? "border-red-300"
+                          : ""
+                      }`}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword((prev) => !prev)
+                      }
+                      disabled={loading}
+                      aria-label={
+                        showConfirmPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A99A8D] transition hover:text-[#A95643]"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff size={14} />
+                      ) : (
+                        <Eye size={14} />
+                      )}
+                    </button>
+                  </div>
+
+                  {formData.confirmPassword &&
+                    formData.password !== formData.confirmPassword && (
+                      <p className="mt-1 text-[9px] text-red-500">
+                        Passwords do not match
+                      </p>
+                    )}
+                </div>
+
+                {/* ACCOUNT INFORMATION */}
+                <div className="flex items-start gap-2 rounded-lg border border-[#EBD5C9] bg-[#FBF3ED] p-2.5">
+                  <ShieldCheck
+                    size={14}
+                    className="mt-0.5 shrink-0 text-[#A95643]"
+                  />
+
+                  <p className="text-[10px] leading-4 text-[#805044]">
+                    Your account will be registered as a customer. Verify your
+                    email address to complete registration.
+                  </p>
+                </div>
+
+                {/* TERMS */}
+                <div className="flex items-start gap-2">
+                  <input
+                    type="checkbox"
+                    required
+                    disabled={loading}
+                    className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-[#D9CABC] accent-[#A95643] focus:ring-[#A95643]"
+                  />
+
+                  <p className="text-[10px] leading-4 text-[#8F8175]">
+                    I agree to the{" "}
+                    <Link
+                      to="/terms"
+                      className="font-semibold text-[#A95643] transition hover:text-[#71392F]"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      to="/privacy"
+                      className="font-semibold text-[#A95643] transition hover:text-[#71392F]"
+                    >
+                      Privacy Policy
+                    </Link>
+                    .
+                  </p>
+                </div>
+
+                {/* SUBMIT */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#A95643] to-[#874536] py-2.5 text-xs font-bold text-white shadow-sm shadow-[#A95643]/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-[#B96852] hover:to-[#985340] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
-                  Sign in to your account
-                  <ArrowRight size={13} />
-                </Link>
+                  {loading ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Sending verification code...
+                    </>
+                  ) : (
+                    <>
+                      Continue with Email Verification
+                      <ArrowRight
+                        size={14}
+                        className="transition-transform group-hover:translate-x-1"
+                      />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
 
-                {/* Security note */}
-                <div className="mt-3 flex items-center justify-center gap-1.5 text-[9px] text-slate-400">
-                  <ShieldCheck size={12} className="text-emerald-500" />
-                  Your account information is protected
+            {/* =====================================
+                STEP 2: OTP VERIFICATION
+            ===================================== */}
+            {step === "verify" && (
+              <form onSubmit={handleVerifyOTP} className="space-y-3">
+                {/* EMAIL INFORMATION */}
+                <div className="rounded-lg border border-[#EBD5C9] bg-[#FBF3ED] p-3 text-center">
+                  <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#A95643] shadow-sm">
+                    <Mail size={18} />
+                  </div>
+
+                  <h3 className="text-xs font-bold text-[#382B26]">
+                    Check your inbox
+                  </h3>
+
+                  <p className="mt-1 text-[10px] leading-4 text-[#8F8175]">
+                    Enter the verification code sent to your registered email
+                    address.
+                  </p>
+
+                  <p className="mt-1.5 break-all text-[11px] font-bold text-[#A95643]">
+                    {formData.email}
+                  </p>
                 </div>
-              </div>
+
+                {/* OTP INPUT */}
+                <div>
+                  <label className="mb-1.5 block text-center text-[10px] font-semibold text-[#55443B]">
+                    Enter 6-digit verification code
+                  </label>
+
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otp}
+                    onChange={(e) => {
+                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                      setError("");
+                      setSuccess("");
+                    }}
+                    placeholder="000000"
+                    disabled={loading}
+                    className="w-full rounded-lg border border-[#E9DED0] bg-[#FAF8F4] py-3 text-center text-xl font-extrabold tracking-[0.6em] text-[#382B26] outline-none transition placeholder:text-[#D5C7B9] focus:border-[#A95643] focus:bg-white focus:ring-2 focus:ring-[#A95643]/10 disabled:opacity-60"
+                  />
+
+                  <p className="mt-1 text-center text-[9px] text-[#A99A8D]">
+                    Enter the OTP exactly as received in your email.
+                  </p>
+                </div>
+
+                {/* OTP EXPIRY */}
+                <div className="flex items-center justify-between rounded-lg border border-[#E9DED0] bg-[#FAF8F4] px-3 py-2">
+                  <div className="flex items-center gap-2 text-[10px] text-[#8F8175]">
+                    <ShieldCheck size={13} className="text-[#A95643]" />
+                    OTP validity
+                  </div>
+
+                  <span
+                    className={`text-[11px] font-bold tabular-nums ${
+                      otpExpiryTimer === 0
+                        ? "text-red-600"
+                        : "text-[#55443B]"
+                    }`}
+                  >
+                    {formatTime(otpExpiryTimer)}
+                  </span>
+                </div>
+
+                {/* VERIFY BUTTON */}
+                <button
+                  type="submit"
+                  disabled={loading || otp.length !== 6}
+                  className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#A95643] to-[#874536] py-2.5 text-xs font-bold text-white shadow-sm shadow-[#A95643]/20 transition-all duration-200 hover:-translate-y-0.5 hover:from-[#B96852] hover:to-[#985340] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                >
+                  {loading ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      Verifying OTP...
+                    </>
+                  ) : (
+                    <>
+                      Verify Email & Create Account
+                      <ArrowRight
+                        size={14}
+                        className="transition-transform group-hover:translate-x-1"
+                      />
+                    </>
+                  )}
+                </button>
+
+                {/* RESEND OTP */}
+                <div className="text-center">
+                  <p className="text-[10px] text-[#8F8175]">
+                    Didn't receive the verification code?
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={handleResendOTP}
+                    disabled={resendTimer > 0 || resending || loading}
+                    className="mt-1 text-[10px] font-bold text-[#A95643] transition hover:text-[#71392F] disabled:cursor-not-allowed disabled:text-[#B9ADA2]"
+                  >
+                    {resending
+                      ? "Sending new OTP..."
+                      : resendTimer > 0
+                        ? `Resend OTP in ${formatTime(resendTimer)}`
+                        : "Resend Verification Code"}
+                  </button>
+                </div>
+
+                {/* BACK BUTTON */}
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  disabled={loading || resending}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#E9DED0] py-2 text-[10px] font-semibold text-[#806F63] transition hover:border-[#D5A08D] hover:bg-[#FBF3ED] hover:text-[#A95643] disabled:opacity-50"
+                >
+                  <ArrowLeft size={13} />
+                  Back to Registration
+                </button>
+              </form>
+            )}
+
+            {/* LOGIN SECTION */}
+            <div className="my-4 flex items-center gap-2">
+              <div className="h-px flex-1 bg-[#F0E8DF]" />
+
+              <span className="text-[9px] font-medium text-[#A99A8D]">
+                Already part of Oorza?
+              </span>
+
+              <div className="h-px flex-1 bg-[#F0E8DF]" />
             </div>
 
-            {/* Footer */}
-            <div className="mt-3 flex items-center justify-center text-center">
-              <p className="text-[9px] text-slate-400">
-                © 2026 Oorza. All rights reserved.
-              </p>
+            <Link
+              to="/login"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#EBD5C9] bg-[#FBF3ED] py-2 text-[10px] font-bold text-[#A95643] transition hover:border-[#D5A08D] hover:bg-[#F8EDE6]"
+            >
+              Sign in to your account
+              <ArrowRight size={12} />
+            </Link>
+
+            {/* SECURITY NOTE */}
+            <div className="mt-3 flex items-center justify-center gap-1.5 text-[9px] text-[#A99A8D]">
+              <ShieldCheck size={12} className="text-emerald-600" />
+              Your account information is protected
             </div>
           </div>
-        </section>
+        </div>
+
+        {/* FOOTER */}
+        <div className="mt-4 text-center">
+          <p className="text-[9px] text-[#A99A8D]">
+            © 2026 Oorza. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );

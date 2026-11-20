@@ -1,13 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "../components/admin/AdminSidebar";
 
 const AdminLayout = () => {
-  return (
-    <div className="min-h-screen bg-slate-50">
-      <AdminSidebar />
+  const [collapsed, setCollapsed] = useState(false);
 
-      <main className="min-h-screen md:ml-64 pt-16 md:pt-0">
+  return (
+    <div className="min-h-screen bg-[#FAF6EF]">
+      <AdminSidebar
+        collapsed={collapsed}
+        onToggle={() => setCollapsed((prev) => !prev)}
+      />
+
+      <main
+        className={`
+          min-h-screen overflow-x-hidden pt-14
+          transition-[margin] duration-300 ease-in-out
+          ${collapsed ? "md:ml-20" : "md:ml-64"}
+          md:pt-0
+        `}
+      >
         <div className="min-h-screen">
           <Outlet />
         </div>

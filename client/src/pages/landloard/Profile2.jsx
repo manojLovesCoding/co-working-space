@@ -167,9 +167,9 @@ const Profile2 = () => {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm font-medium text-slate-700 outline-none transition placeholder:font-normal placeholder:text-slate-400 hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-60";
+    "w-full rounded-xl border border-[#E9DED0] bg-[#FFFDFA] py-3 pl-11 pr-4 text-sm font-medium text-[#382B26] outline-none transition placeholder:font-normal placeholder:text-[#B5A79B] hover:border-[#C9826C] focus:border-[#A95643] focus:ring-4 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:bg-[#FAF6EF] disabled:opacity-60";
 
-  const labelClass = "mb-2 block text-sm font-semibold text-slate-700";
+  const labelClass = "mb-1.5 block text-sm font-semibold text-[#514239]";
 
   const fields = [
     {
@@ -217,16 +217,29 @@ const Profile2 = () => {
   if (loading) {
     return (
       <>
-        <ToastContainer position="top-right" autoClose={3000} theme="light" />
-        <div className="flex min-h-screen items-center justify-center bg-[#EAF4FF] px-4">
-          <div className="rounded-3xl border border-white bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+          toastStyle={{
+            background: "#FFFDFA",
+            color: "#382B26",
+            border: "1px solid #E9DED0",
+          }}
+          progressStyle={{ background: "#A95643" }}
+        />
+
+        <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] px-4">
+          <div className="rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-7 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-[#F8EDE6]">
+              <Loader2 className="h-7 w-7 animate-spin text-[#A95643]" />
             </div>
-            <h2 className="mt-5 text-lg font-bold text-slate-800">
+
+            <h2 className="mt-4 text-base font-bold text-[#382B26]">
               Loading your profile
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+
+            <p className="mt-1.5 text-xs text-[#8F8175]">
               Please wait while we fetch your information.
             </p>
           </div>
@@ -237,31 +250,41 @@ const Profile2 = () => {
 
   return (
     <>
-      <ToastContainer position="top-right" autoClose={3000} theme="light" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        theme="light"
+        toastStyle={{
+          background: "#FFFDFA",
+          color: "#382B26",
+          border: "1px solid #E9DED0",
+        }}
+        progressStyle={{ background: "#A95643" }}
+      />
 
-      <div className="min-h-screen bg-[#EAF4FF] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#FAF6EF] px-3 py-5 sm:px-5 lg:px-7">
         <div className="mx-auto max-w-6xl">
           {/* Header */}
-          <div className="mb-7 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-600">
-                <UserCircle size={16} />
+              <div className="mb-1.5 flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#A95643]">
+                <UserCircle size={15} />
                 <span>Oorza Customer Portal</span>
-                <span className="text-slate-300">/</span>
-                <span className="text-slate-500">My Profile</span>
+                <span className="text-[#D6C9BB]">/</span>
+                <span className="text-[#8F8175]">My Profile</span>
               </div>
 
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              <h1 className="text-2xl font-extrabold tracking-tight text-[#382B26] sm:text-3xl">
                 Account Settings
               </h1>
 
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-[#8F8175]">
                 Manage your profile, personal details and contact information.
               </p>
             </div>
 
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white px-4 py-2 shadow-sm">
-              <ShieldCheck size={17} className="text-emerald-600" />
+            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-emerald-200 bg-white px-3.5 py-2 shadow-sm">
+              <ShieldCheck size={16} className="text-emerald-600" />
               <span className="text-xs font-bold text-emerald-700">
                 Secure Account
               </span>
@@ -269,31 +292,33 @@ const Profile2 = () => {
           </div>
 
           {/* Hero Banner */}
-          <div className="relative mb-7 overflow-hidden rounded-3xl bg-gradient-to-br from-[#155EEF] via-[#2563EB] to-[#4338CA] p-6 shadow-xl shadow-blue-900/10 sm:p-8">
-            <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-white/10" />
-            <div className="absolute -bottom-32 right-1/3 h-64 w-64 rounded-full bg-indigo-300/20" />
+          <div className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#71392F] via-[#A95643] to-[#C9826C] p-5 shadow-lg shadow-[#71392F]/10 sm:p-6">
+            <div className="absolute -right-12 -top-20 h-56 w-56 rounded-full bg-white/10" />
+            <div className="absolute -bottom-32 right-1/3 h-56 w-56 rounded-full bg-[#F8EDE6]/15" />
 
-            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/15 text-3xl font-extrabold text-white shadow-lg backdrop-blur">
+            <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/15 text-2xl font-extrabold text-white shadow-md backdrop-blur">
                 {formData.name?.charAt(0)?.toUpperCase() || "U"}
               </div>
 
               <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center gap-2 text-sm text-blue-100">
-                  <Sparkles size={15} />
+                <div className="mb-1 flex items-center gap-2 text-xs font-medium text-[#F8EDE6]">
+                  <Sparkles size={14} />
                   Welcome back
                 </div>
-                <h2 className="truncate text-2xl font-extrabold text-white sm:text-3xl">
+
+                <h2 className="truncate text-xl font-extrabold text-white sm:text-2xl">
                   {formData.name || "Oorza Member"}
                 </h2>
-                <p className="mt-1 text-sm text-blue-100">
+
+                <p className="mt-1 text-xs text-white/75">
                   {formData.designation || "Workspace Member"}
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 self-start rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur sm:self-center">
-                <CheckCircle2 size={18} className="text-emerald-300" />
-                <span className="text-sm font-semibold text-white">
+              <div className="flex w-fit items-center gap-2 self-start rounded-lg border border-white/20 bg-white/10 px-3 py-2 backdrop-blur sm:self-center">
+                <CheckCircle2 size={16} className="text-emerald-200" />
+                <span className="text-xs font-semibold text-white">
                   Profile Management
                 </span>
               </div>
@@ -301,14 +326,14 @@ const Profile2 = () => {
           </div>
 
           {/* Profile Layout */}
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
             {/* Left Profile Card */}
-            <aside className="h-fit overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="h-24 bg-gradient-to-r from-blue-600 to-indigo-600" />
+            <aside className="h-fit overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="h-20 bg-gradient-to-r from-[#71392F] to-[#C9826C]" />
 
-              <div className="-mt-12 px-6 pb-6">
-                <div className="relative mx-auto h-28 w-28">
-                  <div className="h-28 w-28 overflow-hidden rounded-3xl border-4 border-white bg-blue-50 shadow-lg">
+              <div className="-mt-10 px-5 pb-5">
+                <div className="relative mx-auto h-24 w-24">
+                  <div className="h-24 w-24 overflow-hidden rounded-2xl border-4 border-[#FFFDFA] bg-[#F8EDE6] shadow-md">
                     {preview ? (
                       <img
                         src={preview}
@@ -317,18 +342,19 @@ const Profile2 = () => {
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center">
-                        <UserRound size={42} className="text-blue-300" />
+                        <UserRound size={38} className="text-[#C9826C]" />
                       </div>
                     )}
                   </div>
 
                   <label
-                    className={`absolute -bottom-2 -right-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-2 border-white bg-blue-600 text-white shadow-md transition hover:bg-blue-700 ${
+                    className={`absolute -bottom-1.5 -right-1.5 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-2 border-[#FFFDFA] bg-[#A95643] text-white shadow-md transition hover:bg-[#71392F] ${
                       saving ? "pointer-events-none opacity-60" : ""
                     }`}
                     title="Change profile photo"
                   >
-                    <Camera size={17} />
+                    <Camera size={16} />
+
                     <input
                       type="file"
                       accept="image/*"
@@ -339,56 +365,65 @@ const Profile2 = () => {
                   </label>
                 </div>
 
-                <div className="mt-5 text-center">
-                  <h3 className="break-words text-lg font-extrabold text-slate-900">
+                <div className="mt-4 text-center">
+                  <h3 className="break-words text-base font-extrabold text-[#382B26]">
                     {formData.name || "Your Name"}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500">
+
+                  <p className="mt-1 text-xs text-[#8F8175]">
                     {formData.designation || "Oorza Member"}
                   </p>
-                  <p className="mt-2 break-all text-xs text-slate-400">
+
+                  <p className="mt-2 break-all text-xs text-[#A99B8E]">
                     {formData.email}
                   </p>
                 </div>
 
-                <div className="my-6 border-t border-slate-100" />
+                <div className="my-5 border-t border-[#F0E8DE]" />
 
-                <div className="space-y-4">
+                <div className="space-y-3.5">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                      <Mail size={16} />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                      <Mail size={15} />
                     </div>
+
                     <div className="min-w-0">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#A99B8E]">
                         Email Address
                       </p>
-                      <p className="truncate text-sm font-semibold text-slate-700">
+
+                      <p className="truncate text-xs font-semibold text-[#514239]">
                         {formData.email || "Not added"}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                      <Phone size={16} />
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                      <Phone size={15} />
                     </div>
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-[#A99B8E]">
                         Phone Number
                       </p>
-                      <p className="text-sm font-semibold text-slate-700">
+
+                      <p className="text-xs font-semibold text-[#514239]">
                         {formData.contact || "Not added"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50 p-4">
-                  <div className="flex items-center gap-2 text-blue-700">
-                    <ShieldCheck size={17} />
-                    <span className="text-xs font-bold">Your information</span>
+                <div className="mt-5 rounded-xl border border-[#E9DED0] bg-[#FBF3ED] p-3">
+                  <div className="flex items-center gap-2 text-[#71392F]">
+                    <ShieldCheck size={15} />
+                    <span className="text-xs font-bold">
+                      Your information
+                    </span>
                   </div>
-                  <p className="mt-2 text-xs leading-5 text-blue-700/80">
+
+                  <p className="mt-1.5 text-[11px] leading-5 text-[#8F8175]">
                     Keep your account details up to date for a better workspace
                     experience.
                   </p>
@@ -397,52 +432,56 @@ const Profile2 = () => {
             </aside>
 
             {/* Right Form Card */}
-            <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-              <div className="flex flex-col justify-between gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:px-8">
+            <section className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="flex flex-col justify-between gap-2 border-b border-[#F0E8DE] px-5 py-4 sm:flex-row sm:items-center sm:px-6">
                 <div>
-                  <h3 className="text-lg font-extrabold text-slate-900">
+                  <h3 className="text-base font-extrabold text-[#382B26]">
                     Personal Information
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500">
+
+                  <p className="mt-0.5 text-xs text-[#8F8175]">
                     Update your personal details below.
                   </p>
                 </div>
 
-                <div className="flex w-fit items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
-                  <Pencil size={14} />
+                <div className="flex w-fit items-center gap-2 rounded-lg bg-[#F8EDE6] px-3 py-2 text-[11px] font-bold text-[#A95643]">
+                  <Pencil size={13} />
                   Edit Profile
                 </div>
               </div>
 
               <form onSubmit={handleSubmit}>
-                <div className="p-6 sm:p-8">
+                <div className="p-5 sm:p-6">
                   {/* Photo Upload */}
-                  <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-dashed border-blue-200 bg-[#F5F9FF] p-5 sm:flex-row sm:items-center">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                      <Camera size={22} />
+                  <div className="mb-6 flex flex-col gap-3 rounded-xl border border-dashed border-[#DCC3B5] bg-[#FBF3ED] p-4 sm:flex-row sm:items-center">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-[#A95643] shadow-sm">
+                      <Camera size={19} />
                     </div>
 
                     <div className="flex-1">
-                      <h4 className="text-sm font-bold text-slate-800">
+                      <h4 className="text-sm font-bold text-[#382B26]">
                         Profile Picture
                       </h4>
-                      <p className="mt-1 text-xs text-slate-500">
+
+                      <p className="mt-0.5 text-[11px] text-[#8F8175]">
                         Upload a JPG, PNG or WEBP image. Maximum file size 5 MB.
                       </p>
+
                       {profilePic && (
-                        <p className="mt-2 break-all text-xs font-semibold text-blue-600">
+                        <p className="mt-1.5 break-all text-[11px] font-semibold text-[#A95643]">
                           Selected: {profilePic.name}
                         </p>
                       )}
                     </div>
 
                     <label
-                      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 ${
+                      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-[#E9DED0] bg-white px-3.5 py-2 text-xs font-bold text-[#A95643] shadow-sm transition hover:border-[#C9826C] hover:bg-[#F8EDE6] ${
                         saving ? "pointer-events-none opacity-60" : ""
                       }`}
                     >
-                      <Camera size={16} />
+                      <Camera size={15} />
                       Change Photo
+
                       <input
                         type="file"
                         accept="image/*"
@@ -454,21 +493,23 @@ const Profile2 = () => {
                   </div>
 
                   {/* Section Heading */}
-                  <div className="mb-6 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                      <UserRound size={19} />
+                  <div className="mb-4 flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                      <UserRound size={17} />
                     </div>
+
                     <div>
-                      <h4 className="text-sm font-extrabold text-slate-800">
+                      <h4 className="text-sm font-extrabold text-[#382B26]">
                         Basic Details
                       </h4>
-                      <p className="text-xs text-slate-400">
+
+                      <p className="text-[11px] text-[#A99B8E]">
                         Your personal and contact information
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-x-4 gap-y-4 md:grid-cols-2">
                     {fields.map((field) => {
                       const Icon = field.icon;
 
@@ -476,6 +517,7 @@ const Profile2 = () => {
                         <div key={field.name}>
                           <label className={labelClass}>
                             {field.label}
+
                             {field.required && (
                               <span className="ml-1 text-red-500">*</span>
                             )}
@@ -483,9 +525,10 @@ const Profile2 = () => {
 
                           <div className="relative">
                             <Icon
-                              size={17}
-                              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                              size={16}
+                              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A99B8E]"
                             />
+
                             <input
                               type={field.type}
                               name={field.name}
@@ -506,14 +549,16 @@ const Profile2 = () => {
                       <label className={labelClass}>
                         Address <span className="text-red-500">*</span>
                       </label>
+
                       <div className="relative">
                         <MapPin
-                          size={18}
-                          className="absolute left-4 top-4 text-slate-400"
+                          size={17}
+                          className="absolute left-3.5 top-3.5 text-[#A99B8E]"
                         />
+
                         <textarea
                           name="address"
-                          rows={4}
+                          rows={3}
                           value={formData.address}
                           onChange={handleChange}
                           placeholder="Enter your complete address"
@@ -526,16 +571,18 @@ const Profile2 = () => {
                   </div>
 
                   {/* Information Note */}
-                  <div className="mt-8 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+                  <div className="mt-6 flex items-start gap-2.5 rounded-xl border border-[#E9DED0] bg-[#FBF3ED] p-3.5">
                     <ShieldCheck
-                      size={19}
-                      className="mt-0.5 shrink-0 text-blue-600"
+                      size={18}
+                      className="mt-0.5 shrink-0 text-[#A95643]"
                     />
+
                     <div>
-                      <p className="text-sm font-bold text-blue-800">
+                      <p className="text-xs font-bold text-[#71392F]">
                         Your privacy matters
                       </p>
-                      <p className="mt-1 text-xs leading-5 text-blue-700/80">
+
+                      <p className="mt-1 text-[11px] leading-5 text-[#8F8175]">
                         Your profile information is used to manage your Oorza
                         workspace experience. Please ensure your contact details
                         are accurate.
@@ -545,26 +592,26 @@ const Profile2 = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-                  <p className="text-xs text-slate-400">
+                <div className="flex flex-col gap-3 border-t border-[#F0E8DE] bg-[#FBF8F3] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                  <p className="text-[11px] text-[#A99B8E]">
                     <span className="text-red-500">*</span> Required fields
                   </p>
 
                   <button
                     type="submit"
                     disabled={saving}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#A95643] to-[#71392F] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#71392F]/15 transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                   >
                     {saving ? (
                       <>
-                        <Loader2 size={18} className="animate-spin" />
+                        <Loader2 size={16} className="animate-spin" />
                         Saving Changes...
                       </>
                     ) : (
                       <>
-                        <Save size={18} />
+                        <Save size={16} />
                         Save Changes
-                        <ArrowUpRight size={16} />
+                        <ArrowUpRight size={15} />
                       </>
                     )}
                   </button>
@@ -574,8 +621,8 @@ const Profile2 = () => {
           </div>
 
           {/* Footer */}
-          <div className="mt-7 pb-3 text-center">
-            <p className="text-xs font-medium tracking-wide text-slate-400">
+          <div className="mt-5 pb-2 text-center">
+            <p className="text-[10px] font-medium tracking-wide text-[#A99B8E]">
               OORZA · Your Space. Your People. Your Work.
             </p>
           </div>

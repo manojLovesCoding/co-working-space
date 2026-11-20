@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Building2, Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 
 const Navbar = () => {
@@ -40,22 +40,19 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
+    <header className="sticky top-0 z-50 border-b border-[#E9DED0] bg-[#FFFDFA]/95 shadow-sm backdrop-blur">
+      <nav className="mx-auto flex min-h-[88px] max-w-7xl items-center justify-between px-4 py-1 sm:px-8">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">
-            <Building2 size={25} />
-          </div>
-
-          <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
-              Oorza
-            </h1>
-            <p className="text-[10px] font-medium tracking-widest text-slate-500">
-              Your Space. Your People. Your Work.
-            </p>
-          </div>
+        <Link
+          to="/"
+          className="group flex shrink-0 items-center"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <img
+            src="/oorza-logo.png"
+            alt="Oorza - Your Space. Your People. Your Work."
+            className="h-[76px] w-auto max-w-none object-contain transition duration-300 group-hover:scale-[1.03] sm:h-[84px]"
+          />
         </Link>
 
         {/* Desktop Navigation */}
@@ -67,7 +64,7 @@ const Navbar = () => {
               onClick={
                 link.name === "Workspaces" ? handleWorkspaceClick : undefined
               }
-              className="text-sm font-semibold text-slate-600 transition hover:text-blue-600"
+              className="relative py-2 text-sm font-semibold text-[#6F6259] transition hover:text-[#A95643] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-[#A95643] after:transition-all after:duration-300 hover:after:w-full"
             >
               {link.name}
             </Link>
@@ -80,7 +77,7 @@ const Navbar = () => {
             (isAuthenticated ? (
               <Link
                 to={accountPath}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#71392F] to-[#A95643] px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#71392F]/15 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-[#71392F]/20"
               >
                 My Account
                 <ArrowRight size={16} />
@@ -89,14 +86,14 @@ const Navbar = () => {
               <>
                 <Link
                   to="/login"
-                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                  className="rounded-xl px-5 py-2.5 text-sm font-semibold text-[#6F6259] transition hover:bg-[#F8EDE6] hover:text-[#A95643]"
                 >
                   Sign In
                 </Link>
 
                 <Link
                   to="/register"
-                  className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
+                  className="rounded-xl bg-gradient-to-r from-[#71392F] to-[#A95643] px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#71392F]/15 transition hover:-translate-y-0.5 hover:shadow-[#71392F]/25"
                 >
                   Get Started
                 </Link>
@@ -108,17 +105,17 @@ const Navbar = () => {
         <button
           type="button"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="rounded-lg p-2 text-slate-700 transition hover:bg-slate-100 md:hidden"
+          className="rounded-lg p-2 text-[#71392F] transition hover:bg-[#F8EDE6] md:hidden"
           aria-label="Toggle navigation menu"
           aria-expanded={mobileMenuOpen}
         >
-          {mobileMenuOpen ? <X size={25} /> : <Menu size={25} />}
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </nav>
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="border-t border-slate-100 bg-white px-5 py-5 shadow-lg md:hidden">
+        <div className="border-t border-[#E9DED0] bg-[#FFFDFA] px-5 py-4 shadow-lg md:hidden">
           <div className="flex flex-col gap-2">
             {navLinks.map((link) => (
               <Link
@@ -129,7 +126,7 @@ const Navbar = () => {
                     ? handleWorkspaceClick
                     : () => setMobileMenuOpen(false)
                 }
-                className="rounded-lg px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-600"
+                className="rounded-lg px-4 py-3 text-sm font-semibold text-[#6F6259] transition hover:bg-[#F8EDE6] hover:text-[#A95643]"
               >
                 {link.name}
               </Link>
@@ -140,16 +137,17 @@ const Navbar = () => {
                 <Link
                   to={accountPath}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="mt-2 rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white"
+                  className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#71392F] to-[#A95643] px-4 py-3 text-center text-sm font-semibold text-white shadow-md shadow-[#71392F]/15"
                 >
                   My Account
+                  <ArrowRight size={16} />
                 </Link>
               ) : (
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <Link
                     to="/login"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-xl border border-slate-200 px-4 py-3 text-center text-sm font-semibold text-slate-700"
+                    className="rounded-xl border border-[#E9DED0] bg-white px-4 py-3 text-center text-sm font-semibold text-[#71392F] transition hover:border-[#C9826C] hover:bg-[#F8EDE6]"
                   >
                     Sign In
                   </Link>
@@ -157,7 +155,7 @@ const Navbar = () => {
                   <Link
                     to="/register"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white"
+                    className="rounded-xl bg-gradient-to-r from-[#71392F] to-[#A95643] px-4 py-3 text-center text-sm font-semibold text-white shadow-md shadow-[#71392F]/15 transition hover:shadow-lg"
                   >
                     Register
                   </Link>

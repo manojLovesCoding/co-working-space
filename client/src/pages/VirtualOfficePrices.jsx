@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -130,7 +131,6 @@ const VirtualOfficePrices = () => {
       return;
     }
 
-    // Customer must log in before purchasing.
     if (!isAuthenticated) {
       toast.error("Please sign in to purchase a Virtual Office plan.");
 
@@ -143,7 +143,6 @@ const VirtualOfficePrices = () => {
       return;
     }
 
-    // Only customer accounts can purchase plans.
     if (role !== "customer") {
       toast.error("Only customer accounts can purchase Virtual Office plans.");
       return;
@@ -201,7 +200,7 @@ const VirtualOfficePrices = () => {
         },
 
         theme: {
-          color: "#2563eb",
+          color: "#A95643",
         },
 
         // 4. Verify payment through backend.
@@ -305,92 +304,87 @@ const VirtualOfficePrices = () => {
   const isCustomer = isAuthenticated && role === "customer";
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="min-h-screen bg-[#FAF6EF] text-[#382B26]">
       <Navbar />
 
       {/* ================= PAYMENT SUCCESS ================= */}
       {paymentSuccess && (
-        <section className="mx-auto max-w-4xl px-5 pt-8 sm:px-8">
-          <div className="overflow-hidden rounded-2xl border border-green-200 bg-white shadow-sm">
-            <div className="bg-green-50 px-6 py-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle2 size={36} className="text-green-600" />
+        <section className="mx-auto max-w-4xl px-4 pt-6 sm:px-6">
+          <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-[#FFFDFA] shadow-sm">
+            <div className="bg-emerald-50 px-5 py-6 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
+                <CheckCircle2 size={32} className="text-emerald-600" />
               </div>
 
-              <h2 className="mt-4 text-2xl font-bold text-green-800">
+              <h2 className="mt-3 text-xl font-bold text-emerald-800 sm:text-2xl">
                 Payment Successful!
               </h2>
 
-              <p className="mt-2 text-sm text-green-700">
+              <p className="mt-1.5 text-sm text-emerald-700">
                 Your Virtual Office plan has been activated successfully.
               </p>
             </div>
 
-            <div className="grid gap-5 p-6 sm:grid-cols-2">
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8175]">
                   Purchased Plan
                 </p>
-
-                <p className="mt-1 font-bold text-slate-900">
+                <p className="mt-1 font-bold text-[#382B26]">
                   {paymentSuccess.planName}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8175]">
                   Amount Paid
                 </p>
-
-                <p className="mt-1 font-bold text-slate-900">
+                <p className="mt-1 font-bold text-[#382B26]">
                   {formatCurrency(paymentSuccess.totalAmount)}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8175]">
                   Start Date
                 </p>
-
-                <p className="mt-1 font-semibold text-slate-800">
+                <p className="mt-1 font-semibold text-[#382B26]">
                   {formatDate(paymentSuccess.startDate)}
                 </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8175]">
                   Expiry Date
                 </p>
-
-                <p className="mt-1 font-semibold text-slate-800">
+                <p className="mt-1 font-semibold text-[#382B26]">
                   {formatDate(paymentSuccess.expiryDate)}
                 </p>
               </div>
 
               <div className="sm:col-span-2">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8F8175]">
                   Payment ID
                 </p>
-
-                <p className="mt-1 break-all text-sm font-medium text-slate-700">
+                <p className="mt-1 break-all text-sm font-medium text-[#6F6258]">
                   {paymentSuccess.paymentId}
                 </p>
               </div>
             </div>
 
-            <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+            <div className="border-t border-[#E9DED0] bg-[#FBF3ED] px-5 py-4">
               <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-[#6F6258]">
                   <CalendarDays
                     size={16}
-                    className="mr-2 inline text-green-600"
+                    className="mr-2 inline text-emerald-600"
                   />
                   Your plan is valid for 11 months.
                 </p>
 
                 <Link
                   to="/customer"
-                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#A95643] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#71392F]"
                 >
                   Go to Dashboard
                   <ArrowRight size={16} />
@@ -402,17 +396,16 @@ const VirtualOfficePrices = () => {
       )}
 
       {/* ================= HERO ================= */}
-      <section className="relative overflow-hidden bg-slate-950 px-5 py-20 text-center text-white sm:py-28">
-        <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl" />
-
-        <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-indigo-600/20 blur-3xl" />
+      <section className="relative overflow-hidden bg-[#382B26] px-5 py-14 text-center text-white sm:py-20">
+        <div className="absolute -left-28 -top-28 h-80 w-80 rounded-full bg-[#A95643]/25 blur-3xl" />
+        <div className="absolute -bottom-28 -right-28 h-80 w-80 rounded-full bg-[#C9826C]/20 blur-3xl" />
 
         <div className="relative mx-auto max-w-4xl">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/10">
-            <Building2 size={34} />
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10">
+            <Building2 size={30} />
           </div>
 
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-[#E4AD96] sm:text-sm">
             Virtual Office Solutions
           </p>
 
@@ -420,17 +413,17 @@ const VirtualOfficePrices = () => {
             Give Your Business a Professional Address
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[#E8DCD3] sm:text-base">
             Explore our virtual office plans and choose a solution that suits
             your business requirements.
           </p>
 
           <a
             href="#pricing"
-            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:bg-blue-500"
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#A95643] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-[#C9826C]"
           >
             Explore Plans
-            <ArrowRight size={18} />
+            <ArrowRight size={17} />
           </a>
         </div>
       </section>
@@ -438,37 +431,36 @@ const VirtualOfficePrices = () => {
       {/* ================= PRICING ================= */}
       <section
         id="pricing"
-        className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-20"
+        className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16"
       >
-        <div className="mb-12 text-center">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-600">
+        <div className="mb-9 text-center">
+          <p className="text-xs font-bold uppercase tracking-wider text-[#A95643] sm:text-sm">
             Our Pricing
           </p>
 
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-[#382B26] sm:text-3xl">
             Choose Your Virtual Office Plan
           </h2>
 
-          <p className="mx-auto mt-4 max-w-2xl text-slate-500">
+          <p className="mx-auto mt-3 max-w-2xl text-sm text-[#8F8175]">
             Compare our available plans with transparent pricing and GST
             breakdowns.
           </p>
 
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700">
-            <Clock size={16} />
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#E9DED0] bg-[#F8EDE6] px-4 py-2 text-xs font-semibold text-[#71392F] sm:text-sm">
+            <Clock size={15} />
             All plans include 11 months validity
           </div>
         </div>
 
         {/* Loading */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-24">
+          <div className="flex flex-col items-center justify-center py-20">
             <LoaderCircle
-              size={42}
-              className="animate-spin text-blue-600"
+              size={38}
+              className="animate-spin text-[#A95643]"
             />
-
-            <p className="mt-4 text-sm text-slate-500">
+            <p className="mt-3 text-sm text-[#8F8175]">
               Loading virtual office plans...
             </p>
           </div>
@@ -476,15 +468,15 @@ const VirtualOfficePrices = () => {
 
         {/* Error */}
         {!loading && error && (
-          <div className="mx-auto max-w-lg rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
-            <p className="font-medium text-red-700">{error}</p>
+          <div className="mx-auto max-w-lg rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+            <p className="text-sm font-medium text-red-700">{error}</p>
 
             <button
               type="button"
               onClick={fetchPrices}
-              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={15} />
               Try Again
             </button>
           </div>
@@ -492,14 +484,14 @@ const VirtualOfficePrices = () => {
 
         {/* Empty State */}
         {!loading && !error && prices.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
-            <Building2 size={44} className="mx-auto text-slate-400" />
+          <div className="rounded-xl border border-dashed border-[#D9C9B8] bg-[#FFFDFA] px-5 py-16 text-center">
+            <Building2 size={40} className="mx-auto text-[#B7A394]" />
 
-            <h3 className="mt-5 text-xl font-bold text-slate-800">
+            <h3 className="mt-4 text-lg font-bold text-[#382B26]">
               No Plans Available
             </h3>
 
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-[#8F8175]">
               Our virtual office plans will be displayed here when available.
             </p>
           </div>
@@ -507,109 +499,108 @@ const VirtualOfficePrices = () => {
 
         {/* Pricing Cards */}
         {!loading && !error && prices.length > 0 && (
-          <div className="grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {prices.map((plan) => {
               const isProcessing = processingPlanId === plan._id;
 
               return (
                 <div
                   key={plan._id}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-xl"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm transition duration-300 hover:-translate-y-1 hover:border-[#C9826C] hover:shadow-lg"
                 >
                   {/* Card Header */}
-                  <div className="border-b border-slate-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-7">
-                    <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
-                      <Building2 size={25} />
+                  <div className="border-b border-[#E9DED0] bg-gradient-to-br from-[#F8EDE6] to-[#FBF3ED] p-5">
+                    <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#A95643] shadow-sm">
+                      <Building2 size={23} />
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900">
+                    <h3 className="text-lg font-bold text-[#382B26]">
                       {plan.planName}
                     </h3>
 
-                    <p className="mt-3 min-h-12 text-sm leading-6 text-slate-600">
+                    <p className="mt-2 min-h-10 text-sm leading-5 text-[#8F8175]">
                       {plan.description ||
                         "Virtual office solution for your business."}
                     </p>
                   </div>
 
                   {/* Card Body */}
-                  <div className="flex flex-1 flex-col p-7">
+                  <div className="flex flex-1 flex-col p-5">
                     <div>
-                      <p className="text-sm font-medium text-slate-500">
+                      <p className="text-xs font-medium text-[#8F8175]">
                         Base Price
                       </p>
 
-                      <div className="mt-2 flex items-center gap-1">
+                      <div className="mt-1.5 flex items-center gap-1">
                         <IndianRupee
-                          size={25}
-                          className="text-slate-900"
+                          size={23}
+                          className="text-[#382B26]"
                         />
-
-                        <span className="text-3xl font-bold text-slate-900">
+                        <span className="text-3xl font-bold text-[#382B26]">
                           {Number(plan.basePrice).toLocaleString("en-IN")}
                         </span>
                       </div>
                     </div>
 
                     {/* GST Breakdown */}
-                    <div className="my-7 space-y-4 rounded-xl bg-slate-50 p-5">
+                    <div className="my-5 space-y-3 rounded-xl bg-[#FBF3ED] p-4">
                       <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="text-slate-500">
+                        <span className="text-[#8F8175]">
                           GST ({plan.gstRate}%)
                         </span>
 
-                        <span className="font-semibold text-slate-800">
+                        <span className="font-semibold text-[#382B26]">
                           {formatCurrency(plan.gstAmount)}
                         </span>
                       </div>
 
-                      <div className="border-t border-dashed border-slate-300 pt-4">
+                      <div className="border-t border-dashed border-[#D9C9B8] pt-3">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="font-semibold text-slate-700">
+                          <span className="text-sm font-semibold text-[#382B26]">
                             Total Price
                           </span>
 
-                          <span className="text-xl font-bold text-blue-700">
+                          <span className="text-xl font-bold text-[#A95643]">
                             {formatCurrency(plan.totalPrice)}
                           </span>
                         </div>
 
-                        <p className="mt-2 text-right text-xs text-slate-400">
+                        <p className="mt-1.5 text-right text-[11px] text-[#8F8175]">
                           Including GST
                         </p>
                       </div>
                     </div>
 
                     {/* Features */}
-                    <div className="mt-auto space-y-3">
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                    <div className="mt-auto space-y-2.5">
+                      <div className="flex items-center gap-2 text-sm text-[#6F6258]">
                         <CheckCircle2
-                          size={17}
-                          className="shrink-0 text-green-600"
+                          size={16}
+                          className="shrink-0 text-emerald-600"
                         />
                         Virtual office plan
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-[#6F6258]">
                         <Receipt
-                          size={17}
-                          className="shrink-0 text-green-600"
+                          size={16}
+                          className="shrink-0 text-emerald-600"
                         />
                         Transparent GST breakdown
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-[#6F6258]">
                         <CalendarDays
-                          size={17}
-                          className="shrink-0 text-green-600"
+                          size={16}
+                          className="shrink-0 text-emerald-600"
                         />
                         11 months validity
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-[#6F6258]">
                         <ShieldCheck
-                          size={17}
-                          className="shrink-0 text-green-600"
+                          size={16}
+                          className="shrink-0 text-emerald-600"
                         />
                         Secure Razorpay payment
                       </div>
@@ -620,30 +611,30 @@ const VirtualOfficePrices = () => {
                       type="button"
                       disabled={!!processingPlanId || authLoading}
                       onClick={() => handlePurchase(plan)}
-                      className="mt-7 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#A95643] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#71392F] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isProcessing ? (
                         <>
                           <LoaderCircle
-                            size={19}
+                            size={18}
                             className="animate-spin"
                           />
                           Processing...
                         </>
                       ) : isCustomer ? (
                         <>
-                          <CreditCard size={18} />
+                          <CreditCard size={17} />
                           Buy Now
-                          <ArrowRight size={17} />
+                          <ArrowRight size={16} />
                         </>
                       ) : isAuthenticated ? (
                         <>
                           Buy Now
-                          <ArrowRight size={17} />
+                          <ArrowRight size={16} />
                         </>
                       ) : (
                         <>
-                          <LogIn size={17} />
+                          <LogIn size={16} />
                           Sign In to Purchase
                         </>
                       )}
@@ -657,28 +648,27 @@ const VirtualOfficePrices = () => {
       </section>
 
       {/* ================= CTA ================= */}
-      <section className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 to-indigo-700 px-8 py-14 text-center shadow-xl sm:px-12">
-          <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10 blur-3xl" />
-
-          <div className="absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-indigo-950/20 blur-3xl" />
+      <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#71392F] to-[#A95643] px-6 py-10 text-center shadow-lg sm:px-10 sm:py-12">
+          <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-white/10 blur-3xl" />
+          <div className="absolute -bottom-16 -left-16 h-52 w-52 rounded-full bg-[#382B26]/20 blur-3xl" />
 
           <div className="relative">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">
               Ready to Get Started?
             </h2>
 
-            <p className="mx-auto mt-4 max-w-xl text-blue-100">
+            <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#F8EDE6]">
               Choose your virtual office plan and take the next step towards
               building your business presence.
             </p>
 
             <Link
               to={isAuthenticated ? "/virtual-office-prices" : "/register"}
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 font-semibold text-blue-700 shadow-lg transition hover:-translate-y-0.5 hover:bg-blue-50"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-[#FFFDFA] px-6 py-3 text-sm font-semibold text-[#71392F] shadow-md transition hover:-translate-y-0.5 hover:bg-[#F8EDE6]"
             >
               {isAuthenticated ? "Explore Plans" : "Create Account"}
-              <ArrowRight size={18} />
+              <ArrowRight size={17} />
             </Link>
           </div>
         </div>

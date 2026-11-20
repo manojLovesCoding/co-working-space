@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   ArrowDownRight,
-  ArrowUpRight,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -49,9 +48,7 @@ const formatCompact = (amount) => {
   const value = Number(amount) || 0;
 
   if (value >= 10000000) return `₹${+(value / 10000000).toFixed(2)}Cr`;
-
   if (value >= 100000) return `₹${+(value / 100000).toFixed(2)}L`;
-
   if (value >= 1000) return `₹${+(value / 1000).toFixed(1)}K`;
 
   return `₹${Math.round(value)}`;
@@ -108,28 +105,28 @@ const StatCard = ({
   valueStyle,
   children,
 }) => (
-  <div className="group relative overflow-hidden rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-100/60">
-    <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-50/70 transition-transform duration-300 group-hover:scale-125" />
+  <div className="group relative overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+    <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#F8EDE6]/70 transition-transform duration-300 group-hover:scale-125" />
 
-    <div className="relative z-10 flex items-start justify-between gap-3">
+    <div className="relative z-10 flex items-start justify-between gap-2">
       <div
-        className={`flex h-12 w-12 items-center justify-center rounded-xl ${iconStyle}`}
+        className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconStyle}`}
       >
-        <Icon className="h-6 w-6" />
+        <Icon className="h-5 w-5" />
       </div>
 
       {children}
     </div>
 
-    <div className="relative z-10 mt-5">
-      <p className="text-sm font-medium text-slate-500">{title}</p>
+    <div className="relative z-10 mt-4">
+      <p className="text-xs font-medium text-[#8F8175]">{title}</p>
 
-      <p className={`mt-1 text-3xl font-bold tracking-tight ${valueStyle}`}>
+      <p className={`mt-1 text-2xl font-bold tracking-tight ${valueStyle}`}>
         {value}
       </p>
 
       {hint && (
-        <p className="mt-2 text-xs font-medium text-slate-400">{hint}</p>
+        <p className="mt-1.5 text-[11px] font-medium text-[#A99B8E]">{hint}</p>
       )}
     </div>
   </div>
@@ -148,22 +145,24 @@ const RevenueChart = ({ data }) => {
   const ticks = [1, 0.75, 0.5, 0.25, 0];
 
   return (
-    <div className="rounded-xl border border-slate-100 bg-[#FBFDFF] p-4 sm:p-5">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="rounded-xl border border-[#E9DED0] bg-[#FAF6EF] p-3 sm:p-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-bold text-slate-700">Revenue Overview</h3>
-          <p className="mt-1 text-xs text-slate-400">Monthly booking revenue</p>
+          <h3 className="text-sm font-bold text-[#382B26]">Revenue Overview</h3>
+          <p className="mt-0.5 text-[11px] text-[#8F8175]">
+            Monthly booking revenue
+          </p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-          <span className="h-2 w-2 rounded-full bg-blue-600" />
+        <div className="flex items-center gap-1.5 rounded-full bg-[#F8EDE6] px-2.5 py-1 text-[10px] font-semibold text-[#71392F]">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#A95643]" />
           Paid & Confirmed
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-2">
         {/* Y Axis */}
-        <div className="flex h-64 flex-col justify-between pb-0 text-right text-[10px] font-medium text-slate-400 sm:text-xs">
+        <div className="flex h-56 flex-col justify-between pb-0 text-right text-[9px] font-medium text-[#A99B8E] sm:text-[10px]">
           {ticks.map((tick) => (
             <span key={tick} className="leading-none">
               {formatCompact(max * tick)}
@@ -172,13 +171,13 @@ const RevenueChart = ({ data }) => {
         </div>
 
         <div className="min-w-0 flex-1 overflow-visible">
-          <div className="min-w-[520px]">
+          <div className="min-w-[460px]">
             {/* Chart Plot */}
-            <div className="relative h-64">
+            <div className="relative h-56">
               {ticks.map((tick) => (
                 <div
                   key={tick}
-                  className="absolute left-0 right-0 border-t border-dashed border-slate-200"
+                  className="absolute left-0 right-0 border-t border-dashed border-[#E9DED0]"
                   style={{ top: `${(1 - tick) * 100}%` }}
                 />
               ))}
@@ -199,7 +198,7 @@ const RevenueChart = ({ data }) => {
                     >
                       {isActive && (
                         <div
-                          className="absolute z-30 whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 text-xs text-white shadow-xl pointer-events-none"
+                          className="pointer-events-none absolute z-30 whitespace-nowrap rounded-lg bg-[#382B26] px-3 py-2 text-[11px] text-white shadow-lg"
                           style={{
                             bottom: `max(8px, calc(${height}% - 75px))`,
                             left: "50%",
@@ -208,11 +207,11 @@ const RevenueChart = ({ data }) => {
                         >
                           <p className="font-semibold">{item.fullLabel}</p>
 
-                          <p className="mt-1 font-bold text-blue-300">
+                          <p className="mt-1 font-bold text-[#E7AD98]">
                             Revenue: {formatCurrency(item.value)}
                           </p>
 
-                          <p className="mt-1 text-slate-300">
+                          <p className="mt-1 text-[#D8C8BD]">
                             Bookings: {item.count}
                           </p>
                         </div>
@@ -221,17 +220,15 @@ const RevenueChart = ({ data }) => {
                       <div
                         tabIndex={0}
                         role="img"
-                        aria-label={`${item.fullLabel}: ${formatCurrency(
-                          item.value,
-                        )}`}
-                        className={`w-full max-w-12 rounded-t-lg transition-all duration-200 ${
+                        aria-label={`${item.fullLabel}: ${formatCurrency(item.value)}`}
+                        className={`w-full max-w-12 rounded-t-md transition-all duration-200 ${
                           item.isCurrent
                             ? isActive
-                              ? "bg-indigo-600"
-                              : "bg-blue-600"
+                              ? "bg-[#71392F]"
+                              : "bg-[#A95643]"
                             : isActive
-                              ? "bg-blue-500"
-                              : "bg-blue-300"
+                              ? "bg-[#A95643]"
+                              : "bg-[#C9826C]"
                         }`}
                         style={{
                           height: item.value > 0 ? `max(${height}%, 3px)` : "0",
@@ -244,18 +241,18 @@ const RevenueChart = ({ data }) => {
             </div>
 
             {/* X Axis */}
-            <div className="mt-3 flex gap-3 px-2">
+            <div className="mt-2 flex gap-3 px-2">
               {data.map((item) => (
-                <div key={item.key} className="flex-1 text-center text-xs">
+                <div key={item.key} className="flex-1 text-center text-[10px]">
                   <p
                     className={`font-semibold ${
-                      item.isCurrent ? "text-blue-700" : "text-slate-500"
+                      item.isCurrent ? "text-[#71392F]" : "text-[#8F8175]"
                     }`}
                   >
                     {item.label}
                   </p>
 
-                  <p className="mt-0.5 text-[10px] text-slate-400">
+                  <p className="mt-0.5 text-[9px] text-[#A99B8E]">
                     &apos;{item.year}
                   </p>
                 </div>
@@ -408,26 +405,26 @@ const AdminDashboard = () => {
   const periodLabel = PERIODS.find((item) => item.id === period)?.label;
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF6EF] px-3 py-4 sm:px-4 sm:py-5 lg:px-6">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* HEADER */}
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full bg-blue-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-blue-700">
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="rounded-full bg-[#F8EDE6] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#71392F]">
                 Oorza Admin
               </span>
 
-              <span className="text-xs font-medium text-slate-400">
+              <span className="text-[11px] font-medium text-[#A99B8E]">
                 / Overview
               </span>
             </div>
 
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-xl font-bold tracking-tight text-[#382B26] sm:text-2xl">
               Dashboard
             </h1>
 
-            <p className="mt-1.5 text-sm text-slate-500">
+            <p className="mt-1 text-xs text-[#8F8175]">
               Monitor workspace reservations and business revenue.
             </p>
           </div>
@@ -436,113 +433,115 @@ const AdminDashboard = () => {
             type="button"
             onClick={fetchReservations}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-[#A95643] px-4 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#71392F] disabled:cursor-not-allowed disabled:opacity-60 sm:self-center"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`}
+            />
             {loading ? "Refreshing..." : "Refresh Dashboard"}
           </button>
         </div>
 
-        {/* Hero Banner */}
-        <div className="relative mb-7 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-600 p-6 text-white shadow-lg shadow-blue-200/60 sm:p-8">
-          <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full border-[35px] border-white/10" />
-          <div className="absolute -bottom-24 right-36 h-52 w-52 rounded-full bg-white/5" />
+        {/* HERO BANNER */}
+        <div className="relative mb-5 overflow-hidden rounded-xl bg-gradient-to-r from-[#71392F] via-[#914A3B] to-[#A95643] p-4 text-white shadow-md sm:p-5">
+          <div className="absolute -right-12 -top-20 h-56 w-56 rounded-full border-[30px] border-white/10" />
+          <div className="absolute -bottom-24 right-36 h-44 w-44 rounded-full bg-white/5" />
 
-          <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl">
-              <div className="mb-3 flex items-center gap-2 text-blue-100">
-                <Activity className="h-5 w-5" />
-                <span className="text-xs font-bold uppercase tracking-[0.15em]">
+              <div className="mb-2 flex items-center gap-2 text-[#F2D8CE]">
+                <Activity className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.15em]">
                   Workspace Analytics
                 </span>
               </div>
 
-              <h2 className="text-xl font-bold sm:text-2xl">
+              <h2 className="text-lg font-bold sm:text-xl">
                 Your workspace at a glance.
               </h2>
 
-              <p className="mt-2 text-sm leading-relaxed text-blue-100">
+              <p className="mt-1.5 text-xs leading-relaxed text-[#F2D8CE]">
                 Track reservations, monitor activity and understand your
                 workspace revenue from one place.
               </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-medium text-white">
-                  <span className="h-2 w-2 rounded-full bg-emerald-300" />
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[10px] font-medium text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                   Dashboard Overview
                 </span>
 
-                <span className="text-xs text-blue-100">
+                <span className="text-[10px] text-[#F2D8CE]">
                   All figures based on confirmed and paid bookings
                 </span>
               </div>
             </div>
 
-            <div className="hidden h-24 w-24 shrink-0 items-center justify-center rounded-3xl border border-white/20 bg-white/10 backdrop-blur-sm sm:flex">
-              <TrendingUp className="h-12 w-12 text-white" />
+            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm sm:flex">
+              <TrendingUp className="h-8 w-8 text-white" />
             </div>
           </div>
         </div>
 
-        {/* Error */}
+        {/* ERROR */}
         {error && !loading && (
-          <div className="mb-6 flex flex-col gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
-                <Activity className="h-5 w-5" />
+          <div className="mb-4 flex flex-col gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                <Activity className="h-4 w-4" />
               </div>
 
               <div>
-                <p className="text-sm font-bold text-rose-800">
+                <p className="text-xs font-bold text-rose-800">
                   Unable to load dashboard
                 </p>
-                <p className="mt-0.5 text-xs text-rose-600">{error}</p>
+                <p className="mt-0.5 text-[11px] text-rose-600">{error}</p>
               </div>
             </div>
 
             <button
               type="button"
               onClick={fetchReservations}
-              className="rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+              className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
             >
               Try Again
             </button>
           </div>
         )}
 
-        {/* Reservation Stats */}
-        <div className="mb-7">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        {/* RESERVATION STATS */}
+        <div className="mb-5">
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-800">
+              <h2 className="text-base font-bold text-[#382B26]">
                 Reservation Overview
               </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-0.5 text-xs text-[#8F8175]">
                 Track booking activity and reservation status.
               </p>
             </div>
 
-            <span className="w-fit rounded-full border border-blue-100 bg-white px-3 py-1.5 text-xs font-semibold text-blue-700">
-              <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" />
+            <span className="w-fit rounded-full border border-[#E9DED0] bg-[#FFFDFA] px-2.5 py-1 text-[10px] font-semibold text-[#71392F]">
+              <CheckCircle2 className="mr-1 inline h-3 w-3" />
               Paid & Confirmed
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatCard
               title="New Reservations"
               value={loading ? "—" : stats.newCount}
               hint={`Booked ${periodLabel?.toLowerCase()}`}
               icon={CalendarDays}
-              iconStyle="bg-blue-50 text-blue-600"
-              valueStyle="text-blue-700"
+              iconStyle="bg-[#F8EDE6] text-[#A95643]"
+              valueStyle="text-[#71392F]"
             >
               <select
                 value={period}
                 onChange={(event) => setPeriod(event.target.value)}
                 aria-label="New reservations period"
-                className="max-w-[125px] rounded-lg border border-blue-100 bg-blue-50 px-2 py-1.5 text-xs font-semibold text-blue-700 outline-none focus:ring-2 focus:ring-blue-200"
+                className="max-w-[115px] rounded-lg border border-[#E9DED0] bg-[#FAF6EF] px-2 py-1.5 text-[10px] font-semibold text-[#71392F] outline-none focus:ring-2 focus:ring-[#C9826C]/30"
               >
                 {PERIODS.map((item) => (
                   <option key={item.id} value={item.id}>
@@ -558,7 +557,7 @@ const AdminDashboard = () => {
               hint="Happening right now"
               icon={Activity}
               iconStyle="bg-emerald-50 text-emerald-600"
-              valueStyle="text-emerald-600"
+              valueStyle="text-emerald-700"
             />
 
             <StatCard
@@ -566,8 +565,8 @@ const AdminDashboard = () => {
               value={loading ? "—" : stats.completed}
               hint="Booking period has ended"
               icon={CalendarCheck}
-              iconStyle="bg-indigo-50 text-indigo-600"
-              valueStyle="text-indigo-600"
+              iconStyle="bg-[#F8EDE6] text-[#A95643]"
+              valueStyle="text-[#71392F]"
             />
 
             <StatCard
@@ -579,43 +578,43 @@ const AdminDashboard = () => {
                   : `${stats.confirmedTotal} confirmed in total`
               }
               icon={CalendarClock}
-              iconStyle="bg-sky-50 text-sky-600"
-              valueStyle="text-sky-700"
+              iconStyle="bg-amber-50 text-amber-600"
+              valueStyle="text-amber-700"
             />
           </div>
         </div>
 
-        {/* Revenue Section */}
-        <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-          {/* Revenue Header */}
-          <div className="border-b border-slate-100 p-5 sm:p-6">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-              <div className="flex items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                  <Wallet className="h-6 w-6" />
+        {/* REVENUE SECTION */}
+        <div className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+          {/* REVENUE HEADER */}
+          <div className="border-b border-[#E9DED0] p-4">
+            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+              <div className="flex items-start gap-2.5">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <Wallet className="h-5 w-5" />
                 </div>
 
                 <div>
-                  <h2 className="text-lg font-bold text-slate-800">
+                  <h2 className="text-base font-bold text-[#382B26]">
                     Monthly Revenue
                   </h2>
 
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-0.5 text-xs text-[#8F8175]">
                     Revenue generated from paid bookings over the last three
                     months.
                   </p>
                 </div>
               </div>
 
-              {/* GST Toggle */}
-              <div className="flex w-fit items-center gap-1 rounded-xl border border-blue-100 bg-blue-50/70 p-1">
+              {/* GST TOGGLE */}
+              <div className="flex w-fit items-center gap-1 rounded-lg border border-[#E9DED0] bg-[#FAF6EF] p-1">
                 <button
                   type="button"
                   onClick={() => setIncludeGst(true)}
-                  className={`rounded-lg px-4 py-2 text-xs font-bold transition ${
+                  className={`rounded-md px-3 py-1.5 text-[10px] font-bold transition ${
                     includeGst
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-white"
+                      ? "bg-[#A95643] text-white shadow-sm"
+                      : "text-[#6F6259] hover:bg-white"
                   }`}
                 >
                   Incl. GST
@@ -624,10 +623,10 @@ const AdminDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setIncludeGst(false)}
-                  className={`rounded-lg px-4 py-2 text-xs font-bold transition ${
+                  className={`rounded-md px-3 py-1.5 text-[10px] font-bold transition ${
                     !includeGst
-                      ? "bg-blue-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-white"
+                      ? "bg-[#A95643] text-white shadow-sm"
+                      : "text-[#6F6259] hover:bg-white"
                   }`}
                 >
                   Excl. GST
@@ -636,89 +635,89 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Revenue Summary */}
-          <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            <div className="p-5 sm:p-6">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+          {/* REVENUE SUMMARY */}
+          <div className="grid grid-cols-1 divide-y divide-[#E9DED0] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            <div className="p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#A99B8E]">
                   This Month
                 </p>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                  <IndianRupee className="h-4 w-4" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <IndianRupee className="h-3.5 w-3.5" />
                 </div>
               </div>
 
-              <p className="text-2xl font-bold tracking-tight text-blue-700">
+              <p className="text-xl font-bold tracking-tight text-[#71392F]">
                 {loading ? "—" : formatCurrency(revenueTotals.thisMonth)}
               </p>
 
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-[10px] text-[#A99B8E]">
                 Current month revenue
               </p>
             </div>
 
-            <div className="p-5 sm:p-6">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#A99B8E]">
                   Last Month
                 </p>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-                  <ArrowDownRight className="h-4 w-4" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <ArrowDownRight className="h-3.5 w-3.5" />
                 </div>
               </div>
 
-              <p className="text-2xl font-bold tracking-tight text-slate-800">
+              <p className="text-xl font-bold tracking-tight text-[#382B26]">
                 {loading ? "—" : formatCurrency(revenueTotals.lastMonth)}
               </p>
 
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-[10px] text-[#A99B8E]">
                 Previous month revenue
               </p>
             </div>
 
-            <div className="p-5 sm:p-6">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+            <div className="p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#A99B8E]">
                   3-Month Total
                 </p>
 
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                  <TrendingUp className="h-4 w-4" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                  <TrendingUp className="h-3.5 w-3.5" />
                 </div>
               </div>
 
-              <p className="text-2xl font-bold tracking-tight text-emerald-600">
+              <p className="text-xl font-bold tracking-tight text-emerald-700">
                 {loading ? "—" : formatCurrency(revenueTotals.total)}
               </p>
 
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-[10px] text-[#A99B8E]">
                 Total revenue generated
               </p>
             </div>
           </div>
 
-          {/* Chart */}
-          <div className="border-t border-slate-100 p-5 sm:p-6">
+          {/* CHART */}
+          <div className="border-t border-[#E9DED0] p-3 sm:p-4">
             {loading ? (
-              <div className="flex h-80 flex-col items-center justify-center">
-                <LoaderCircle className="mb-3 h-8 w-8 animate-spin text-blue-600" />
-                <p className="text-sm font-medium text-slate-500">
+              <div className="flex h-72 flex-col items-center justify-center">
+                <LoaderCircle className="mb-2 h-7 w-7 animate-spin text-[#A95643]" />
+                <p className="text-xs font-medium text-[#8F8175]">
                   Loading revenue data...
                 </p>
               </div>
             ) : revenueTotals.total === 0 ? (
-              <div className="flex h-80 flex-col items-center justify-center text-center">
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500">
-                  <Wallet className="h-8 w-8" />
+              <div className="flex h-72 flex-col items-center justify-center text-center">
+                <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
+                  <Wallet className="h-7 w-7" />
                 </div>
 
-                <h3 className="font-bold text-slate-700">
+                <h3 className="text-sm font-bold text-[#382B26]">
                   No revenue data yet
                 </h3>
 
-                <p className="mt-1 max-w-sm text-sm text-slate-400">
+                <p className="mt-1 max-w-sm text-xs text-[#8F8175]">
                   No paid and confirmed bookings were found in the last three
                   months.
                 </p>
@@ -728,32 +727,32 @@ const AdminDashboard = () => {
             )}
           </div>
 
-          {/* Revenue Footer */}
-          <div className="flex flex-col gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="flex items-center gap-2 text-xs text-slate-500">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+          {/* REVENUE FOOTER */}
+          <div className="flex flex-col gap-1.5 border-t border-[#E9DED0] bg-[#FAF6EF] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-1.5 text-[10px] text-[#6F6259]">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
               Only paid and confirmed reservations are included.
             </p>
 
-            <p className="flex items-center gap-1.5 text-xs font-medium text-slate-400">
-              <Clock3 className="h-3.5 w-3.5" />
+            <p className="flex items-center gap-1.5 text-[10px] font-medium text-[#A99B8E]">
+              <Clock3 className="h-3 w-3" />
               All dates calculated in IST
             </p>
           </div>
         </div>
 
-        {/* Bottom Info */}
-        <div className="mt-5 flex items-start gap-3 rounded-xl border border-blue-100 bg-white/70 p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+        {/* BOTTOM INFO */}
+        <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-[#E9DED0] bg-[#FFFDFA] p-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
             <Activity className="h-4 w-4" />
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700">
+            <p className="text-xs font-semibold text-[#382B26]">
               Dashboard insights
             </p>
 
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            <p className="mt-0.5 text-[11px] leading-relaxed text-[#8F8175]">
               Reservation statistics and revenue are calculated using confirmed
               bookings with successful payments. Cancelled, unpaid and refunded
               reservations are excluded.
