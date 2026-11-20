@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Users,
@@ -19,6 +20,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import api from "../../api/axios.js";
 
 const initialForm = {
@@ -39,9 +41,10 @@ const TeamManagement = () => {
   const [loadingCustomers, setLoadingCustomers] = useState(true);
   const [loadingTeam, setLoadingTeam] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deactivatingId, setDeactivatingId] = useState(null);
   const [error, setError] = useState("");
 
-  // Fetch customers
+  // FETCH CUSTOMERS
   const fetchCustomers = async () => {
     try {
       setLoadingCustomers(true);
@@ -77,7 +80,7 @@ const TeamManagement = () => {
     }
   };
 
-  // Fetch selected customer's team
+  // FETCH SELECTED CUSTOMER'S TEAM
   const fetchTeamMembers = async () => {
     if (!selectedCustomer) {
       setTeamMembers([]);
@@ -107,6 +110,7 @@ const TeamManagement = () => {
     fetchTeamMembers();
   }, [selectedCustomer]);
 
+  // HANDLE FORM CHANGE
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -114,12 +118,13 @@ const TeamManagement = () => {
     }));
   };
 
+  // RESET FORM
   const resetForm = () => {
     setFormData(initialForm);
     setEditingId(null);
   };
 
-  // Add or update team member
+  // ADD OR UPDATE TEAM MEMBER
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -151,26 +156,30 @@ const TeamManagement = () => {
 
       if (editingId) {
         await api.put(`/team/${editingId}`, payload);
-        alert("Team member updated successfully.");
+        toast.success("Team member updated successfully.");
       } else {
         await api.post("/team", {
           ...payload,
           customerId: selectedCustomer,
         });
 
-        alert("Team member added successfully.");
+        toast.success("Team member added successfully.");
       }
 
       resetForm();
       await fetchTeamMembers();
     } catch (err) {
-      setError(err.response?.data?.message || "Unable to save team member.");
+      const message =
+        err.response?.data?.message || "Unable to save team member.";
+
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
-  // Edit team member
+  // EDIT TEAM MEMBER
   const handleEdit = (member) => {
     setEditingId(member._id);
 
@@ -187,18 +196,75 @@ const TeamManagement = () => {
     });
   };
 
-  // Deactivate team member
-  const handleDeactivate = async (memberId) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to deactivate this team member?",
-    );
+  // SHOW DEACTIVATION CONFIRMATION TOAST
+  const handleDeactivate = (memberId) => {
+    if (deactivatingId !== null || saving) return;
 
-    if (!confirmed) return;
+    toast(
+      ({ closeToast }) => (
+        <div
+          className="flex flex-col gap-3"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div>
+            <p className="text-sm font-semibold text-[#382B26]">
+              Deactivate this team member?
+            </p>
+            <p className="mt-1 text-xs text-[#8F8175]">
+              This team member will be deactivated from the customer's team.
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                closeToast();
+              }}
+              className="rounded-lg border border-[#E9DED0] px-3 py-1.5 text-xs font-semibold text-[#6F5D52] transition hover:bg-[#FBF3ED]"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                void confirmDeactivate(memberId);
+                closeToast();
+              }}
+              className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
+            >
+              Deactivate
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        autoClose: false,
+        closeOnClick: false,
+        closeButton: false,
+        draggable: false,
+        position: "top-right",
+      },
+    );
+  };
+
+  // CONFIRM DEACTIVATION
+  const confirmDeactivate = async (memberId) => {
+    if (deactivatingId !== null || saving) return;
 
     try {
+      setDeactivatingId(memberId);
+      setError("");
+
       await api.patch(`/team/${memberId}/deactivate`);
 
-      alert("Team member deactivated successfully.");
+      toast.success("Team member deactivated successfully.");
 
       if (editingId === memberId) {
         resetForm();
@@ -206,16 +272,22 @@ const TeamManagement = () => {
 
       await fetchTeamMembers();
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to deactivate team member.",
-      );
+      const message =
+        err.response?.data?.message || "Failed to deactivate team member.";
+
+      setError(message);
+      toast.error(message);
+    } finally {
+      setDeactivatingId(null);
     }
   };
 
+  // CURRENT CUSTOMER
   const currentCustomer = customers.find(
     (customer) => customer._id === selectedCustomer,
   );
 
+  // GET INITIALS
   const getInitials = (name = "") =>
     name
       .split(" ")
@@ -225,20 +297,22 @@ const TeamManagement = () => {
       .join("")
       .toUpperCase();
 
+  // INPUT STYLES
   const inputClass =
-    "w-full rounded-xl border border-blue-100 bg-[#F8FBFF] py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-500/10";
+    "w-full rounded-xl border border-[#E9DED0] bg-[#FBF3ED] py-2.5 pl-11 pr-4 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99A8D] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10";
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        {/* Header */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-700 p-6 text-white shadow-xl shadow-blue-200/60 sm:p-8">
+    <div className="min-h-screen bg-[#FAF6EF] p-3 sm:p-4 lg:p-5">
+      <div className="mx-auto max-w-[1500px] space-y-5">
+
+        {/* PAGE HEADER */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] p-5 text-white shadow-md shadow-[#71392F]/10 sm:p-6">
           <div className="absolute -right-12 -top-24 h-72 w-72 rounded-full border-[35px] border-white/10" />
           <div className="absolute -bottom-28 right-1/3 h-64 w-64 rounded-full bg-white/5" />
 
-          <div className="relative z-10 flex flex-col justify-between gap-6 lg:flex-row lg:items-center">
+          <div className="relative z-10 flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-blue-50">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-wide text-white/90">
                 <Sparkles size={14} />
                 OORZA ADMINISTRATION
               </div>
@@ -247,21 +321,22 @@ const TeamManagement = () => {
                 Team Management
               </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100 sm:text-base">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
                 Build and manage customer teams. Organize your people and keep
                 every team member's information up to date.
               </p>
             </div>
 
-            <div className="flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/15">
-                <UsersRound size={25} />
+            <div className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 p-3 backdrop-blur-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
+                <UsersRound size={23} />
               </div>
+
               <div>
                 <p className="text-2xl font-bold tabular-nums">
                   {teamMembers.length}
                 </p>
-                <p className="text-xs font-medium text-blue-100">
+                <p className="text-xs font-medium text-white/80">
                   Team Members
                 </p>
               </div>
@@ -269,11 +344,13 @@ const TeamManagement = () => {
           </div>
         </div>
 
-        {/* Error */}
+        {/* ERROR MESSAGE */}
         {error && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm">
+          <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3.5 text-sm text-red-700 shadow-sm">
             <AlertCircle size={19} className="mt-0.5 shrink-0" />
+
             <p className="flex-1">{error}</p>
+
             <button
               type="button"
               onClick={() => setError("")}
@@ -285,23 +362,26 @@ const TeamManagement = () => {
           </div>
         )}
 
-        {/* Customer Selection */}
-        <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-          <div className="flex items-center gap-3 border-b border-blue-50 px-5 py-4 sm:px-6">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-              <Building2 size={20} />
+        {/* CUSTOMER SELECTION */}
+        <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+          <div className="flex items-center gap-3 border-b border-[#E9DED0] px-4 py-3.5 sm:px-5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+              <Building2 size={19} />
             </div>
+
             <div>
-              <h2 className="font-bold text-slate-800">Customer Workspace</h2>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <h2 className="font-bold text-[#382B26]">
+                Customer Workspace
+              </h2>
+              <p className="mt-0.5 text-xs text-[#8F8175]">
                 Choose a customer to manage their team
               </p>
             </div>
           </div>
 
-          <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[1fr_1fr] lg:items-center">
+          <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-2 lg:items-center">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
+              <label className="mb-2 block text-sm font-semibold text-[#382B26]">
                 Select Customer
               </label>
 
@@ -311,9 +391,10 @@ const TeamManagement = () => {
                   onChange={(e) => {
                     setSelectedCustomer(e.target.value);
                     resetForm();
+                    setError("");
                   }}
                   disabled={loadingCustomers || customers.length === 0}
-                  className="w-full appearance-none rounded-xl border border-blue-100 bg-[#F8FBFF] px-4 py-3.5 pr-11 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full appearance-none rounded-xl border border-[#E9DED0] bg-[#FBF3ED] px-4 py-3 pr-11 text-sm font-medium text-[#382B26] outline-none transition focus:border-[#A95643] focus:ring-4 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loadingCustomers ? (
                     <option value="">Loading customers...</option>
@@ -327,47 +408,54 @@ const TeamManagement = () => {
                     ))
                   )}
                 </select>
+
                 <ChevronDown
                   size={18}
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#8F8175]"
                 />
               </div>
 
               {customers.length === 0 && !loadingCustomers && (
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[#8F8175]">
                   Create an active customer account first.
                 </p>
               )}
             </div>
 
             {currentCustomer ? (
-              <div className="flex items-center gap-4 rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-sm font-bold text-white shadow-md shadow-blue-200">
+              <div className="flex items-center gap-3 rounded-xl border border-[#E9DED0] bg-[#FBF3ED] p-3.5">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#71392F] to-[#A95643] text-sm font-bold text-white shadow-sm">
                   {getInitials(currentCustomer.name)}
                 </div>
 
                 <div className="min-w-0 flex-1">
                   <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#A95643]">
                       Selected Customer
                     </span>
-                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold text-green-700">
+
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                       Active
                     </span>
                   </div>
-                  <p className="truncate font-bold text-slate-800">
+
+                  <p className="truncate font-bold text-[#382B26]">
                     {currentCustomer.name}
                   </p>
-                  <p className="truncate text-xs text-slate-500">
+
+                  <p className="truncate text-xs text-[#8F8175]">
                     {currentCustomer.email}
                   </p>
                 </div>
 
-                <ShieldCheck size={22} className="shrink-0 text-blue-500" />
+                <ShieldCheck
+                  size={21}
+                  className="shrink-0 text-[#A95643]"
+                />
               </div>
             ) : (
-              <div className="flex items-center gap-3 rounded-2xl border border-dashed border-blue-200 bg-[#F8FBFF] p-4 text-sm text-slate-500">
-                <Users size={20} className="text-blue-400" />
+              <div className="flex items-center gap-3 rounded-xl border border-dashed border-[#E9DED0] bg-[#FBF3ED] p-4 text-sm text-[#8F8175]">
+                <Users size={20} className="text-[#A95643]" />
                 Select a customer to view their team.
               </div>
             )}
@@ -376,18 +464,24 @@ const TeamManagement = () => {
 
         {selectedCustomer && (
           <>
-            {/* Add / Edit Form */}
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-blue-50 px-5 py-5 sm:px-6">
+            {/* ADD / EDIT FORM */}
+            <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E9DED0] px-4 py-4 sm:px-5">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                    {editingId ? <Pencil size={20} /> : <UserPlus size={21} />}
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                    {editingId ? (
+                      <Pencil size={19} />
+                    ) : (
+                      <UserPlus size={20} />
+                    )}
                   </div>
+
                   <div>
-                    <h2 className="font-bold text-slate-800">
+                    <h2 className="font-bold text-[#382B26]">
                       {editingId ? "Edit Team Member" : "Add Team Member"}
                     </h2>
-                    <p className="mt-1 text-xs text-slate-500">
+
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
                       {editingId
                         ? "Update the selected member's details."
                         : "Add a new person to this customer's team."}
@@ -399,7 +493,7 @@ const TeamManagement = () => {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                    className="inline-flex items-center gap-2 rounded-lg border border-[#E9DED0] px-3 py-2 text-xs font-semibold text-[#6F5D52] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
                   >
                     <X size={15} />
                     Cancel Editing
@@ -407,17 +501,20 @@ const TeamManagement = () => {
                 )}
               </div>
 
-              <form onSubmit={handleSubmit} className="p-5 sm:p-6">
-                <div className="mb-5 grid gap-5 sm:grid-cols-2">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-5">
+                <div className="mb-5 grid gap-4 sm:grid-cols-2">
+                  {/* NAME */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#382B26]">
                       Full Name <span className="text-red-500">*</span>
                     </label>
+
                     <div className="relative">
                       <UserRound
                         size={17}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99A8D]"
                       />
+
                       <input
                         name="name"
                         value={formData.name}
@@ -429,15 +526,18 @@ const TeamManagement = () => {
                     </div>
                   </div>
 
+                  {/* EMAIL */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#382B26]">
                       Email Address <span className="text-red-500">*</span>
                     </label>
+
                     <div className="relative">
                       <Mail
                         size={17}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99A8D]"
                       />
+
                       <input
                         name="email"
                         type="email"
@@ -450,15 +550,18 @@ const TeamManagement = () => {
                     </div>
                   </div>
 
+                  {/* PHONE */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#382B26]">
                       Phone Number <span className="text-red-500">*</span>
                     </label>
+
                     <div className="relative">
                       <Phone
                         size={17}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99A8D]"
                       />
+
                       <input
                         name="phone"
                         type="tel"
@@ -471,18 +574,21 @@ const TeamManagement = () => {
                     </div>
                   </div>
 
+                  {/* DESIGNATION */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    <label className="mb-2 block text-sm font-semibold text-[#382B26]">
                       Designation
-                      <span className="ml-1 font-normal text-slate-400">
+                      <span className="ml-1 font-normal text-[#A99A8D]">
                         (Optional)
                       </span>
                     </label>
+
                     <div className="relative">
                       <BriefcaseBusiness
                         size={17}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99A8D]"
                       />
+
                       <input
                         name="designation"
                         value={formData.designation}
@@ -494,18 +600,18 @@ const TeamManagement = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-blue-50 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-xs text-slate-400">
+                <div className="flex flex-col gap-3 border-t border-[#E9DED0] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs text-[#A99A8D]">
                     <span className="text-red-500">*</span> Required fields
                   </p>
 
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2">
                     {editingId && (
                       <button
                         type="button"
                         onClick={resetForm}
                         disabled={saving}
-                        className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                        className="rounded-lg border border-[#E9DED0] px-4 py-2.5 text-sm font-semibold text-[#6F5D52] transition hover:bg-[#FBF3ED] disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -513,8 +619,8 @@ const TeamManagement = () => {
 
                     <button
                       type="submit"
-                      disabled={saving}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200 transition hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={saving || deactivatingId !== null}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#A95643] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#71392F] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {saving ? (
                         <>
@@ -528,6 +634,7 @@ const TeamManagement = () => {
                           ) : (
                             <UserPlus size={17} />
                           )}
+
                           {editingId ? "Update Member" : "Add Team Member"}
                           <ArrowRight size={16} />
                         </>
@@ -538,108 +645,130 @@ const TeamManagement = () => {
               </form>
             </section>
 
-            {/* Team Members */}
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-blue-50 px-5 py-5 sm:px-6">
+            {/* TEAM MEMBERS */}
+            <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E9DED0] px-4 py-4 sm:px-5">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                    <UsersRound size={21} />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                    <UsersRound size={20} />
                   </div>
+
                   <div>
-                    <h2 className="font-bold text-slate-800">Team Members</h2>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <h2 className="font-bold text-[#382B26]">
+                      Team Members
+                    </h2>
+
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
                       People associated with {currentCustomer?.name}
                     </p>
                   </div>
                 </div>
 
-                <div className="inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-4 py-2">
-                  <Users size={16} className="text-blue-600" />
-                  <span className="text-sm font-bold text-blue-700">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-[#E9DED0] bg-[#FBF3ED] px-3 py-2">
+                  <Users size={15} className="text-[#A95643]" />
+
+                  <span className="text-sm font-bold text-[#71392F]">
                     {teamMembers.length}
                   </span>
-                  <span className="text-xs font-medium text-blue-600">
+
+                  <span className="text-xs font-medium text-[#8F8175]">
                     Members
                   </span>
                 </div>
               </div>
 
+              {/* LOADING */}
               {loadingTeam ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <Loader2 size={30} className="animate-spin text-blue-600" />
-                  <p className="mt-3 text-sm font-medium text-slate-500">
+                <div className="flex flex-col items-center justify-center py-14">
+                  <Loader2
+                    size={29}
+                    className="animate-spin text-[#A95643]"
+                  />
+
+                  <p className="mt-3 text-sm font-medium text-[#6F5D52]">
                     Loading team members...
                   </p>
                 </div>
               ) : teamMembers.length === 0 ? (
-                <div className="px-5 py-16 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-500">
-                    <UsersRound size={30} />
+                /* EMPTY STATE */
+                <div className="px-5 py-14 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
+                    <UsersRound size={28} />
                   </div>
-                  <h3 className="mt-5 font-bold text-slate-800">
+
+                  <h3 className="mt-4 font-bold text-[#382B26]">
                     No team members yet
                   </h3>
-                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">
+
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#8F8175]">
                     This customer doesn't have any team members. Add the first
                     member using the form above.
                   </p>
                 </div>
               ) : (
                 <>
-                  {/* Desktop Table */}
+                  {/* DESKTOP TABLE */}
                   <div className="hidden overflow-x-auto md:block">
                     <table className="w-full text-left">
-                      <thead className="bg-[#F3F8FF] text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                      <thead className="bg-[#FBF3ED] text-[11px] font-bold uppercase tracking-wider text-[#8F8175]">
                         <tr>
-                          <th className="px-6 py-4">Team Member</th>
-                          <th className="px-6 py-4">Phone</th>
-                          <th className="px-6 py-4">Designation</th>
-                          <th className="px-6 py-4 text-right">Actions</th>
+                          <th className="px-5 py-3.5">Team Member</th>
+                          <th className="px-5 py-3.5">Phone</th>
+                          <th className="px-5 py-3.5">Designation</th>
+                          <th className="px-5 py-3.5 text-right">Actions</th>
                         </tr>
                       </thead>
 
-                      <tbody className="divide-y divide-blue-50">
+                      <tbody className="divide-y divide-[#F0E7DD]">
                         {teamMembers.map((member) => (
                           <tr
                             key={member._id}
-                            className="transition hover:bg-[#F8FBFF]"
+                            className="transition hover:bg-[#FBF6F0]"
                           >
-                            <td className="px-6 py-4">
+                            <td className="px-5 py-3.5">
                               <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#71392F] to-[#A95643] text-xs font-bold text-white">
                                   {getInitials(member.name)}
                                 </div>
+
                                 <div className="min-w-0">
-                                  <p className="font-semibold text-slate-800">
+                                  <p className="font-semibold text-[#382B26]">
                                     {member.name}
                                   </p>
-                                  <p className="mt-1 text-xs text-slate-500">
+
+                                  <p className="mt-1 text-xs text-[#8F8175]">
                                     {member.email}
                                   </p>
                                 </div>
                               </div>
                             </td>
 
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2 text-sm text-slate-600">
-                                <Phone size={14} className="text-slate-400" />
+                            <td className="px-5 py-3.5">
+                              <div className="flex items-center gap-2 text-sm text-[#6F5D52]">
+                                <Phone
+                                  size={14}
+                                  className="text-[#A99A8D]"
+                                />
                                 {member.phone}
                               </div>
                             </td>
 
-                            <td className="px-6 py-4">
-                              <span className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700">
+                            <td className="px-5 py-3.5">
+                              <span className="inline-flex items-center gap-2 rounded-lg bg-[#F8EDE6] px-3 py-1.5 text-xs font-semibold text-[#71392F]">
                                 <BriefcaseBusiness size={13} />
                                 {member.designation || "Not specified"}
                               </span>
                             </td>
 
-                            <td className="px-6 py-4">
+                            <td className="px-5 py-3.5">
                               <div className="flex justify-end gap-2">
                                 <button
                                   type="button"
                                   onClick={() => handleEdit(member)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-blue-100 bg-white px-3 py-2 text-xs font-semibold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+                                  disabled={
+                                    saving || deactivatingId !== null
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#E9DED0] bg-white px-3 py-2 text-xs font-semibold text-[#A95643] transition hover:border-[#C9826C] hover:bg-[#FBF3ED] disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   <Pencil size={14} />
                                   Edit
@@ -647,11 +776,28 @@ const TeamManagement = () => {
 
                                 <button
                                   type="button"
-                                  onClick={() => handleDeactivate(member._id)}
-                                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-100 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50"
+                                  onClick={() =>
+                                    handleDeactivate(member._id)
+                                  }
+                                  disabled={
+                                    saving || deactivatingId !== null
+                                  }
+                                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-100 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                  <UserX size={14} />
-                                  Deactivate
+                                  {deactivatingId === member._id ? (
+                                    <>
+                                      <Loader2
+                                        size={14}
+                                        className="animate-spin"
+                                      />
+                                      Deactivating
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserX size={14} />
+                                      Deactivate
+                                    </>
+                                  )}
                                 </button>
                               </div>
                             </td>
@@ -661,42 +807,45 @@ const TeamManagement = () => {
                     </table>
                   </div>
 
-                  {/* Mobile Cards */}
+                  {/* MOBILE CARDS */}
                   <div className="space-y-3 p-4 md:hidden">
                     {teamMembers.map((member) => (
                       <div
                         key={member._id}
-                        className="rounded-2xl border border-blue-100 bg-[#F9FBFF] p-4"
+                        className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA] p-3.5"
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-xs font-bold text-white shadow-sm">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#71392F] to-[#A95643] text-xs font-bold text-white shadow-sm">
                             {getInitials(member.name)}
                           </div>
 
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-bold text-slate-800">
+                            <p className="truncate font-bold text-[#382B26]">
                               {member.name}
                             </p>
-                            <p className="mt-1 break-all text-xs text-slate-500">
+
+                            <p className="mt-1 break-all text-xs text-[#8F8175]">
                               {member.email}
                             </p>
-                            <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700">
+
+                            <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-[#F8EDE6] px-2.5 py-1 text-[11px] font-semibold text-[#71392F]">
                               <BriefcaseBusiness size={12} />
                               {member.designation || "Not specified"}
                             </span>
                           </div>
                         </div>
 
-                        <div className="mt-4 flex items-center gap-2 border-t border-blue-100 pt-3 text-xs text-slate-600">
-                          <Phone size={14} className="text-slate-400" />
+                        <div className="mt-3 flex items-center gap-2 border-t border-[#E9DED0] pt-3 text-xs text-[#6F5D52]">
+                          <Phone size={14} className="text-[#A99A8D]" />
                           {member.phone}
                         </div>
 
-                        <div className="mt-4 grid grid-cols-2 gap-2">
+                        <div className="mt-3 grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => handleEdit(member)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-50"
+                            disabled={saving || deactivatingId !== null}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#E9DED0] bg-white px-3 py-2.5 text-xs font-semibold text-[#A95643] transition hover:bg-[#FBF3ED] disabled:opacity-50"
                           >
                             <Pencil size={14} />
                             Edit
@@ -705,10 +854,23 @@ const TeamManagement = () => {
                           <button
                             type="button"
                             onClick={() => handleDeactivate(member._id)}
-                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                            disabled={saving || deactivatingId !== null}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                           >
-                            <UserX size={14} />
-                            Deactivate
+                            {deactivatingId === member._id ? (
+                              <>
+                                <Loader2
+                                  size={14}
+                                  className="animate-spin"
+                                />
+                                Deactivating
+                              </>
+                            ) : (
+                              <>
+                                <UserX size={14} />
+                                Deactivate
+                              </>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -717,15 +879,16 @@ const TeamManagement = () => {
                 </>
               )}
 
+              {/* TABLE FOOTER */}
               {!loadingTeam && teamMembers.length > 0 && (
-                <div className="border-t border-blue-50 bg-[#F8FBFF] px-5 py-3 sm:px-6">
-                  <p className="text-xs text-slate-500">
+                <div className="border-t border-[#E9DED0] bg-[#FBF3ED] px-4 py-3 sm:px-5">
+                  <p className="text-xs text-[#8F8175]">
                     Showing{" "}
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-[#382B26]">
                       {teamMembers.length}
                     </span>{" "}
                     team {teamMembers.length === 1 ? "member" : "members"} for{" "}
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-[#382B26]">
                       {currentCustomer?.name}
                     </span>
                   </p>
@@ -735,8 +898,8 @@ const TeamManagement = () => {
           </>
         )}
 
-        {/* Footer Note */}
-        <div className="flex items-center justify-center gap-2 py-2 text-xs text-slate-400">
+        {/* FOOTER */}
+        <div className="flex items-center justify-center gap-2 py-2 text-xs text-[#A99A8D]">
           <ShieldCheck size={14} />
           Oorza Team Administration
         </div>

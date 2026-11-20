@@ -25,7 +25,7 @@ const loadRazorpayScript = () =>
 // Must match PER_HEAD_SPACES in bookingController.js and BookSpace.jsx.
 const PER_HEAD_SPACES = ["Video Conferencing"];
 
-// 15-character Indian GSTIN (the server validates it again).
+// 15-character Indian GSTIN.
 const GSTIN_REGEX = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
 const isSunday = (dateString) =>
@@ -64,6 +64,7 @@ const formatPrice = (value) => {
 const unitLabel = (plan, count) => {
   const base =
     plan === "hourly" ? "hour" : plan === "monthly" ? "month" : "day";
+
   return Number(count) === 1 ? base : `${base}s`;
 };
 
@@ -81,8 +82,9 @@ export default function Checkout() {
   // Amounts confirmed by the server after the order is created.
   const [paidSummary, setPaidSummary] = useState(null);
 
-  // Invoice: the customer gets ONE invoice, either personal or business (GST).
+  // Invoice: customer OR business (GST).
   const [invoiceType, setInvoiceType] = useState("customer");
+
   const [billing, setBilling] = useState({
     businessName: "",
     gstin: "",
@@ -94,16 +96,18 @@ export default function Checkout() {
 
   if (!bookingData || !space) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50 p-6">
-        <h2 className="text-xl font-bold text-gray-800">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-[#FAF6EF] p-4">
+        <h2 className="text-lg font-bold text-[#382B26]">
           Booking information not found
         </h2>
-        <p className="text-gray-600 text-center">
+
+        <p className="text-center text-sm text-[#8F8175]">
           Please select your workspace and booking dates again.
         </p>
+
         <button
           onClick={() => navigate("/")}
-          className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+          className="rounded-lg bg-[#A95643] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#71392F]"
         >
           Back to Home
         </button>
@@ -124,8 +128,6 @@ export default function Checkout() {
   } = bookingData;
 
   const isHourly = plan === "hourly";
-
-  // Per-head rooms (Video Conferencing): one room, many attendees.
   const isPerHead = PER_HEAD_SPACES.includes(spaceName);
 
   const hasAssignments =
@@ -140,15 +142,12 @@ export default function Checkout() {
       ? selectedSpaces.length
       : 0;
 
-  // Normal spaces: "A1 (Myself), A2 (Priya)" when assignments exist,
-  // otherwise just the codes.
   const seatsText = (
     hasAssignments
       ? seatAssignments.map((seat) => `${seat.spaceCode} (${seat.label})`)
       : selectedSpaces
   ).join(", ");
 
-  // Per-head rooms: the room code and the attendee names.
   const roomText = Array.isArray(selectedSpaces)
     ? selectedSpaces.join(", ")
     : "";
@@ -160,28 +159,23 @@ export default function Checkout() {
   const attendeesText = attendeeNames.join(", ");
 
   // Display-only amounts. The server recalculates everything.
-  // totalAmount = final payable amount including GST.
   const totalAmount = Number(
     bookingData.totalAmount ?? bookingData.totalPrice ?? bookingData.total ?? 0,
   );
 
   const discountAmount = Number(bookingData.discountAmount || 0);
-
   const gstRate = Number(bookingData.gstRate ?? 18);
   const gstAmount = Number(bookingData.gstAmount || 0);
 
-  // Amount after coupon, before GST.
   const taxableAmount = Number(
     bookingData.taxableAmount ?? totalAmount - gstAmount,
   );
 
-  // Price before coupon and GST.
   const subtotal = Number(
     bookingData.subtotal ?? taxableAmount + discountAmount,
   );
 
   const pricePerUnit = Number(bookingData.pricePerUnit || 0);
-
   const hasCoupon = Boolean(couponCode) && discountAmount > 0;
 
   const handlePayment = async () => {
@@ -203,7 +197,6 @@ export default function Checkout() {
     }
 
     if (isPerHead) {
-      // One room, at least one attendee.
       if (
         selectedSpaces.length !== 1 ||
         !Array.isArray(seatAssignments) ||
@@ -224,7 +217,6 @@ export default function Checkout() {
       return;
     }
 
-    // Office is closed on Sundays (the server enforces this as well).
     if (isSunday(bookingDate)) {
       toast.error(
         "Our office is closed on Sundays. Please select another date.",
@@ -263,9 +255,7 @@ export default function Checkout() {
         throw new Error("Unable to load Razorpay Checkout. Please try again.");
       }
 
-      // Step 1: Create the order on your backend.
-      // The server validates the coupon and seat/attendee assignments again
-      // and calculates the final amount (coupon + 18% GST).
+      // Step 1: Create order on backend.
       const orderResponse = await api.post("/booking/create_razorpay_order", {
         spaceName,
         bookingDate,
@@ -307,7 +297,7 @@ export default function Checkout() {
         );
       }
 
-      // Amounts confirmed by the server (shown after payment).
+      // Amounts confirmed by the server.
       setPaidSummary({
         subtotal: order.subtotal,
         discountAmount: order.discountAmount,
@@ -329,7 +319,7 @@ export default function Checkout() {
           : `${spaceName} - ${selectedSpaces.length} space(s)`,
         order_id: order.orderId,
 
-        // Step 3: Send payment details to the backend for verification.
+        // Step 3: Verify payment with backend.
         handler: async (paymentResponse) => {
           try {
             const verifyResponse = await api.post(
@@ -351,10 +341,12 @@ export default function Checkout() {
             setConfirmedBookingId(
               verifyResponse.data.booking?.bookingId || order.bookingId,
             );
+
             setBookingConfirmed(true);
             toast.success("Payment verified and booking confirmed!");
           } catch (error) {
             console.error("Booking verification error:", error);
+
             toast.error(
               error.response?.data?.message ||
                 error.message ||
@@ -373,7 +365,7 @@ export default function Checkout() {
         },
 
         theme: {
-          color: "#2563eb",
+          color: "#A95643",
         },
       };
 
@@ -381,23 +373,31 @@ export default function Checkout() {
 
       razorpay.on("payment.failed", (response) => {
         console.error("Razorpay payment failed:", response.error);
+
         toast.error(
           response.error?.description || "Payment failed. Please try again.",
         );
+
         setLoading(false);
       });
 
       razorpay.open();
     } catch (error) {
       console.error("Checkout error:", error);
+
       toast.error(
         error.response?.data?.message ||
           error.message ||
           "Unable to start checkout.",
       );
+
       setLoading(false);
     }
   };
+
+  // ---------------------------------------------
+  // BOOKING CONFIRMATION
+  // ---------------------------------------------
 
   if (bookingConfirmed) {
     const finalPaid = paidSummary?.totalAmount ?? totalAmount;
@@ -407,139 +407,172 @@ export default function Checkout() {
     const finalGstRate = paidSummary?.gstRate ?? gstRate;
 
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-lg">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700">
-            ✓
-          </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] p-3 sm:p-5">
+        <div className="w-full max-w-lg overflow-hidden rounded-xl border border-[#E9DED0] bg-white shadow-lg shadow-[#71392F]/[0.06]">
+          <div className="h-1 w-full bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#D58B70]" />
 
-          <h1 className="text-2xl font-bold text-gray-900">
-            Booking Confirmed!
-          </h1>
+          <div className="p-4 text-center sm:p-6">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#EAF0E6] text-2xl text-[#527C61]">
+              <span>✓</span>
+            </div>
 
-          <p className="mt-3 text-gray-600">
-            Your payment was verified and your workspace booking is confirmed.
-          </p>
+            <h1 className="text-xl font-bold text-[#382B26]">
+              Booking Confirmed!
+            </h1>
 
-          <div className="mt-6 rounded-xl bg-gray-50 p-4 text-left">
-            <p className="text-sm text-gray-500">Booking ID</p>
-            <p className="mt-1 break-all font-semibold text-gray-900">
-              {confirmedBookingId}
+            <p className="mt-1.5 text-xs leading-5 text-[#8F8175]">
+              Your payment was verified and your workspace booking is confirmed.
             </p>
 
-            <p className="mt-4 text-sm text-gray-500">Workspace</p>
-            <p className="mt-1 font-medium text-gray-900">{spaceName}</p>
-
-            {isPerHead ? (
-              <>
-                <p className="mt-4 text-sm text-gray-500">Room</p>
-                <p className="mt-1 font-medium text-gray-900">{roomText}</p>
-
-                <p className="mt-4 text-sm text-gray-500">
-                  Attendees ({headCount})
-                </p>
-                <p className="mt-1 font-medium text-gray-900">
-                  {attendeesText}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="mt-4 text-sm text-gray-500">Selected seats</p>
-                <p className="mt-1 font-medium text-gray-900">{seatsText}</p>
-              </>
-            )}
-
-            <p className="mt-4 text-sm text-gray-500">Booking date</p>
-            <p className="mt-1 font-medium text-gray-900">
-              {formatDate(bookingDate)}
-            </p>
-
-            {isHourly && startTime && (
-              <>
-                <p className="mt-4 text-sm text-gray-500">Time</p>
-                <p className="mt-1 font-medium text-gray-900">
-                  {formatTime(startTime)} - {formatTime(endTime)}
-                </p>
-              </>
-            )}
-
-            <p className="mt-4 text-sm text-gray-500">
-              Amount paid (incl. GST)
-            </p>
-            <p className="mt-1 font-medium text-gray-900">
-              {formatPrice(finalPaid)}
-            </p>
-
-            {Number(finalGst) > 0 && (
-              <p className="mt-1 text-sm text-gray-500">
-                Includes GST ({finalGstRate}%) of {formatPrice(finalGst)}
+            <div className="mt-4 rounded-lg border border-[#E9DED0] bg-[#FBF8F3] p-3 text-left">
+              <p className="text-[11px] text-[#8F8175]">Booking ID</p>
+              <p className="mt-0.5 break-all text-sm font-semibold text-[#382B26]">
+                {confirmedBookingId}
               </p>
-            )}
 
-            {finalCoupon && Number(finalDiscount) > 0 && (
-              <p className="mt-1 text-sm text-green-600">
-                Coupon {finalCoupon} saved you {formatPrice(finalDiscount)}
+              <p className="mt-3 text-[11px] text-[#8F8175]">Workspace</p>
+              <p className="mt-0.5 text-sm font-medium text-[#382B26]">
+                {spaceName}
               </p>
-            )}
+
+              {isPerHead ? (
+                <>
+                  <p className="mt-3 text-[11px] text-[#8F8175]">Room</p>
+                  <p className="mt-0.5 text-sm font-medium text-[#382B26]">
+                    {roomText}
+                  </p>
+
+                  <p className="mt-3 text-[11px] text-[#8F8175]">
+                    Attendees ({headCount})
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium text-[#382B26]">
+                    {attendeesText}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-3 text-[11px] text-[#8F8175]">
+                    Selected seats
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium text-[#382B26]">
+                    {seatsText}
+                  </p>
+                </>
+              )}
+
+              <p className="mt-3 text-[11px] text-[#8F8175]">Booking date</p>
+              <p className="mt-0.5 text-sm font-medium text-[#382B26]">
+                {formatDate(bookingDate)}
+              </p>
+
+              {isHourly && startTime && (
+                <>
+                  <p className="mt-3 text-[11px] text-[#8F8175]">Time</p>
+                  <p className="mt-0.5 text-sm font-medium text-[#382B26]">
+                    {formatTime(startTime)} - {formatTime(endTime)}
+                  </p>
+                </>
+              )}
+
+              <div className="mt-3 border-t border-[#E9DED0] pt-3">
+                <p className="text-[11px] text-[#8F8175]">
+                  Amount paid (incl. GST)
+                </p>
+
+                <p className="mt-0.5 text-xl font-bold text-[#A95643]">
+                  {formatPrice(finalPaid)}
+                </p>
+
+                {Number(finalGst) > 0 && (
+                  <p className="mt-1 text-[11px] text-[#8F8175]">
+                    Includes GST ({finalGstRate}%) of {formatPrice(finalGst)}
+                  </p>
+                )}
+
+                {finalCoupon && Number(finalDiscount) > 0 && (
+                  <p className="mt-1 text-[11px] font-medium text-[#527C61]">
+                    Coupon {finalCoupon} saved you {formatPrice(finalDiscount)}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={() =>
+                navigate(`/customer/invoice/${confirmedBookingId}`)
+              }
+              className="mt-4 w-full rounded-lg border border-[#A95643] px-4 py-2.5 text-sm font-semibold text-[#A95643] transition hover:bg-[#F8EDE6]"
+            >
+              View {invoiceType === "business" ? "Business" : "Personal"}{" "}
+              Invoice
+            </button>
+
+            <button
+              onClick={() => navigate("/customer")}
+              className="mt-2 w-full rounded-lg bg-[#A95643] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#71392F]"
+            >
+              Go to Dashboard
+            </button>
           </div>
-
-          <button
-            onClick={() => navigate(`/customer/invoice/${confirmedBookingId}`)}
-            className="mt-6 w-full rounded-lg border border-blue-600 px-5 py-3 font-semibold text-blue-600 hover:bg-blue-50"
-          >
-            View {invoiceType === "business" ? "Business" : "Personal"} Invoice
-          </button>
-
-          <button
-            onClick={() => navigate("/customer")}
-            className="mt-3 w-full rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700"
-          >
-            Go to Dashboard
-          </button>
         </div>
       </div>
     );
   }
 
+  // ---------------------------------------------
+  // CHECKOUT PAGE
+  // ---------------------------------------------
+
+  const fieldClass =
+    "w-full rounded-lg border border-[#E9DED0] bg-[#FFFDFA] px-3 py-2 text-xs text-[#382B26] outline-none transition placeholder:text-[#A99A8D] focus:border-[#A95643] focus:ring-2 focus:ring-[#A95643]/10 disabled:cursor-not-allowed disabled:opacity-60";
+
+  const infoCardClass =
+    "rounded-lg border border-[#E9DED0]/80 bg-[#FBF8F3] p-3";
+
+  const labelClass = "text-[11px] text-[#8F8175]";
+
+  const valueClass = "mt-1 break-words text-sm font-semibold text-[#382B26]";
+
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-10">
+    <div className="min-h-screen bg-[#FAF6EF] px-3 py-4 sm:px-4 sm:py-5">
       <div className="mx-auto max-w-3xl">
         <button
           onClick={() => navigate(-1)}
           disabled={loading}
-          className="mb-6 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
+          className="mb-3 text-xs font-semibold text-[#A95643] transition hover:text-[#71392F] disabled:opacity-50"
         >
           ← Back
         </button>
 
-        <div className="overflow-hidden rounded-2xl bg-white shadow-lg">
-          <div className="bg-blue-600 px-6 py-6 text-white">
-            <h1 className="text-2xl font-bold">Checkout</h1>
-            <p className="mt-1 text-blue-100">
+        <div className="overflow-hidden rounded-xl border border-[#E9DED0] bg-white shadow-md shadow-[#71392F]/[0.05]">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-[#71392F] to-[#A95643] px-4 py-3.5 text-white sm:px-5">
+            <h1 className="text-lg font-bold">Checkout</h1>
+            <p className="mt-0.5 text-[11px] text-[#F5E5DC]">
               Review your workspace booking before payment.
             </p>
           </div>
 
-          <div className="space-y-5 p-6">
+          <div className="space-y-4 p-3.5 sm:p-5">
+            {/* Workspace */}
             <div>
-              <p className="text-sm text-gray-500">Workspace</p>
-              <h2 className="mt-1 text-lg font-semibold text-gray-900">
+              <p className={labelClass}>Workspace</p>
+              <h2 className="mt-0.5 text-base font-bold text-[#382B26]">
                 {spaceName}
               </h2>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">Booking date</p>
-                <p className="mt-1 font-semibold text-gray-900">
-                  {formatDate(bookingDate)}
-                </p>
+            {/* Booking details */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+              <div className={infoCardClass}>
+                <p className={labelClass}>Booking date</p>
+                <p className={valueClass}>{formatDate(bookingDate)}</p>
               </div>
 
               {isHourly && (
-                <div className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-sm text-gray-500">Time</p>
-                  <p className="mt-1 font-semibold text-gray-900">
+                <div className={infoCardClass}>
+                  <p className={labelClass}>Time</p>
+                  <p className={valueClass}>
                     {startTime
                       ? `${formatTime(startTime)} - ${formatTime(endTime)}`
                       : "Not selected"}
@@ -547,52 +580,47 @@ export default function Checkout() {
                 </div>
               )}
 
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">Plan</p>
-                <p className="mt-1 font-semibold capitalize text-gray-900">
-                  {plan}
-                </p>
+              <div className={infoCardClass}>
+                <p className={labelClass}>Plan</p>
+                <p className={`${valueClass} capitalize`}>{plan}</p>
               </div>
 
-              <div className="rounded-lg bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">Duration</p>
-                <p className="mt-1 font-semibold text-gray-900">
+              <div className={infoCardClass}>
+                <p className={labelClass}>Duration</p>
+                <p className={valueClass}>
                   {duration} {unitLabel(plan, duration)}
                 </p>
               </div>
 
               {isPerHead ? (
                 <>
-                  <div className="rounded-lg bg-gray-50 p-4">
-                    <p className="text-sm text-gray-500">Room</p>
-                    <p className="mt-1 break-words font-semibold text-gray-900">
-                      {roomText}
-                    </p>
+                  <div className={infoCardClass}>
+                    <p className={labelClass}>Room</p>
+                    <p className={valueClass}>{roomText}</p>
                   </div>
 
-                  <div className="rounded-lg bg-gray-50 p-4 sm:col-span-2">
-                    <p className="text-sm text-gray-500">
-                      Attendees ({headCount})
-                    </p>
-                    <p className="mt-1 break-words font-semibold text-gray-900">
-                      {attendeesText || "-"}
-                    </p>
+                  <div className={`${infoCardClass} col-span-2`}>
+                    <p className={labelClass}>Attendees ({headCount})</p>
+                    <p className={valueClass}>{attendeesText || "-"}</p>
                   </div>
                 </>
               ) : (
-                <div className="rounded-lg bg-gray-50 p-4">
-                  <p className="text-sm text-gray-500">Selected seats</p>
-                  <p className="mt-1 break-words font-semibold text-gray-900">
-                    {seatsText}
-                  </p>
+                <div className={`${infoCardClass} col-span-2`}>
+                  <p className={labelClass}>Selected seats</p>
+                  <p className={valueClass}>{seatsText}</p>
                 </div>
               )}
             </div>
 
-            <div className="border-t pt-5">
-              <div className="mb-4 space-y-2">
+            {/* Price summary */}
+            <div className="border-t border-[#E9DED0] pt-3.5">
+              <h3 className="mb-3 text-sm font-bold text-[#382B26]">
+                Price summary
+              </h3>
+
+              <div className="mb-3 space-y-2">
                 {isPerHead && pricePerUnit > 0 && (
-                  <div className="flex items-center justify-between text-xs text-gray-500">
+                  <div className="flex items-center justify-between gap-3 text-[11px] text-[#8F8175]">
                     <span>
                       {formatPrice(pricePerUnit)} × {duration}{" "}
                       {unitLabel(plan, duration)} × {headCount}{" "}
@@ -601,66 +629,68 @@ export default function Checkout() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium text-gray-900">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#8F8175]">Subtotal</span>
+                  <span className="font-semibold text-[#382B26]">
                     {formatPrice(subtotal)}
                   </span>
                 </div>
 
                 {hasCoupon && (
-                  <div className="flex items-center justify-between rounded-lg bg-green-50 px-3 py-2 text-sm">
-                    <span className="font-medium text-green-700">
+                  <div className="flex items-center justify-between rounded-lg border border-[#DCE7D8] bg-[#F0F5EC] px-3 py-2 text-xs">
+                    <span className="font-semibold text-[#527C61]">
                       Coupon {couponCode}
                     </span>
-                    <span className="font-semibold text-green-700">
+                    <span className="font-bold text-[#527C61]">
                       − {formatPrice(discountAmount)}
                     </span>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Taxable amount</span>
-                  <span className="font-medium text-gray-900">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#8F8175]">Taxable amount</span>
+                  <span className="font-semibold text-[#382B26]">
                     {formatPrice(taxableAmount)}
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">GST ({gstRate}%)</span>
-                  <span className="font-medium text-gray-900">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-[#8F8175]">GST ({gstRate}%)</span>
+                  <span className="font-semibold text-[#382B26]">
                     {formatPrice(gstAmount)}
                   </span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4 border-t pt-4">
-                <span className="text-gray-600">Total (incl. GST)</span>
-                <span className="text-2xl font-bold text-gray-900">
+              <div className="flex items-center justify-between gap-3 border-t border-[#E9DED0] pt-3">
+                <span className="text-xs font-semibold text-[#55443B]">
+                  Total (incl. GST)
+                </span>
+
+                <span className="text-xl font-extrabold text-[#A95643]">
                   {Number.isFinite(totalAmount) && totalAmount > 0
                     ? formatPrice(totalAmount)
                     : "Calculated securely by server"}
                 </span>
               </div>
 
-              <p className="mt-2 text-xs text-gray-500">
+              <p className="mt-2 text-[10px] leading-4 text-[#8F8175]">
                 The final payable amount, including any coupon discount and GST,
                 is calculated and validated by the server when your order is
                 created.
               </p>
             </div>
 
-            {/* Invoice type: customer OR business, not both */}
-            <div className="border-t pt-5">
-              <p className="text-sm font-semibold text-gray-900">
-                Invoice type
-              </p>
-              <p className="mt-1 text-xs text-gray-500">
+            {/* Invoice type */}
+            <div className="border-t border-[#E9DED0] pt-3.5">
+              <h3 className="text-sm font-bold text-[#382B26]">Invoice type</h3>
+
+              <p className="mt-1 text-[10px] leading-4 text-[#8F8175]">
                 Choose one. Your invoice is generated after payment is confirmed
                 and cannot be switched later.
               </p>
 
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div className="mt-2.5 grid grid-cols-2 gap-2">
                 {[
                   {
                     id: "customer",
@@ -675,10 +705,10 @@ export default function Checkout() {
                 ].map((option) => (
                   <label
                     key={option.id}
-                    className={`cursor-pointer rounded-xl border-2 p-4 transition ${
+                    className={`cursor-pointer rounded-lg border p-2.5 transition ${
                       invoiceType === option.id
-                        ? "border-blue-600 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-[#A95643] bg-[#F8EDE6] ring-1 ring-[#A95643]/10"
+                        : "border-[#E9DED0] bg-white hover:border-[#D5A08D] hover:bg-[#FBF8F3]"
                     } ${loading ? "pointer-events-none opacity-60" : ""}`}
                   >
                     <input
@@ -690,23 +720,44 @@ export default function Checkout() {
                       disabled={loading}
                       className="sr-only"
                     />
-                    <p className="text-sm font-semibold text-gray-900">
-                      {option.title}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">{option.text}</p>
+
+                    <div className="flex items-start gap-1.5">
+                      <span
+                        className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
+                          invoiceType === option.id
+                            ? "border-[#A95643]"
+                            : "border-[#CBBCAF]"
+                        }`}
+                      >
+                        {invoiceType === option.id && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-[#A95643]" />
+                        )}
+                      </span>
+
+                      <div>
+                        <p className="text-[11px] font-bold text-[#382B26]">
+                          {option.title}
+                        </p>
+                        <p className="mt-0.5 text-[9px] leading-4 text-[#8F8175]">
+                          {option.text}
+                        </p>
+                      </div>
+                    </div>
                   </label>
                 ))}
               </div>
 
+              {/* Business billing details */}
               {invoiceType === "business" && (
-                <div className="mt-4 space-y-3">
+                <div className="mt-3 space-y-2.5 rounded-lg border border-[#E9DED0] bg-[#FBF8F3] p-3">
                   <div>
                     <label
                       htmlFor="business-name"
-                      className="mb-1 block text-xs font-semibold text-gray-700"
+                      className="mb-1 block text-[11px] font-semibold text-[#55443B]"
                     >
                       Business name <span className="text-red-500">*</span>
                     </label>
+
                     <input
                       id="business-name"
                       type="text"
@@ -716,17 +767,19 @@ export default function Checkout() {
                       }
                       maxLength={150}
                       disabled={loading}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Enter business name"
+                      className={fieldClass}
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="business-gstin"
-                      className="mb-1 block text-xs font-semibold text-gray-700"
+                      className="mb-1 block text-[11px] font-semibold text-[#55443B]"
                     >
                       GSTIN <span className="text-red-500">*</span>
                     </label>
+
                     <input
                       id="business-gstin"
                       type="text"
@@ -740,11 +793,12 @@ export default function Checkout() {
                       maxLength={15}
                       placeholder="15-character GSTIN"
                       disabled={loading}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm uppercase outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      className={`${fieldClass} uppercase`}
                     />
+
                     {billing.gstin.length === 15 &&
                       !GSTIN_REGEX.test(billing.gstin) && (
-                        <p className="mt-1 text-xs text-red-600">
+                        <p className="mt-1 text-[10px] text-red-600">
                           This GSTIN does not look valid.
                         </p>
                       )}
@@ -753,38 +807,50 @@ export default function Checkout() {
                   <div>
                     <label
                       htmlFor="business-address"
-                      className="mb-1 block text-xs font-semibold text-gray-700"
+                      className="mb-1 block text-[11px] font-semibold text-[#55443B]"
                     >
                       Billing address <span className="text-red-500">*</span>
                     </label>
+
                     <textarea
                       id="business-address"
-                      rows={3}
+                      rows={2}
                       value={billing.address}
                       onChange={(event) =>
                         updateBilling("address", event.target.value)
                       }
                       maxLength={300}
                       disabled={loading}
-                      className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                      placeholder="Enter complete billing address"
+                      className={`${fieldClass} resize-y`}
                     />
                   </div>
                 </div>
               )}
             </div>
 
-            <button
-              onClick={handlePayment}
-              disabled={loading}
-              className="w-full rounded-lg bg-blue-600 px-5 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? "Processing..." : "Pay Securely with Razorpay"}
-            </button>
+            {/* Payment button */}
+            <div className="border-t border-[#E9DED0] pt-3">
+              <button
+                onClick={handlePayment}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#A95643] to-[#874536] px-4 py-3 text-sm font-bold text-white shadow-sm shadow-[#A95643]/20 transition hover:from-[#71392F] hover:to-[#71392F] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Processing...
+                  </>
+                ) : (
+                  "Pay Securely with Razorpay"
+                )}
+              </button>
 
-            <p className="text-center text-xs text-gray-500">
-              Your booking is confirmed only after the backend verifies your
-              payment.
-            </p>
+              <p className="mt-2 text-center text-[10px] leading-4 text-[#8F8175]">
+                Your booking is confirmed only after the backend verifies your
+                payment.
+              </p>
+            </div>
           </div>
         </div>
       </div>

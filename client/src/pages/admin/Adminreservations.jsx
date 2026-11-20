@@ -3,7 +3,6 @@ import {
   Search,
   RefreshCw,
   CalendarDays,
-  Users,
   CheckCircle2,
   Clock3,
   XCircle,
@@ -214,7 +213,7 @@ const getStatusStyle = (status) => {
     case "expired":
       return "border border-orange-100 bg-orange-50 text-orange-700";
     default:
-      return "border border-slate-200 bg-slate-100 text-slate-600";
+      return "border border-[#E9DED0] bg-[#F4EDE5] text-[#8F8175]";
   }
 };
 
@@ -225,7 +224,7 @@ const getPaymentStyle = (status) => {
     case "failed":
       return "border border-red-100 bg-red-50 text-red-700";
     default:
-      return "border border-slate-200 bg-slate-100 text-slate-600";
+      return "border border-[#E9DED0] bg-[#F4EDE5] text-[#8F8175]";
   }
 };
 
@@ -234,25 +233,25 @@ const PLAN_FILTERS = ["All", "hourly", "daily", "monthly"];
 const PAYMENT_FILTERS = ["All", "Paid", "Pending", "Failed"];
 
 const selectClass =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm text-slate-700 outline-none transition hover:border-blue-300 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+  "w-full rounded-xl border border-[#E9DED0] bg-[#FBF3ED] px-3.5 py-2.5 text-sm text-[#382B26] outline-none transition hover:border-[#C9826C] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10";
 
 /* ---------- reusable components ---------- */
 
 const SummaryCard = ({ title, value, subtitle, icon: Icon, iconClass }) => (
-  <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+  <div className="rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
     <div className="flex items-start justify-between gap-3">
-      <div>
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <p className="mt-2 text-2xl font-extrabold tracking-tight text-slate-900">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-[#8F8175]">{title}</p>
+        <p className="mt-2 break-words text-2xl font-extrabold tracking-tight text-[#382B26]">
           {value}
         </p>
-        <p className="mt-1 text-xs text-slate-400">{subtitle}</p>
+        <p className="mt-1 text-xs text-[#A99A8D]">{subtitle}</p>
       </div>
 
       <div
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconClass}`}
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconClass}`}
       >
-        <Icon size={21} />
+        <Icon size={20} />
       </div>
     </div>
   </div>
@@ -269,17 +268,17 @@ const StatusBadge = ({ status, payment = false }) => (
 );
 
 const DetailItem = ({ label, value, icon: Icon }) => (
-  <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/80 p-4">
+  <div className="flex items-start gap-3 rounded-xl border border-[#E9DED0] bg-[#FBF3ED] p-3">
     {Icon && (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-blue-600 shadow-sm">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#A95643] shadow-sm">
         <Icon size={17} />
       </div>
     )}
     <div className="min-w-0">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[#8F8175]">
         {label}
       </p>
-      <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+      <p className="mt-1 break-words text-sm font-semibold text-[#382B26]">
         {value || "—"}
       </p>
     </div>
@@ -451,23 +450,23 @@ const AdminReservations = () => {
   const selectedSeatRows = selected ? getSeatRows(selected) : [];
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#FAF6EF] px-4 py-5 sm:px-5 lg:px-6">
       <div className="mx-auto max-w-[1600px]">
         {/* PAGE HEADER */}
-        <div className="mb-7 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+        <div className="mb-5 flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-600">
+            <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#A95643]">
               <ClipboardList size={16} />
               <span>Oorza Admin Portal</span>
-              <span className="text-slate-300">/</span>
-              <span className="text-slate-500">Reservations</span>
+              <span className="text-[#CDBFB1]">/</span>
+              <span className="text-[#8F8175]">Reservations</span>
             </div>
 
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-[#382B26] sm:text-3xl">
               Reservation Management
             </h1>
 
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-1.5 text-sm text-[#8F8175]">
               Monitor customer bookings, workspace schedules and payments.
             </p>
           </div>
@@ -476,39 +475,39 @@ const AdminReservations = () => {
             type="button"
             onClick={fetchReservations}
             disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E9DED0] bg-[#FFFDFA] px-4 py-2.5 text-sm font-bold text-[#71392F] shadow-sm transition hover:border-[#C9826C] hover:bg-[#F8EDE6] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshCw size={17} className={loading ? "animate-spin" : ""} />
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
             Refresh Reservations
           </button>
         </div>
 
         {/* HERO BANNER */}
-        <div className="relative mb-7 overflow-hidden rounded-3xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-6 shadow-xl shadow-blue-900/10 sm:p-8">
-          <div className="absolute -right-16 -top-24 h-72 w-72 rounded-full bg-white/10" />
-          <div className="absolute -bottom-28 right-1/4 h-64 w-64 rounded-full bg-indigo-300/20" />
+        <div className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] p-5 shadow-lg shadow-[#71392F]/10 sm:p-6">
+          <div className="absolute -right-16 -top-24 h-64 w-64 rounded-full bg-white/10" />
+          <div className="absolute -bottom-28 right-1/4 h-56 w-56 rounded-full bg-[#F8EDE6]/15" />
 
           <div className="relative flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-100">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-white/80">
                 <ShieldCheck size={17} />
                 Admin Overview
               </div>
               <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
                 Workspace Bookings
               </h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-blue-100">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
                 Keep track of reservations, customer seat assignments and
                 payment activity from one place.
               </p>
             </div>
 
-            <div className="flex w-fit items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-5 py-4 backdrop-blur-sm">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 text-white">
-                <CalendarDays size={23} />
+            <div className="flex w-fit items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 text-white">
+                <CalendarDays size={21} />
               </div>
               <div>
-                <p className="text-xs font-medium text-blue-100">
+                <p className="text-xs font-medium text-white/80">
                   Total Reservations
                 </p>
                 <p className="text-2xl font-extrabold text-white">
@@ -520,7 +519,7 @@ const AdminReservations = () => {
         </div>
 
         {/* SUMMARY CARDS */}
-        <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryCard
             title="Confirmed Bookings"
             value={summary.confirmed}
@@ -547,23 +546,23 @@ const AdminReservations = () => {
             value={formatCurrency(summary.revenue)}
             subtitle="Total successful payments"
             icon={IndianRupee}
-            iconClass="bg-blue-50 text-blue-600"
+            iconClass="bg-[#F8EDE6] text-[#A95643]"
           />
         </div>
 
         {/* SEARCH AND FILTERS */}
-        <div className="mb-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-2 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="mb-5 overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+          <div className="flex flex-col gap-2 border-b border-[#E9DED0] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div>
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
                   <Filter size={17} />
                 </div>
-                <h3 className="text-base font-extrabold text-slate-800">
+                <h3 className="text-base font-extrabold text-[#382B26]">
                   Find Reservations
                 </h3>
               </div>
-              <p className="mt-1 text-xs text-slate-400 sm:ml-11">
+              <p className="mt-1 text-xs text-[#8F8175] sm:ml-11">
                 Search bookings and narrow results using filters.
               </p>
             </div>
@@ -572,7 +571,7 @@ const AdminReservations = () => {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="inline-flex items-center gap-2 self-start rounded-lg px-3 py-2 text-xs font-bold text-blue-600 transition hover:bg-blue-50 sm:self-center"
+                className="inline-flex items-center gap-2 self-start rounded-lg px-3 py-2 text-xs font-bold text-[#A95643] transition hover:bg-[#F8EDE6] sm:self-center"
               >
                 <RotateCcw size={14} />
                 Clear all filters
@@ -580,18 +579,18 @@ const AdminReservations = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4 sm:p-6">
+          <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4 sm:p-5">
             <div className="relative sm:col-span-2 lg:col-span-1">
               <Search
                 size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A99A8D]"
               />
               <input
                 type="text"
                 value={search}
                 onChange={handleSearch}
                 placeholder="Search booking, customer, seat..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 hover:border-blue-300 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+                className="w-full rounded-xl border border-[#E9DED0] bg-[#FBF3ED] py-2.5 pl-10 pr-4 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99A8D] hover:border-[#C9826C] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10"
               />
             </div>
 
@@ -635,61 +634,61 @@ const AdminReservations = () => {
             </select>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-5 py-3 sm:px-6">
-            <p className="text-xs text-slate-500">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E9DED0] bg-[#FBF3ED] px-4 py-3 sm:px-5">
+            <p className="text-xs text-[#8F8175]">
               Showing{" "}
-              <span className="font-bold text-slate-700">
+              <span className="font-bold text-[#382B26]">
                 {filtered.length}
               </span>{" "}
               matching reservations
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#A99A8D]">
               All booking times displayed in Indian Standard Time
             </p>
           </div>
         </div>
 
         {/* RESERVATIONS TABLE */}
-        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col justify-between gap-3 border-b border-slate-100 px-5 py-5 sm:flex-row sm:items-center sm:px-6">
+        <div className="overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+          <div className="flex flex-col justify-between gap-3 border-b border-[#E9DED0] px-4 py-4 sm:flex-row sm:items-center sm:px-5">
             <div>
-              <h3 className="text-lg font-extrabold text-slate-900">
+              <h3 className="text-lg font-extrabold text-[#382B26]">
                 All Reservations
               </h3>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-[#8F8175]">
                 Review booking information and customer details.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+            <div className="flex w-fit items-center gap-2 rounded-xl bg-[#F8EDE6] px-3 py-2 text-xs font-bold text-[#71392F]">
               <ClipboardList size={15} />
               {filtered.length} Results
             </div>
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center px-5 py-20">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-                <RefreshCw size={25} className="animate-spin text-blue-600" />
+            <div className="flex flex-col items-center justify-center px-5 py-16">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F8EDE6]">
+                <RefreshCw size={25} className="animate-spin text-[#A95643]" />
               </div>
-              <p className="mt-4 text-sm font-bold text-slate-700">
+              <p className="mt-4 text-sm font-bold text-[#382B26]">
                 Loading reservations...
               </p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-[#A99A8D]">
                 Please wait while we fetch booking details.
               </p>
             </div>
           ) : paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-5 py-16 text-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-400">
+            <div className="flex flex-col items-center justify-center px-5 py-14 text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F8EDE6] text-[#C9826C]">
                 <CalendarDays size={30} />
               </div>
-              <h3 className="mt-5 text-lg font-bold text-slate-800">
+              <h3 className="mt-5 text-lg font-bold text-[#382B26]">
                 {hasActiveFilters
                   ? "No matching reservations"
                   : "No reservations yet"}
               </h3>
-              <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+              <p className="mt-2 max-w-md text-sm leading-6 text-[#8F8175]">
                 {hasActiveFilters
                   ? "Try changing your search term or clearing some filters to see more results."
                   : "Customer workspace bookings will appear here once reservations are made."}
@@ -698,7 +697,7 @@ const AdminReservations = () => {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
+                  className="mt-5 rounded-xl bg-[#A95643] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#71392F]"
                 >
                   Clear Filters
                 </button>
@@ -708,7 +707,7 @@ const AdminReservations = () => {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1250px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-[#F5F9FF]">
+                  <tr className="border-b border-[#E9DED0] bg-[#FBF3ED]">
                     {[
                       "#",
                       "Booking Details",
@@ -723,7 +722,7 @@ const AdminReservations = () => {
                     ].map((heading) => (
                       <th
                         key={heading}
-                        className="whitespace-nowrap px-4 py-4 text-xs font-extrabold uppercase tracking-wide text-slate-500"
+                        className="whitespace-nowrap px-4 py-3.5 text-xs font-extrabold uppercase tracking-wide text-[#8F8175]"
                       >
                         {heading}
                       </th>
@@ -731,7 +730,7 @@ const AdminReservations = () => {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-[#E9DED0]">
                   {paginated.map((item, index) => {
                     const customer = getCustomer(item);
                     const displayStatus = getDisplayStatus(item);
@@ -740,32 +739,32 @@ const AdminReservations = () => {
                     return (
                       <tr
                         key={item._id || item.bookingId}
-                        className="align-top transition hover:bg-[#F8FBFF]"
+                        className="align-top transition hover:bg-[#FAF6EF]"
                       >
-                        <td className="px-4 py-5 text-sm font-semibold text-slate-400">
+                        <td className="px-4 py-4 text-sm font-semibold text-[#A99A8D]">
                           {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                         </td>
 
-                        <td className="px-4 py-5">
-                          <p className="max-w-[150px] break-all text-sm font-extrabold text-blue-700">
+                        <td className="px-4 py-4">
+                          <p className="max-w-[150px] break-all text-sm font-extrabold text-[#71392F]">
                             {item.bookingId || "—"}
                           </p>
-                          <p className="mt-1 text-xs text-slate-400">
+                          <p className="mt-1 text-xs text-[#A99A8D]">
                             {formatDateTime(item.createdAt)}
                           </p>
                         </td>
 
-                        <td className="px-4 py-5">
+                        <td className="px-4 py-4">
                           <div className="flex items-start gap-2">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
                               <UserRound size={15} />
                             </div>
                             <div className="min-w-0">
-                              <p className="max-w-[160px] truncate text-sm font-bold text-slate-800">
+                              <p className="max-w-[160px] truncate text-sm font-bold text-[#382B26]">
                                 {customer.name}
                               </p>
                               {customer.email && (
-                                <p className="mt-1 max-w-[160px] break-all text-xs text-slate-400">
+                                <p className="mt-1 max-w-[160px] break-all text-xs text-[#8F8175]">
                                   {customer.email}
                                 </p>
                               )}
@@ -773,8 +772,8 @@ const AdminReservations = () => {
                           </div>
                         </td>
 
-                        <td className="px-4 py-5">
-                          <p className="max-w-[170px] text-sm font-bold text-slate-800">
+                        <td className="px-4 py-4">
+                          <p className="max-w-[170px] text-sm font-bold text-[#382B26]">
                             {item.spaceName || "—"}
                           </p>
                           {seatRows.length > 0 ? (
@@ -782,9 +781,9 @@ const AdminReservations = () => {
                               {seatRows.map((seat, seatIndex) => (
                                 <div
                                   key={`${seat.spaceCode}-${seatIndex}`}
-                                  className="text-xs text-slate-500"
+                                  className="text-xs text-[#8F8175]"
                                 >
-                                  <span className="font-bold text-blue-700">
+                                  <span className="font-bold text-[#A95643]">
                                     {seat.spaceCode}
                                   </span>
                                   {seat.name && (
@@ -798,45 +797,45 @@ const AdminReservations = () => {
                               ))}
                             </div>
                           ) : (
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-[#A99A8D]">
                               No seats
                             </p>
                           )}
                         </td>
 
-                        <td className="px-4 py-5">
-                          <span className="rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold capitalize text-indigo-700">
+                        <td className="px-4 py-4">
+                          <span className="rounded-lg bg-[#F8EDE6] px-2.5 py-1 text-xs font-bold capitalize text-[#71392F]">
                             {item.plan || "—"}
                           </span>
-                          <p className="mt-2 text-xs text-slate-400">
+                          <p className="mt-2 text-xs text-[#A99A8D]">
                             {getDurationLabel(item)}
                           </p>
                         </td>
 
-                        <td className="max-w-[200px] px-4 py-5 text-sm leading-6 text-slate-600">
+                        <td className="max-w-[200px] px-4 py-4 text-sm leading-6 text-[#6F5D52]">
                           {getSchedule(item)}
                         </td>
 
-                        <td className="whitespace-nowrap px-4 py-5 text-sm font-extrabold text-slate-800">
+                        <td className="whitespace-nowrap px-4 py-4 text-sm font-extrabold text-[#382B26]">
                           {formatCurrency(item.totalAmount)}
                         </td>
 
-                        <td className="px-4 py-5">
+                        <td className="px-4 py-4">
                           <StatusBadge status={displayStatus} />
                         </td>
 
-                        <td className="px-4 py-5">
+                        <td className="px-4 py-4">
                           <StatusBadge
                             status={item.paymentStatus || "Unknown"}
                             payment
                           />
                         </td>
 
-                        <td className="px-4 py-5">
+                        <td className="px-4 py-4">
                           <button
                             type="button"
                             onClick={() => setSelected(item)}
-                            className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-bold text-blue-700 transition hover:border-blue-500 hover:bg-blue-50"
+                            className="inline-flex items-center gap-2 rounded-xl border border-[#E9DED0] bg-white px-3.5 py-2 text-xs font-bold text-[#71392F] transition hover:border-[#C9826C] hover:bg-[#F8EDE6]"
                           >
                             <Eye size={15} />
                             View
@@ -852,18 +851,18 @@ const AdminReservations = () => {
 
           {/* PAGINATION */}
           {!loading && filtered.length > 0 && (
-            <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/60 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-              <p className="text-xs text-slate-500">
+            <div className="flex flex-col gap-4 border-t border-[#E9DED0] bg-[#FBF3ED] px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <p className="text-xs text-[#8F8175]">
                 Showing{" "}
-                <span className="font-bold text-slate-800">
+                <span className="font-bold text-[#382B26]">
                   {(currentPage - 1) * ITEMS_PER_PAGE + 1}
                 </span>{" "}
                 to{" "}
-                <span className="font-bold text-slate-800">
+                <span className="font-bold text-[#382B26]">
                   {Math.min(currentPage * ITEMS_PER_PAGE, filtered.length)}
                 </span>{" "}
                 of{" "}
-                <span className="font-bold text-slate-800">
+                <span className="font-bold text-[#382B26]">
                   {filtered.length}
                 </span>{" "}
                 reservations
@@ -874,7 +873,7 @@ const AdminReservations = () => {
                   type="button"
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E9DED0] bg-white px-3 py-2 text-xs font-bold text-[#6F5D52] transition hover:bg-[#F8EDE6] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft size={15} />
                   Previous
@@ -887,8 +886,8 @@ const AdminReservations = () => {
                     onClick={() => goToPage(page)}
                     className={`min-w-9 rounded-lg border px-3 py-2 text-xs font-bold transition ${
                       currentPage === page
-                        ? "border-blue-600 bg-blue-600 text-white shadow-sm"
-                        : "border-slate-200 bg-white text-slate-600 hover:border-blue-300 hover:bg-blue-50"
+                        ? "border-[#A95643] bg-[#A95643] text-white shadow-sm"
+                        : "border-[#E9DED0] bg-white text-[#6F5D52] hover:border-[#C9826C] hover:bg-[#F8EDE6]"
                     }`}
                   >
                     {page}
@@ -899,7 +898,7 @@ const AdminReservations = () => {
                   type="button"
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#E9DED0] bg-white px-3 py-2 text-xs font-bold text-[#6F5D52] transition hover:bg-[#F8EDE6] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next
                   <ChevronRight size={15} />
@@ -910,8 +909,8 @@ const AdminReservations = () => {
         </div>
 
         {/* FOOTER */}
-        <div className="mt-6 pb-3 text-center">
-          <p className="text-xs font-medium tracking-wide text-slate-400">
+        <div className="mt-5 pb-2 text-center">
+          <p className="text-xs font-medium tracking-wide text-[#A99A8D]">
             OORZA · Your Space. Your People. Your Work.
           </p>
         </div>
@@ -920,23 +919,23 @@ const AdminReservations = () => {
       {/* RESERVATION DETAILS MODAL */}
       {selected && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-sm sm:p-5"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#382B26]/60 p-3 backdrop-blur-sm sm:p-5"
           onClick={closeDetails}
         >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="reservation-modal-title"
-            className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/30 bg-white shadow-2xl"
+            className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="relative overflow-hidden bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 px-6 py-6 sm:px-8">
+            <div className="relative overflow-hidden bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] px-5 py-5 sm:px-6">
               <div className="absolute -right-10 -top-20 h-48 w-48 rounded-full bg-white/10" />
 
               <div className="relative flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-blue-100">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-white/80">
                     <ClipboardList size={15} />
                     Reservation Information
                   </div>
@@ -946,7 +945,7 @@ const AdminReservations = () => {
                   >
                     Reservation Details
                   </h2>
-                  <p className="mt-2 break-all text-sm font-semibold text-blue-100">
+                  <p className="mt-2 break-all text-sm font-semibold text-white/80">
                     Booking ID: {selected.bookingId || "—"}
                   </p>
                 </div>
@@ -963,11 +962,11 @@ const AdminReservations = () => {
             </div>
 
             {/* Modal Body */}
-            <div className="overflow-y-auto p-5 sm:p-7">
+            <div className="overflow-y-auto p-4 sm:p-5">
               {/* Status Overview */}
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-[#F5F9FF] p-4">
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9DED0] bg-[#FBF3ED] p-3.5">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#8F8175]">
                     Booking Status
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -979,10 +978,10 @@ const AdminReservations = () => {
                   </div>
                 </div>
                 <div className="text-left sm:text-right">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-[#8F8175]">
                     Created On
                   </p>
-                  <p className="mt-2 text-sm font-bold text-slate-700">
+                  <p className="mt-2 text-sm font-bold text-[#382B26]">
                     {formatDateTime(selected.createdAt)}
                   </p>
                 </div>
@@ -1033,62 +1032,65 @@ const AdminReservations = () => {
               </div>
 
               {/* Seat Holders */}
-              <div className="mt-7">
-                <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="mt-6">
+                <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="flex items-center gap-2 text-base font-extrabold text-slate-900">
-                      <Armchair size={18} className="text-blue-600" />
+                    <h3 className="flex items-center gap-2 text-base font-extrabold text-[#382B26]">
+                      <Armchair size={18} className="text-[#A95643]" />
                       Seat Assignments
                     </h3>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-[#8F8175]">
                       People assigned to this reservation.
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                  <span className="rounded-full bg-[#F8EDE6] px-3 py-1.5 text-xs font-bold text-[#71392F]">
                     {selectedSeatRows.length}{" "}
                     {selectedSeatRows.length === 1 ? "Seat" : "Seats"}
                   </span>
                 </div>
 
                 {selectedSeatRows.length > 0 ? (
-                  <div className="overflow-x-auto rounded-2xl border border-slate-200">
+                  <div className="overflow-x-auto rounded-xl border border-[#E9DED0]">
                     <table className="w-full min-w-[600px] text-left text-sm">
                       <thead>
-                        <tr className="border-b border-slate-100 bg-[#F5F9FF]">
-                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+                        <tr className="border-b border-[#E9DED0] bg-[#FBF3ED]">
+                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#8F8175]">
                             Seat
                           </th>
-                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#8F8175]">
                             Person
                           </th>
-                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#8F8175]">
                             Email
                           </th>
-                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+                          <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide text-[#8F8175]">
                             Phone
                           </th>
                         </tr>
                       </thead>
 
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-[#E9DED0]">
                         {selectedSeatRows.map((seat, index) => (
-                          <tr key={`${seat.spaceCode}-${index}`}>
-                            <td className="px-4 py-3 font-extrabold text-blue-700">
+                          <tr
+                            key={`${seat.spaceCode}-${index}`}
+                            className="hover:bg-[#FAF6EF]"
+                          >
+                            <td className="px-4 py-3 font-extrabold text-[#A95643]">
                               {seat.spaceCode || "—"}
                             </td>
-                            <td className="px-4 py-3 font-semibold text-slate-700">
+                            <td className="px-4 py-3 font-semibold text-[#382B26]">
                               {seat.name || "—"}
                               {seat.isSelf && (
-                                <span className="ml-2 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700">
+                                <span className="ml-2 inline-flex rounded-full bg-[#F8EDE6] px-2 py-0.5 text-[10px] font-bold text-[#71392F]">
                                   Customer
                                 </span>
                               )}
                             </td>
-                            <td className="break-all px-4 py-3 text-slate-500">
+                            <td className="break-all px-4 py-3 text-[#8F8175]">
                               {seat.email || "—"}
                             </td>
-                            <td className="px-4 py-3 text-slate-500">
+                            <td className="px-4 py-3 text-[#8F8175]">
                               {seat.phone || "—"}
                             </td>
                           </tr>
@@ -1097,16 +1099,16 @@ const AdminReservations = () => {
                     </table>
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-400">
+                  <div className="rounded-xl border border-dashed border-[#E9DED0] bg-[#FBF3ED] p-5 text-center text-sm text-[#A99A8D]">
                     No seat assignments available.
                   </div>
                 )}
               </div>
 
               {/* Payment Details */}
-              <div className="mt-7">
-                <h3 className="mb-4 flex items-center gap-2 text-base font-extrabold text-slate-900">
-                  <CreditCard size={18} className="text-blue-600" />
+              <div className="mt-6">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-extrabold text-[#382B26]">
+                  <CreditCard size={18} className="text-[#A95643]" />
                   Payment Information
                 </h3>
 
@@ -1136,11 +1138,11 @@ const AdminReservations = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-end border-t border-slate-100 bg-slate-50/80 px-5 py-4 sm:px-7">
+            <div className="flex justify-end border-t border-[#E9DED0] bg-[#FBF3ED] px-4 py-3.5 sm:px-5">
               <button
                 type="button"
                 onClick={closeDetails}
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:from-blue-700 hover:to-indigo-700"
+                className="rounded-xl bg-gradient-to-r from-[#A95643] to-[#71392F] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#71392F]/15 transition hover:from-[#71392F] hover:to-[#71392F]"
               >
                 Close Details
               </button>

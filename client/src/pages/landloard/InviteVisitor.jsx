@@ -19,7 +19,6 @@ import {
   BriefcaseBusiness,
   MapPin,
   LoaderCircle,
-  Receipt,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api/axios.js";
@@ -191,14 +190,14 @@ const validateForm = (form) => {
 };
 
 const inputClass = (hasError) =>
-  `w-full rounded-xl border bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:ring-4 ${
+  `w-full rounded-lg border bg-[#FFFDFA] px-3.5 py-2.5 text-sm text-[#382B26] outline-none transition placeholder:text-[#B2A59A] focus:ring-2 ${
     hasError
       ? "border-red-300 focus:border-red-400 focus:ring-red-100"
-      : "border-slate-200 focus:border-blue-500 focus:ring-blue-100"
+      : "border-[#E9DED0] focus:border-[#A95643] focus:ring-[#F8EDE6]"
   }`;
 
 const FieldLabel = ({ children, required }) => (
-  <label className="mb-2 block text-sm font-semibold text-slate-700">
+  <label className="mb-1.5 block text-xs font-semibold text-[#5D4B41]">
     {children}
     {required && <span className="ml-1 text-red-500">*</span>}
   </label>
@@ -422,7 +421,7 @@ export default function InviteVisitor() {
           },
         },
 
-        theme: { color: "#2563eb" },
+        theme: { color: "#A95643" },
       };
 
       const razorpay = new window.Razorpay(options);
@@ -457,26 +456,26 @@ export default function InviteVisitor() {
 
   if (confirmedVisit) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#EAF4FF] p-4 sm:p-6">
-        <div className="w-full max-w-xl overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-xl shadow-blue-900/10">
-          <div className="bg-gradient-to-r from-blue-700 to-indigo-700 px-6 py-9 text-center text-white sm:px-10">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl border border-white/20 bg-white/10">
-              <CheckCircle2 size={43} />
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] p-3 sm:p-5">
+        <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-[#E9DED0] bg-[#FFFDFA] shadow-lg shadow-[#71392F]/5">
+          <div className="bg-gradient-to-br from-[#71392F] to-[#A95643] px-5 py-7 text-center text-white sm:px-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
+              <CheckCircle2 size={36} />
             </div>
 
-            <h1 className="mt-5 text-2xl font-extrabold">
+            <h1 className="mt-4 text-xl font-extrabold sm:text-2xl">
               Visitor Pass Confirmed!
             </h1>
 
-            <p className="mt-2 text-sm text-blue-100">
+            <p className="mt-1.5 text-sm text-[#F8EDE6]">
               Your payment was verified successfully.
             </p>
           </div>
 
-          <div className="p-6 sm:p-8">
-            <div className="mb-6 flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+          <div className="p-5 sm:p-7">
+            <div className="mb-5 flex items-center justify-between rounded-xl border border-emerald-100 bg-emerald-50 p-3.5">
               <div className="flex items-center gap-3">
-                <ShieldCheck className="text-emerald-600" size={22} />
+                <ShieldCheck className="text-emerald-600" size={21} />
                 <div>
                   <p className="text-sm font-bold text-emerald-800">
                     Payment Successful
@@ -487,68 +486,68 @@ export default function InviteVisitor() {
                 </div>
               </div>
 
-              <CheckCircle2 size={22} className="text-emerald-600" />
+              <CheckCircle2 size={21} className="text-emerald-600" />
             </div>
 
-            <h2 className="mb-4 text-sm font-extrabold uppercase tracking-wider text-slate-400">
+            <h2 className="mb-3 text-xs font-extrabold uppercase tracking-wider text-[#8F8175]">
               Visit Summary
             </h2>
 
-            <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50 p-5">
+            <div className="space-y-3 rounded-xl border border-[#E9DED0] bg-[#FBF3ED] p-4">
               <div>
-                <p className="text-xs font-medium text-slate-400">Visit ID</p>
-                <p className="mt-1 break-all text-sm font-bold text-slate-900">
+                <p className="text-xs font-medium text-[#8F8175]">Visit ID</p>
+                <p className="mt-1 break-all text-sm font-bold text-[#382B26]">
                   {confirmedVisit.visitId}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-slate-400">Visitor</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">
+                  <p className="text-xs text-[#8F8175]">Visitor</p>
+                  <p className="mt-1 text-sm font-bold text-[#382B26]">
                     {confirmedVisit.name}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-400">Attendees</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">
+                  <p className="text-xs text-[#8F8175]">Attendees</p>
+                  <p className="mt-1 text-sm font-bold text-[#382B26]">
                     {confirmedVisit.attendees}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-400">Duration</p>
-                  <p className="mt-1 text-sm font-bold text-slate-800">
+                  <p className="text-xs text-[#8F8175]">Duration</p>
+                  <p className="mt-1 text-sm font-bold text-[#382B26]">
                     {confirmedVisit.visitHours}{" "}
                     {confirmedVisit.visitHours === 1 ? "hour" : "hours"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-slate-400">Amount Paid</p>
-                  <p className="mt-1 text-sm font-extrabold text-blue-700">
+                  <p className="text-xs text-[#8F8175]">Amount Paid</p>
+                  <p className="mt-1 text-sm font-extrabold text-[#A95643]">
                     {formatMoney(confirmedVisit.total)}
                   </p>
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 pt-4">
-                <p className="text-xs text-slate-400">Workspace Booking</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-slate-800">
+              <div className="border-t border-[#E9DED0] pt-3">
+                <p className="text-xs text-[#8F8175]">Workspace Booking</p>
+                <p className="mt-1 text-sm font-semibold leading-5 text-[#382B26]">
                   {confirmedVisit.bookingLabel}
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
               <button
                 type="button"
                 onClick={resetForm}
-                className="flex-1 rounded-xl border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-700 transition hover:bg-blue-50"
+                className="flex-1 rounded-lg border border-[#D9B5A7] bg-white px-4 py-2.5 text-sm font-bold text-[#A95643] transition hover:bg-[#F8EDE6]"
               >
                 <span className="inline-flex items-center justify-center gap-2">
-                  <UserPlus size={17} />
+                  <UserPlus size={16} />
                   Invite Another Visitor
                 </span>
               </button>
@@ -556,7 +555,7 @@ export default function InviteVisitor() {
               <button
                 type="button"
                 onClick={() => navigate("/customer")}
-                className="flex-1 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+                className="flex-1 rounded-lg bg-[#A95643] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#71392F]"
               >
                 Go to Dashboard
               </button>
@@ -572,24 +571,24 @@ export default function InviteVisitor() {
   // ---------------------------------------------
 
   return (
-    <div className="min-h-screen bg-[#EAF4FF] p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-[#FAF6EF] p-3 sm:p-5 lg:p-6">
       <div className="mx-auto max-w-5xl">
         {/* PAGE HEADER */}
-        <div className="mb-7">
-          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-blue-700">
-            <Building2 size={17} />
-              <span>Oorza Customer Portal</span>
-              <span className="text-blue-300">/</span>
-            <span className="text-slate-500">Invite Visitor</span>
+        <div className="mb-5">
+          <div className="mb-2 flex items-center gap-2 text-xs font-semibold text-[#A95643]">
+            <Building2 size={15} />
+            <span>Oorza Customer Portal</span>
+            <span className="text-[#C9826C]">/</span>
+            <span className="text-[#8F8175]">Invite Visitor</span>
           </div>
 
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              <h1 className="text-2xl font-extrabold tracking-tight text-[#382B26] sm:text-3xl">
                 Invite a Visitor
               </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+              <p className="mt-1.5 max-w-xl text-sm leading-5 text-[#8F8175]">
                 Register your guests and arrange their access to your booked
                 workspace with a simple visitor pass.
               </p>
@@ -598,54 +597,54 @@ export default function InviteVisitor() {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-blue-50"
+              className="inline-flex w-fit items-center gap-2 rounded-lg border border-[#E9DED0] bg-[#FFFDFA] px-3.5 py-2 text-sm font-semibold text-[#5D4B41] shadow-sm transition hover:bg-[#F8EDE6]"
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={15} />
               Back
             </button>
           </div>
         </div>
 
         {/* HERO BANNER */}
-        <div className="relative mb-7 overflow-hidden rounded-2xl bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 p-6 text-white shadow-lg shadow-blue-900/10 sm:p-7">
-          <div className="absolute -right-12 -top-20 h-64 w-64 rounded-full bg-white/10" />
-          <div className="absolute -bottom-28 right-1/3 h-52 w-52 rounded-full bg-indigo-400/20" />
+        <div className="relative mb-5 overflow-hidden rounded-xl bg-gradient-to-r from-[#71392F] via-[#A95643] to-[#C9826C] p-5 text-white shadow-md shadow-[#71392F]/10 sm:p-6">
+          <div className="absolute -right-12 -top-20 h-56 w-56 rounded-full bg-white/10" />
+          <div className="absolute -bottom-28 right-1/3 h-44 w-44 rounded-full bg-[#F8EDE6]/10" />
 
           <div className="relative flex items-center justify-between gap-4">
             <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-blue-50">
-                <ShieldCheck size={14} />
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-[#FAF6EF]">
+                <ShieldCheck size={13} />
                 Visitor Access
               </div>
 
-              <h2 className="text-xl font-extrabold sm:text-2xl">
+              <h2 className="text-lg font-extrabold sm:text-xl">
                 Welcome Your Guests
               </h2>
 
-              <p className="mt-2 max-w-lg text-sm leading-6 text-blue-100">
+              <p className="mt-1.5 max-w-lg text-sm leading-5 text-[#F8EDE6]">
                 Invite visitors to your active workspace booking. Complete their
                 details and securely pay the visitor fee online.
               </p>
             </div>
 
-            <div className="hidden h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 sm:flex">
-              <UserPlus size={40} strokeWidth={1.5} />
+            <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 sm:flex">
+              <UserPlus size={34} strokeWidth={1.5} />
             </div>
           </div>
         </div>
 
         {/* LOADING STATE */}
         {loadingBookings && (
-          <div className="rounded-2xl border border-blue-100 bg-white px-5 py-16 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
-              <LoaderCircle size={28} className="animate-spin text-blue-600" />
+          <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA] px-5 py-12 text-center shadow-sm">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8EDE6]">
+              <LoaderCircle size={25} className="animate-spin text-[#A95643]" />
             </div>
 
-            <h3 className="mt-4 text-base font-bold text-slate-800">
+            <h3 className="mt-3 text-sm font-bold text-[#382B26]">
               Loading your bookings
             </h3>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-xs text-[#8F8175]">
               Please wait while we fetch your active workspace bookings.
             </p>
           </div>
@@ -653,23 +652,23 @@ export default function InviteVisitor() {
 
         {/* LOAD ERROR */}
         {!loadingBookings && loadError && (
-          <div className="rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
-              <AlertCircle size={27} />
+          <div className="rounded-xl border border-red-200 bg-[#FFFDFA] p-6 text-center shadow-sm">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-500">
+              <AlertCircle size={24} />
             </div>
 
-            <h2 className="mt-4 text-lg font-bold text-slate-900">
+            <h2 className="mt-3 text-base font-bold text-[#382B26]">
               Could not load your bookings
             </h2>
 
-            <p className="mt-2 text-sm text-slate-500">{loadError}</p>
+            <p className="mt-1.5 text-sm text-[#8F8175]">{loadError}</p>
 
             <button
               type="button"
               onClick={fetchBookings}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#A95643] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#71392F]"
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={15} />
               Try Again
             </button>
           </div>
@@ -677,16 +676,16 @@ export default function InviteVisitor() {
 
         {/* NO BOOKINGS */}
         {!loadingBookings && !loadError && bookings.length === 0 && (
-          <div className="rounded-2xl border border-blue-100 bg-white px-6 py-14 text-center shadow-sm">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-blue-50 text-blue-600">
-              <CalendarDays size={36} strokeWidth={1.5} />
+          <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA] px-5 py-11 text-center shadow-sm">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F8EDE6] text-[#A95643]">
+              <CalendarDays size={30} strokeWidth={1.5} />
             </div>
 
-            <h2 className="mt-5 text-xl font-extrabold text-slate-900">
+            <h2 className="mt-4 text-lg font-extrabold text-[#382B26]">
               No upcoming bookings
             </h2>
 
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+            <p className="mx-auto mt-1.5 max-w-md text-sm leading-5 text-[#8F8175]">
               You need an active workspace booking before you can invite
               visitors.
             </p>
@@ -694,9 +693,9 @@ export default function InviteVisitor() {
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md shadow-blue-600/20 transition hover:bg-blue-700"
+              className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[#A95643] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#71392F]"
             >
-              <Building2 size={17} />
+              <Building2 size={16} />
               Book a Space
             </button>
           </div>
@@ -704,29 +703,29 @@ export default function InviteVisitor() {
 
         {/* MAIN FORM */}
         {!loadingBookings && !loadError && bookings.length > 0 && (
-          <form onSubmit={handlePay} noValidate className="space-y-6">
+          <form onSubmit={handlePay} noValidate className="space-y-4">
             {/* BOOKING SECTION */}
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                  <Building2 size={21} />
+            <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="flex items-center gap-3 border-b border-[#F0E7DC] px-4 py-3.5 sm:px-5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <Building2 size={19} />
                 </div>
 
                 <div>
-                  <h2 className="text-base font-extrabold text-slate-900">
+                  <h2 className="text-sm font-extrabold text-[#382B26]">
                     Workspace Booking
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-[11px] text-[#8F8175]">
                     Select the booking for your visitor
                   </p>
                 </div>
 
-                <span className="ml-auto rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-700">
+                <span className="ml-auto rounded-md bg-[#F8EDE6] px-2.5 py-1 text-[10px] font-bold text-[#A95643]">
                   Step 01
                 </span>
               </div>
 
-              <div className="p-5 sm:p-7">
+              <div className="p-4 sm:p-5">
                 <FieldLabel required>
                   Select Your Active Workspace Booking
                 </FieldLabel>
@@ -750,58 +749,58 @@ export default function InviteVisitor() {
 
                 <FieldError>{errors.bookingId}</FieldError>
 
-                <p className="mt-2 text-xs leading-5 text-slate-400">
+                <p className="mt-1.5 text-[11px] leading-4 text-[#A09286]">
                   Visitors are charged according to the selected workspace's
                   hourly rate.
                 </p>
 
                 {/* SELECTED BOOKING DETAILS */}
                 {selectedBooking && (
-                  <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/60 p-4">
+                  <div className="mt-4 rounded-lg border border-[#E9DED0] bg-[#FBF3ED] p-3.5">
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-blue-600 shadow-sm">
-                          <Building2 size={19} />
+                      <div className="flex items-start gap-2.5">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-[#A95643] shadow-sm">
+                          <Building2 size={18} />
                         </div>
 
                         <div className="min-w-0">
-                          <p className="text-xs font-semibold uppercase tracking-wider text-blue-600">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-[#A95643]">
                             Selected Workspace
                           </p>
 
-                          <p className="mt-1 text-sm font-extrabold text-slate-900">
+                          <p className="mt-1 text-sm font-extrabold text-[#382B26]">
                             {selectedBooking.spaceName || "Workspace"}
                           </p>
 
                           {selectedBooking.selectedSpaces?.length > 0 && (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-0.5 text-xs text-[#8F8175]">
                               Seats: {selectedBooking.selectedSpaces.join(", ")}
                             </p>
                           )}
                         </div>
                       </div>
 
-                      <div className="rounded-lg border border-blue-100 bg-white px-4 py-2.5">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <div className="rounded-lg border border-[#E9DED0] bg-white px-3.5 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[#A09286]">
                           Hourly Rate
                         </p>
-                        <p className="mt-1 text-lg font-extrabold text-blue-700">
+                        <p className="mt-0.5 text-base font-extrabold text-[#A95643]">
                           {formatMoney(selectedBooking.hourlyRate)}
-                          <span className="text-xs font-medium text-slate-400">
+                          <span className="text-xs font-medium text-[#8F8175]">
                             /hr
                           </span>
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-blue-100 pt-3 text-xs text-slate-600">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-[#E9DED0] pt-2.5 text-xs text-[#6F6056]">
                       <span className="inline-flex items-center gap-1.5">
-                        <CalendarDays size={14} className="text-blue-600" />
+                        <CalendarDays size={13} className="text-[#A95643]" />
                         {formatDate(selectedBooking.bookingDate)}
                       </span>
 
                       <span className="inline-flex items-center gap-1.5">
-                        <Clock size={14} className="text-blue-600" />
+                        <Clock size={13} className="text-[#A95643]" />
                         {selectedBooking.startTime
                           ? `${formatTime(selectedBooking.startTime)} - ${formatTime(selectedBooking.endTime)}`
                           : selectedBooking.plan || "Booking"}
@@ -813,35 +812,35 @@ export default function InviteVisitor() {
             </section>
 
             {/* VISITOR DETAILS */}
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                  <Users size={21} />
+            <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="flex items-center gap-3 border-b border-[#F0E7DC] px-4 py-3.5 sm:px-5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <Users size={19} />
                 </div>
 
                 <div>
-                  <h2 className="text-base font-extrabold text-slate-900">
+                  <h2 className="text-sm font-extrabold text-[#382B26]">
                     Visitor Details
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-[11px] text-[#8F8175]">
                     Enter the information of your guest
                   </p>
                 </div>
 
-                <span className="ml-auto rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700">
+                <span className="ml-auto rounded-md bg-[#F8EDE6] px-2.5 py-1 text-[10px] font-bold text-[#A95643]">
                   Step 02
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 gap-5 p-5 sm:grid-cols-2 sm:gap-6 sm:p-7">
+              <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 sm:p-5">
                 {/* ATTENDEES */}
                 <div>
                   <FieldLabel required>Number of Attendees</FieldLabel>
 
                   <div className="relative">
                     <Users
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A09286]"
                     />
 
                     <input
@@ -854,12 +853,12 @@ export default function InviteVisitor() {
                         updateField("attendees", event.target.value)
                       }
                       disabled={submitting}
-                      className={`${inputClass(Boolean(errors.attendees))} pl-11`}
+                      className={`${inputClass(Boolean(errors.attendees))} pl-10`}
                     />
                   </div>
 
                   <FieldError>{errors.attendees}</FieldError>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1 text-[11px] text-[#A09286]">
                     Maximum {MAX_ATTENDEES} attendees
                   </p>
                 </div>
@@ -870,8 +869,8 @@ export default function InviteVisitor() {
 
                   <div className="relative">
                     <Clock
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A09286]"
                     />
 
                     <input
@@ -884,12 +883,12 @@ export default function InviteVisitor() {
                         updateField("visitHours", event.target.value)
                       }
                       disabled={submitting}
-                      className={`${inputClass(Boolean(errors.visitHours))} pl-11`}
+                      className={`${inputClass(Boolean(errors.visitHours))} pl-10`}
                     />
                   </div>
 
                   <FieldError>{errors.visitHours}</FieldError>
-                  <p className="mt-1.5 text-xs text-slate-400">
+                  <p className="mt-1 text-[11px] text-[#A09286]">
                     Maximum {MAX_HOURS} hours per visit
                   </p>
                 </div>
@@ -900,8 +899,8 @@ export default function InviteVisitor() {
 
                   <div className="relative">
                     <User
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A09286]"
                     />
 
                     <input
@@ -913,7 +912,7 @@ export default function InviteVisitor() {
                       placeholder="Enter visitor's full name"
                       maxLength={80}
                       disabled={submitting}
-                      className={`${inputClass(Boolean(errors.name))} pl-11`}
+                      className={`${inputClass(Boolean(errors.name))} pl-10`}
                     />
                   </div>
 
@@ -926,8 +925,8 @@ export default function InviteVisitor() {
 
                   <div className="relative">
                     <Phone
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A09286]"
                     />
 
                     <input
@@ -942,7 +941,7 @@ export default function InviteVisitor() {
                       }
                       placeholder="10-digit mobile number"
                       disabled={submitting}
-                      className={`${inputClass(Boolean(errors.contact))} pl-11`}
+                      className={`${inputClass(Boolean(errors.contact))} pl-10`}
                     />
                   </div>
 
@@ -955,8 +954,8 @@ export default function InviteVisitor() {
 
                   <div className="relative">
                     <Mail
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A09286]"
                     />
 
                     <input
@@ -968,7 +967,7 @@ export default function InviteVisitor() {
                       placeholder="Enter visitor email (optional)"
                       maxLength={120}
                       disabled={submitting}
-                      className={`${inputClass(Boolean(errors.email))} pl-11`}
+                      className={`${inputClass(Boolean(errors.email))} pl-10`}
                     />
                   </div>
 
@@ -981,8 +980,8 @@ export default function InviteVisitor() {
 
                   <div className="relative">
                     <BriefcaseBusiness
-                      size={17}
-                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      size={16}
+                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A09286]"
                     />
 
                     <input
@@ -991,7 +990,7 @@ export default function InviteVisitor() {
                       readOnly
                       tabIndex={-1}
                       placeholder="Company not available"
-                      className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-600 outline-none"
+                      className="w-full cursor-not-allowed rounded-lg border border-[#E9DED0] bg-[#F5F0E8] py-2.5 pl-10 pr-3.5 text-sm text-[#6F6056] outline-none"
                     />
                   </div>
                 </div>
@@ -999,23 +998,23 @@ export default function InviteVisitor() {
             </section>
 
             {/* VISIT PURPOSE */}
-            <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-              <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                  <MapPin size={21} />
+            <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+              <div className="flex items-center gap-3 border-b border-[#F0E7DC] px-4 py-3.5 sm:px-5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F8EDE6] text-[#A95643]">
+                  <MapPin size={19} />
                 </div>
 
                 <div>
-                  <h2 className="text-base font-extrabold text-slate-900">
+                  <h2 className="text-sm font-extrabold text-[#382B26]">
                     Visit Purpose
                   </h2>
-                  <p className="mt-0.5 text-xs text-slate-500">
+                  <p className="mt-0.5 text-[11px] text-[#8F8175]">
                     Tell us why your visitor is coming
                   </p>
                 </div>
               </div>
 
-              <div className="p-5 sm:p-7">
+              <div className="p-4 sm:p-5">
                 <FieldLabel>Reason for Visit</FieldLabel>
 
                 <textarea
@@ -1030,10 +1029,12 @@ export default function InviteVisitor() {
                   className={`${inputClass(false)} resize-none`}
                 />
 
-                <div className="mt-2 flex items-center justify-between">
-                  <p className="text-xs text-slate-400">Optional information</p>
+                <div className="mt-1.5 flex items-center justify-between">
+                  <p className="text-[11px] text-[#A09286]">
+                    Optional information
+                  </p>
 
-                  <p className="text-xs font-medium text-slate-400">
+                  <p className="text-[11px] font-medium text-[#A09286]">
                     {form.reason.length}/{MAX_REASON_LENGTH}
                   </p>
                 </div>
@@ -1042,68 +1043,68 @@ export default function InviteVisitor() {
 
             {/* PAYMENT SUMMARY */}
             {selectedBooking && (
-              <section className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-sm">
-                <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-5 sm:px-7">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                    <Wallet size={21} />
+              <section className="overflow-hidden rounded-xl border border-[#E9DED0] bg-[#FFFDFA] shadow-sm">
+                <div className="flex items-center gap-3 border-b border-[#F0E7DC] px-4 py-3.5 sm:px-5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <Wallet size={19} />
                   </div>
 
                   <div>
-                    <h2 className="text-base font-extrabold text-slate-900">
+                    <h2 className="text-sm font-extrabold text-[#382B26]">
                       Payment Summary
                     </h2>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-[11px] text-[#8F8175]">
                       Review your visitor pass charges
                     </p>
                   </div>
 
-                  <span className="ml-auto rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700">
+                  <span className="ml-auto rounded-md bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
                     Step 03
                   </span>
                 </div>
 
-                <div className="grid gap-6 p-5 sm:grid-cols-2 sm:p-7">
+                <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#A09286]">
                       Charge Calculation
                     </p>
 
-                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-700">
+                    <p className="mt-2 text-sm font-semibold leading-5 text-[#5D4B41]">
                       {formatMoney(pricing.rate)} × {pricing.hours}{" "}
                       {pricing.hours === 1 ? "hour" : "hours"} ×{" "}
                       {pricing.attendees}{" "}
                       {pricing.attendees === 1 ? "attendee" : "attendees"}
                     </p>
 
-                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                    <p className="mt-1.5 text-xs leading-5 text-[#A09286]">
                       Visitor charges are calculated using the selected
                       workspace hourly rate.
                     </p>
                   </div>
 
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                    <div className="space-y-3 text-sm">
-                      <div className="flex justify-between gap-3 text-slate-600">
+                  <div className="rounded-lg border border-[#E9DED0] bg-[#FBF3ED] p-3.5">
+                    <div className="space-y-2.5 text-sm">
+                      <div className="flex justify-between gap-3 text-[#6F6056]">
                         <span>Subtotal</span>
-                        <span className="font-semibold text-slate-800">
+                        <span className="font-semibold text-[#382B26]">
                           {formatMoney(pricing.subtotal)}
                         </span>
                       </div>
 
-                      <div className="flex justify-between gap-3 text-slate-600">
+                      <div className="flex justify-between gap-3 text-[#6F6056]">
                         <span>GST (18%)</span>
-                        <span className="font-semibold text-slate-800">
+                        <span className="font-semibold text-[#382B26]">
                           {formatMoney(pricing.gst)}
                         </span>
                       </div>
 
-                      <div className="border-t border-blue-200 pt-3">
+                      <div className="border-t border-[#E9DED0] pt-2.5">
                         <div className="flex items-center justify-between gap-3">
-                          <span className="font-bold text-slate-900">
+                          <span className="font-bold text-[#382B26]">
                             Total Amount
                           </span>
 
-                          <span className="text-xl font-extrabold text-blue-700">
+                          <span className="text-lg font-extrabold text-[#A95643]">
                             {formatMoney(pricing.total)}
                           </span>
                         </div>
@@ -1115,18 +1116,18 @@ export default function InviteVisitor() {
             )}
 
             {/* PAYMENT BUTTON */}
-            <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                    <ShieldCheck size={22} />
+            <div className="rounded-xl border border-[#E9DED0] bg-[#FFFDFA] p-4 shadow-sm sm:p-5">
+              <div className="flex flex-col items-center justify-between gap-3 sm:flex-row">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                    <ShieldCheck size={21} />
                   </div>
 
                   <div>
-                    <p className="text-sm font-bold text-slate-800">
+                    <p className="text-sm font-bold text-[#382B26]">
                       Secure Online Payment
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
+                    <p className="mt-0.5 text-xs text-[#8F8175]">
                       Payments are securely processed by Razorpay.
                     </p>
                   </div>
@@ -1135,23 +1136,23 @@ export default function InviteVisitor() {
                 <button
                   type="submit"
                   disabled={submitting || !selectedBooking}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#A95643] to-[#71392F] px-7 py-3 text-sm font-bold text-white shadow-md shadow-[#71392F]/15 transition hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {submitting ? (
                     <>
-                      <LoaderCircle size={18} className="animate-spin" />
+                      <LoaderCircle size={17} className="animate-spin" />
                       Processing Payment...
                     </>
                   ) : (
                     <>
-                      <CreditCard size={18} />
+                      <CreditCard size={17} />
                       Pay {formatMoney(pricing.total)}
                     </>
                   )}
                 </button>
               </div>
 
-              <p className="mt-4 text-center text-[11px] text-slate-400">
+              <p className="mt-3 text-center text-[10px] text-[#A09286]">
                 By proceeding, you agree to pay the displayed visitor pass
                 amount, including applicable GST.
               </p>
