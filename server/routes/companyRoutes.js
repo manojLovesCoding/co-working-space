@@ -1,8 +1,10 @@
+
 import { Router } from "express";
 
 import {
   getCompanyProfile,
   saveCompanyProfile,
+  getAllCompanyProfiles,
 } from "../controllers/companyController.js";
 
 import { verifyToken } from "../middleware/auth.js";
@@ -11,11 +13,21 @@ import { upload } from "../middleware/upload.js";
 
 const companyRouter = Router();
 
-/*
- * Get company profile
- *
- * GET /api/company
- */
+// ==========================================
+// ADMIN: GET ALL COMPANY PROFILES
+// GET /api/company/admin/all
+// ==========================================
+companyRouter.get(
+  "/admin/all",
+  verifyToken,
+  authorizeRoles("admin"),
+  getAllCompanyProfiles
+);
+
+// ==========================================
+// CUSTOMER: GET OWN COMPANY PROFILE
+// GET /api/company
+// ==========================================
 companyRouter.get(
   "/",
   verifyToken,
@@ -23,14 +35,10 @@ companyRouter.get(
   getCompanyProfile
 );
 
-/*
- * Create / update company profile
- *
- * PUT /api/company
- *
- * FormData field for logo:
- * "logo"
- */
+// ==========================================
+// CUSTOMER: CREATE / UPDATE COMPANY PROFILE
+// PUT /api/company
+// ==========================================
 companyRouter.put(
   "/",
   verifyToken,

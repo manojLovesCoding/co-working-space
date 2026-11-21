@@ -423,3 +423,36 @@ export const saveCompanyProfile = async (
     });
   }
 };
+
+
+
+/*
+ * ==========================================
+ * ADMIN: GET ALL COMPANY PROFILES
+ * ==========================================
+ *
+ * GET /api/company/admin/all
+ *
+ * Only accessible to administrators.
+ */
+export const getAllCompanyProfiles = async (req, res) => {
+  try {
+    const companies = await CompanyProfile.find()
+      .populate("createdBy", "name email phone")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.status(200).json({
+      success: true,
+      count: companies.length,
+      companies,
+    });
+  } catch (error) {
+    console.error("Get all company profiles error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
