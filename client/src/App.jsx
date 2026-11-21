@@ -48,6 +48,7 @@ import TeamManagement from "./pages/admin/TeamManagement";
 /* Virtual Office Admin Pages */
 import VirtualOfficePrice from "./pages/admin/VirtualOfficePrice";
 import VirtualOfficePurchases from "./pages/admin/VirtualOfficePurchases";
+import CompanyProfiles from "./pages/admin/CompanyProfiles";
 
 const App = () => {
   return (
@@ -195,6 +196,8 @@ const App = () => {
               path="virtual-office-purchases"
               element={<VirtualOfficePurchases />}
             />
+
+            <Route path="company-profiles" element={<CompanyProfiles />} />
           </Route>
         </Route>
       </Routes>

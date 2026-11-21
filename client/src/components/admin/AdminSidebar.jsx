@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -21,6 +20,7 @@ import {
   ShoppingCart,
   LogOut,
   ArrowRight,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 const AdminSidebar = ({ collapsed = false, onToggle }) => {
@@ -46,6 +46,12 @@ const AdminSidebar = ({ collapsed = false, onToggle }) => {
       path: "team-management",
       icon: UserRound,
       description: "Manage customer teams",
+    },
+    {
+      label: "Company Profiles",
+      path: "company-profiles",
+      icon: BriefcaseBusiness,
+      description: "Manage company profiles",
     },
     {
       label: "Invoices",
@@ -137,12 +143,8 @@ const AdminSidebar = ({ collapsed = false, onToggle }) => {
           />
 
           <div className="border-l border-[#E9DED0] pl-2">
-            <p className="text-sm font-bold text-[#382B26]">
-              Admin Panel
-            </p>
-            <p className="text-[10px] text-[#8F8175]">
-              Oorza Management
-            </p>
+            <p className="text-sm font-bold text-[#382B26]">Admin Panel</p>
+            <p className="text-[10px] text-[#8F8175]">Oorza Management</p>
           </div>
         </div>
       </header>
@@ -172,7 +174,6 @@ const AdminSidebar = ({ collapsed = false, onToggle }) => {
         {/* BRAND HEADER */}
         <div className="border-b border-[#E9DED0] px-3 py-3">
           <div className="flex min-h-[58px] items-center justify-between gap-2">
-
             {/* LOGO AND BRAND */}
             <div
               className={`flex min-w-0 flex-1 items-center gap-2 ${
@@ -252,9 +253,7 @@ const AdminSidebar = ({ collapsed = false, onToggle }) => {
 
                 <div className="mt-0.5 flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-[10px] text-[#8F8175]">
-                    Online
-                  </span>
+                  <span className="text-[10px] text-[#8F8175]">Online</span>
                 </div>
               </div>
             </div>
@@ -378,9 +377,7 @@ const AdminSidebar = ({ collapsed = false, onToggle }) => {
             </span>
 
             <span className={`min-w-0 flex-1 ${collapsed ? "md:hidden" : ""}`}>
-              <span className="block text-xs font-semibold">
-                Logout
-              </span>
+              <span className="block text-xs font-semibold">Logout</span>
               <span className="mt-0.5 block text-[9px] text-red-300">
                 Sign out of account
               </span>
