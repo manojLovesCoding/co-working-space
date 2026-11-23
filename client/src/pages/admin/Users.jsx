@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Users as UsersIcon,
@@ -12,6 +11,7 @@ import {
   Eye,
   X,
   Lock,
+  KeyRound,
   EyeOff,
   RefreshCw,
   CheckCircle2,
@@ -53,6 +53,19 @@ const Users = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState(null);
+
+  // ==========================================
+  // UPDATE CUSTOMER PASSWORD
+  // ==========================================
+  const [passwordUser, setPasswordUser] = useState(null);
+  const [passwordForm, setPasswordForm] = useState({
+    password: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showNewConfirmPassword, setShowNewConfirmPassword] = useState(false);
 
   // ==========================================
   // FETCH USERS
@@ -124,7 +137,7 @@ const Users = () => {
       toast.success("Customer account created successfully.");
     } catch (error) {
       setCustomerError(
-        error.response?.data?.message || "Failed to create customer account."
+        error.response?.data?.message || "Failed to create customer account.",
       );
     } finally {
       setCreating(false);
@@ -144,14 +157,12 @@ const Users = () => {
 
       setUsers((prev) =>
         prev.map((user) =>
-          user._id === id ? { ...user, isActive: false } : user
-        )
+          user._id === id ? { ...user, isActive: false } : user,
+        ),
       );
 
       if (selectedUser?._id === id) {
-        setSelectedUser((prev) =>
-          prev ? { ...prev, isActive: false } : null
-        );
+        setSelectedUser((prev) => (prev ? { ...prev, isActive: false } : null));
       }
 
       toast.dismiss(loadingToast);
@@ -160,7 +171,7 @@ const Users = () => {
       console.error(error);
       toast.dismiss(loadingToast);
       toast.error(
-        error.response?.data?.message || "Failed to deactivate customer."
+        error.response?.data?.message || "Failed to deactivate customer.",
       );
     }
   };
@@ -213,8 +224,65 @@ const Users = () => {
           background: "#FFFDFA",
           boxShadow: "0 10px 35px rgba(56, 43, 38, 0.12)",
         },
-      }
+      },
     );
+  };
+
+  // ==========================================
+  // UPDATE CUSTOMER PASSWORD
+  // ==========================================
+  const closePasswordModal = () => {
+    if (updatingPassword) return;
+
+    setPasswordUser(null);
+    setPasswordForm({ password: "", confirmPassword: "" });
+    setPasswordError("");
+    setShowNewPassword(false);
+    setShowNewConfirmPassword(false);
+  };
+
+  const handleUpdateCustomerPassword = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+
+    const { password, confirmPassword } = passwordForm;
+
+    if (!password || !confirmPassword) {
+      setPasswordError("Please fill in both password fields.");
+      return;
+    }
+
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+
+    try {
+      setUpdatingPassword(true);
+
+      await api.patch(`/auth/customer/${passwordUser._id}/password`, {
+        password,
+      });
+
+      toast.success("Customer password updated successfully.");
+      setPasswordUser(null);
+      setPasswordForm({ password: "", confirmPassword: "" });
+      setPasswordError("");
+      setShowNewPassword(false);
+      setShowNewConfirmPassword(false);
+    } catch (error) {
+      console.error("Failed to update customer password:", error);
+      setPasswordError(
+        error.response?.data?.message || "Failed to update customer password.",
+      );
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
   // ==========================================
@@ -229,8 +297,7 @@ const Users = () => {
         user.email?.toLowerCase().includes(searchValue) ||
         user.phone?.toLowerCase().includes(searchValue);
 
-      const matchesRole =
-        roleFilter === "all" || user.role === roleFilter;
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
       const matchesStatus =
         statusFilter === "all" ||
@@ -249,20 +316,15 @@ const Users = () => {
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
 
-    return filteredUsers.slice(
-      startIndex,
-      startIndex + ITEMS_PER_PAGE
-    );
+    return filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredUsers, currentPage]);
 
   const startRecord =
-    filteredUsers.length === 0
-      ? 0
-      : (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    filteredUsers.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
 
   const endRecord = Math.min(
     currentPage * ITEMS_PER_PAGE,
-    filteredUsers.length
+    filteredUsers.length,
   );
 
   useEffect(() => {
@@ -367,8 +429,7 @@ const Users = () => {
   const Pagination = () => (
     <div className="flex flex-col gap-3 border-t border-[#E9DED0] bg-[#FBF3ED] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
       <p className="text-xs text-[#8F8175]">
-        Showing{" "}
-        <span className="font-bold text-[#382B26]">{startRecord}</span>
+        Showing <span className="font-bold text-[#382B26]">{startRecord}</span>
         {" - "}
         <span className="font-bold text-[#382B26]">{endRecord}</span>
         {" of "}
@@ -454,7 +515,6 @@ const Users = () => {
   return (
     <div className="min-h-screen bg-[#FAF6EF] p-4 sm:p-5 lg:p-6">
       <div className="mx-auto max-w-7xl space-y-5">
-
         {/* PAGE HEADER */}
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#71392F] via-[#8F493A] to-[#A95643] p-5 text-white shadow-lg shadow-[#71392F]/10 sm:p-7">
           <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full border-[30px] border-white/5" />
@@ -578,9 +638,7 @@ const Users = () => {
             <p className="mt-1 text-2xl font-bold tracking-tight text-rose-600">
               {inactiveCount}
             </p>
-            <p className="mt-1 text-xs text-[#A99B8F]">
-              Deactivated accounts
-            </p>
+            <p className="mt-1 text-xs text-[#A99B8F]">Deactivated accounts</p>
           </div>
 
           <div className="rounded-2xl border border-[#E9DED0] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -606,9 +664,7 @@ const Users = () => {
               <Filter size={17} />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#382B26]">
-                Find Users
-              </h2>
+              <h2 className="text-sm font-bold text-[#382B26]">Find Users</h2>
               <p className="text-xs text-[#A99B8F]">
                 Search and filter your user directory
               </p>
@@ -673,9 +729,7 @@ const Users = () => {
                 {filteredUsers.length}
               </span>{" "}
               of{" "}
-              <span className="font-bold text-[#382B26]">
-                {users.length}
-              </span>{" "}
+              <span className="font-bold text-[#382B26]">{users.length}</span>{" "}
               users
             </p>
 
@@ -697,9 +751,7 @@ const Users = () => {
         <section className="hidden overflow-hidden rounded-2xl border border-[#E9DED0] bg-white shadow-sm md:block">
           <div className="flex flex-col gap-2 border-b border-[#F0E8DE] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-base font-bold text-[#382B26]">
-                All Users
-              </h2>
+              <h2 className="text-base font-bold text-[#382B26]">All Users</h2>
               <p className="mt-1 text-xs text-[#A99B8F]">
                 View and manage registered accounts
               </p>
@@ -811,6 +863,24 @@ const Users = () => {
                             <Eye size={14} />
                             View
                           </button>
+
+                          {user.role === "customer" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPasswordError("");
+                                setPasswordForm({
+                                  password: "",
+                                  confirmPassword: "",
+                                });
+                                setPasswordUser(user);
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-[#E9DED0] bg-white px-3 py-2 text-xs font-bold text-[#71392F] transition hover:border-[#C9826C] hover:bg-[#F8EDE6]"
+                            >
+                              <KeyRound size={14} />
+                              Password
+                            </button>
+                          )}
 
                           {user.role === "customer" && user.isActive && (
                             <button
@@ -924,6 +994,21 @@ const Users = () => {
                     View Details
                   </button>
 
+                  {user.role === "customer" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPasswordError("");
+                        setPasswordForm({ password: "", confirmPassword: "" });
+                        setPasswordUser(user);
+                      }}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#E9DED0] bg-white py-2.5 text-xs font-bold text-[#71392F] transition hover:bg-[#F8EDE6]"
+                    >
+                      <KeyRound size={14} />
+                      Password
+                    </button>
+                  )}
+
                   {user.role === "customer" && user.isActive && (
                     <button
                       type="button"
@@ -941,9 +1026,7 @@ const Users = () => {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#F8EDE6] text-[#A95643]">
                 <Search size={22} />
               </div>
-              <h3 className="mt-3 font-bold text-[#382B26]">
-                No users found
-              </h3>
+              <h3 className="mt-3 font-bold text-[#382B26]">No users found</h3>
               <p className="mt-1 text-sm text-[#8F8175]">
                 Try changing your search or filters.
               </p>
@@ -1111,9 +1194,7 @@ const Users = () => {
                   />
                   <button
                     type="button"
-                    onClick={() =>
-                      setShowConfirmPassword((prev) => !prev)
-                    }
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A99B8F] transition hover:text-[#A95643]"
                   >
                     {showConfirmPassword ? (
@@ -1165,6 +1246,194 @@ const Users = () => {
                     <>
                       <UserPlus size={17} />
                       Create Customer
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* UPDATE CUSTOMER PASSWORD MODAL */}
+      {passwordUser && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#382B26]/60 p-3 backdrop-blur-sm"
+          onClick={closePasswordModal}
+        >
+          <div
+            className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative overflow-hidden rounded-t-2xl bg-gradient-to-br from-[#71392F] to-[#A95643] px-5 py-5 text-white">
+              <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-[20px] border-white/10" />
+
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15">
+                    <KeyRound size={21} />
+                  </div>
+                  <h2 className="text-xl font-bold">Update Password</h2>
+                  <p className="mt-1 text-sm text-[#F5DFD5]">
+                    Set a new login password for this customer.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={updatingPassword}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50"
+                >
+                  <X size={19} />
+                </button>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleUpdateCustomerPassword}
+              className="space-y-4 p-5"
+            >
+              <div className="rounded-xl border border-[#E9DED0] bg-[#FAF6EF] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#A99B8F]">
+                  Customer account
+                </p>
+                <p className="mt-1 text-sm font-bold text-[#382B26]">
+                  {passwordUser.name}
+                </p>
+                <p className="mt-0.5 break-all text-xs text-[#8F8175]">
+                  {passwordUser.email}
+                </p>
+              </div>
+
+              {passwordError && (
+                <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+                  <AlertCircle size={17} className="mt-0.5 shrink-0" />
+                  <span>{passwordError}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#71645B]">
+                  New Password <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <Lock
+                    size={17}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99B8F]"
+                  />
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={passwordForm.password}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({
+                        ...prev,
+                        password: e.target.value,
+                      }))
+                    }
+                    placeholder="Minimum 6 characters"
+                    autoComplete="new-password"
+                    disabled={updatingPassword}
+                    className="w-full rounded-xl border border-[#E9DED0] bg-[#FAF6EF] py-3 pl-11 pr-12 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99B8F] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10 disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    disabled={updatingPassword}
+                    aria-label={
+                      showNewPassword
+                        ? "Hide new password"
+                        : "Show new password"
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A99B8F] transition hover:text-[#A95643]"
+                  >
+                    {showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#71645B]">
+                  Confirm New Password <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <Lock
+                    size={17}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-[#A99B8F]"
+                  />
+                  <input
+                    type={showNewConfirmPassword ? "text" : "password"}
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) =>
+                      setPasswordForm((prev) => ({
+                        ...prev,
+                        confirmPassword: e.target.value,
+                      }))
+                    }
+                    placeholder="Re-enter new password"
+                    autoComplete="new-password"
+                    disabled={updatingPassword}
+                    className="w-full rounded-xl border border-[#E9DED0] bg-[#FAF6EF] py-3 pl-11 pr-12 text-sm text-[#382B26] outline-none transition placeholder:text-[#A99B8F] focus:border-[#A95643] focus:bg-white focus:ring-4 focus:ring-[#A95643]/10 disabled:opacity-60"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewConfirmPassword((prev) => !prev)}
+                    disabled={updatingPassword}
+                    aria-label={
+                      showNewConfirmPassword
+                        ? "Hide confirm password"
+                        : "Show confirm password"
+                    }
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#A99B8F] transition hover:text-[#A95643]"
+                  >
+                    {showNewConfirmPassword ? (
+                      <EyeOff size={17} />
+                    ) : (
+                      <Eye size={17} />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl border border-[#E9DED0] bg-[#F8EDE6] p-3">
+                <ShieldCheck
+                  size={19}
+                  className="mt-0.5 shrink-0 text-[#A95643]"
+                />
+                <div>
+                  <p className="text-xs font-bold text-[#71392F]">
+                    Password security
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-[#8F6255]">
+                    The new password will replace the customer's current login
+                    password.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 border-t border-[#F0E8DE] pt-4">
+                <button
+                  type="button"
+                  onClick={closePasswordModal}
+                  disabled={updatingPassword}
+                  className="flex-1 rounded-xl border border-[#E9DED0] py-3 text-sm font-semibold text-[#71645B] transition hover:bg-[#FAF6EF] disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingPassword}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#A95643] py-3 text-sm font-bold text-white shadow-md shadow-[#A95643]/15 transition hover:bg-[#8F493A] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {updatingPassword ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <KeyRound size={16} />
+                      Update Password
                     </>
                   )}
                 </button>
@@ -1288,7 +1557,7 @@ const Users = () => {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
-                          }
+                          },
                         )
                       : "Not available"}
                   </p>
