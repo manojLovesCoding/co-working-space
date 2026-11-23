@@ -299,3 +299,55 @@ export const deactivateCustomer = async (req, res) => {
     });
   }
 };
+
+
+// ==========================================
+// ADMIN: UPDATE CUSTOMER PASSWORD
+// ==========================================
+export const updateCustomerPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: "New password is required",
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: "Password must be at least 6 characters",
+      });
+    }
+
+    const customer = await User.findOne({
+      _id: req.params.id,
+      role: "customer",
+    });
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    customer.password = hashedPassword;
+
+    await customer.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Customer password updated successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
