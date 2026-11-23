@@ -5,6 +5,7 @@ import {
   createCustomer,
   getUsers,
   deactivateCustomer,
+  updateCustomerPassword,
 } from "../controllers/authController.js";
 
 import {
@@ -39,6 +40,14 @@ authRouter.patch(
   verifyToken,
   authorizeRoles("admin"),
   deactivateCustomer,
+);
+
+// Admin-only: Update customer password
+authRouter.patch(
+  "/customer/:id/password",
+  verifyToken,
+  authorizeRoles("admin"),
+  updateCustomerPassword,
 );
 
 export default authRouter;
